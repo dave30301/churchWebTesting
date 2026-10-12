@@ -197,7 +197,7 @@ def album(a):
              + txt(a["title"], 22, MAROON, "600", H, "line-height:1.2;") + sp(8)
              + txt(f'{a["date"]} &middot; {a["photos"]} photos', 15, TGRAY) + sp(12)
              + link("View album &rarr;", a["link"], f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};"))
-    return flow_card(inner, gap=12)
+    return flow_card(inner, height=320, gap=12)
 g_albums = sec(T(TR(TD(h("h2", '<a id="albums" name="albums"></a>Browse Recent Albums', 36, MAROON), valign="middle"), TD("&nbsp;", valign="middle", align="right"))) + sp(12)
                + c("Album grid: newest first; cards re-flow automatically") + flow([album(a) for a in ALBUMS], "album"), bg=LGRAY, pad="12px 0 0")
 
