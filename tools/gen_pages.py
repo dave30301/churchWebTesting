@@ -24,7 +24,7 @@ def photo(label, height, radius=12):
     td = f'<td align="center" valign="middle" height="{height}" bgcolor="{LGRAY}" style="height:{height}px;background-color:{LGRAY};border:2px dashed {GOLD};{r}font-family:{B};font-size:15px;color:{TGRAY};text-align:center;">[CMS MEDIA: {label}]</td>'
     return T(TR(td), width="100%", style=r)
 
-def chips(items, active=0, ident=None):
+def chips(items, active=0, ident=None, wrap=False):
     """Filter chips. Items are 'Label' (plain link to #) or ('Label', 'key') for script-driven filtering:
     the anchor gets data-filter="key" and href="#albums" (so it still jumps to the grid if scripts are blocked)."""
     cells = []
@@ -38,8 +38,14 @@ def chips(items, active=0, ident=None):
         href = "#albums" if key else "#"
         a = (f'<a href="{href}"{attrs} style="text-decoration:none;display:block;white-space:nowrap;padding:10px 22px;'
              f'font-family:{B};font-size:16px;font-weight:bold;color:{col};">{t}</a>')
-        cells.append(f'<td bgcolor="{bg}" style="background-color:{bg};border:1px solid {bd};border-radius:999px;">{a}</td>')
-        cells.append(gap_col(12))
+        cell = f'<td bgcolor="{bg}" style="background-color:{bg};border:1px solid {bd};border-radius:999px;">{a}</td>'
+        if wrap:   # each chip floats, so the row wraps onto more lines on narrow screens
+            cells.append(float_item(T(TR(cell), width="auto"), "0 12px 12px 0"))
+        else:
+            cells.append(cell)
+            cells.append(gap_col(12))
+    if wrap:
+        return f'<div{(" id=" + chr(34) + ident + chr(34)) if ident else ""}>' + "".join(cells) + CLEAR + "</div>"
     return T(TR(*cells[:-1]), width="auto", extra=f' id="{ident}"' if ident else "")
 
 def grid3(cards, gap=24):
@@ -58,7 +64,7 @@ def flow_card(inner, pad=20, height=400, gap=24, cats=None):
     display / float / margin CSS). Three per row: width 33%; fixed height keeps the rows from snagging.
     gap = vertical space under each card row."""
     dc = f' data-cats="{cats}"' if cats else ""
-    return (f'<table role="presentation" align="left" width="33%" cellpadding="0" cellspacing="0" border="0"{dc} style="width:33.333%;border-collapse:separate;">'
+    return (f'<table role="presentation" align="left" width="33%" cellpadding="0" cellspacing="0" border="0"{dc} style="width:33.333%;min-width:300px;max-width:100%;border-collapse:separate;">'
             f'<tr><td valign="top" height="{height + gap}" style="height:{height + gap}px;padding:0 12px {gap}px 12px;">'
             + rounded(inner, CREAM, 16, pad, f"border:1px solid {GOLD};") + "</td></tr></table>")
 def flow(cards, what):
@@ -219,24 +225,57 @@ FILTER_JS = """<script>
 })();
 </script>"""
 def lr(share):
-    return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999"></iframe>'
+    return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999" style="max-width:100%;"></iframe>'
+
+def fl_col(inner, width, min_w, pad="0", td_id=None, tbl_id=None):
+    """Left-floating table (HTML align attribute). Two of them sit side by side when there is room; the second drops
+    underneath when the container is narrower than their min-widths. No media queries (this CMS strips style blocks)."""
+    ti = f' id="{td_id}"' if td_id else ""
+    bi = f' id="{tbl_id}"' if tbl_id else ""
+    return (f'<table role="presentation" align="left" width="{width}" cellpadding="0" cellspacing="0" border="0"{bi} '
+            f'style="width:{width};min-width:{min_w}px;max-width:100%;border-collapse:separate;"><tr><td valign="top"{ti} style="padding:{pad};">{inner}</td></tr></table>')
+def float_item(inner, pad="0 16px 12px 0"):
+    """Shrink-to-fit floating wrapper so buttons wrap onto a new line instead of overflowing."""
+    return f'<table role="presentation" align="left" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td style="padding:{pad};">{inner}</td></tr></table>'
+CLEAR = '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>'
+HERO_JS = """<script>
+(function () {
+  // Vertically centers the header text beside the logo when they sit side by side (floats cannot do this on their own).
+  // On narrow screens the logo drops below the text and no extra padding is added.
+  function center() {
+    var t = document.getElementById('fbcHeroText');
+    var l = document.getElementById('fbcHeroLogo');
+    if (!t) { return; }
+    if (!l) { return; }
+    t.style.paddingTop = '0px';
+    var tr = t.getBoundingClientRect();
+    var lr = l.getBoundingClientRect();
+    if (Math.round((lr.top - tr.top) / 5) !== 0) { return; }
+    t.style.paddingTop = Math.max(0, Math.round((lr.height - tr.height) / 2)) + 'px';
+  }
+  center();
+  window.addEventListener('load', center);
+  window.addEventListener('resize', center);
+})();
+</script>"""
 
 cover = (f'<img src="{GALLERY_COVER}" alt="Photography ministry logo" width="1500" height="1500" '
          f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;">')
-cover_cell = T(TR(f'<td align="center" valign="middle" height="510" style="height:510px;text-align:center;">{cover}</td>'),
-               width="100%")
+hero_text = (eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1", "Photo Gallery", 64, MAROON, lh="1.04") + sp(20)
+             + txt("Moments from worship, ministry, and community life at First Baptist Church of Manassas.", 21, TGRAY, extra="line-height:1.5;") + sp(28)
+             + float_item(btn("View all albums in Lightroom", "#albums", MAROON, WHITE, 18, "10px 32px"))
+             + float_item(btn("Contact Us", "#", GOLD, DARK, 18, "10px 32px"))
+             + CLEAR)
 g_hero = section(TR(TD(
-    eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1", "Photo Gallery", 64, MAROON, lh="1.04") + sp(20)
-    + txt("Moments from worship, ministry, and community life at First Baptist Church of Manassas.", 21, TGRAY, extra="line-height:1.5;") + sp(28)
-    + T(TR(TD(btn("View all albums", "#albums", MAROON, WHITE, 18, "10px 32px"), valign="top"), gap_col(16),
-           TD(btn("Contact Us", "#", GOLD, DARK, 18, "10px 32px"), valign="top")), width="auto"),
-    valign="middle", width="48%", style="width:48%;"),
-    TD(c("IMAGE: cover photo - replace the src with the CMS media URL") + cover_cell, valign="middle", width="52%")), pad="16px 0 0")
+    fl_col(hero_text, "48%", 320, "0 24px 0 0", td_id="fbcHeroText")
+    + c("IMAGE: cover photo - replace the src with the CMS media URL")
+    + fl_col(f'<div style="text-align:center;">{cover}</div>', "52%", 260, "0", tbl_id="fbcHeroLogo")
+    + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="16px 0 0")
 
-feat_head = T(TR(TD(f'<h2 style="margin:0;padding:20px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">Featured Album</h2>', valign="middle"),
-                 TD(link("Open full album in Lightroom &rarr;", FEATURED["link"], f"margin:0;padding:0;font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"),
+feat_head = T(TR(TD(f'<h2 style="margin:0;padding:8px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">Featured Album</h2>', valign="middle"),
+                 TD(link("Open full album &rarr;", FEATURED["link"], f"margin:0;padding:0;font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"),
                     valign="middle", align="right", style="text-align:right;")))
-g_feat = sec(c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of the albums section)") + chips([("All", "all"), ("Worship", "worship"), ("Youth", "youth"), ("Events", "events"), ("Missions", "missions"), ("Baptisms", "baptisms")], ident="fbcFilters")
+g_feat = sec(c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of the albums section)") + chips([("All", "all"), ("Worship", "worship"), ("Youth", "youth"), ("Events", "events"), ("Missions", "missions"), ("Baptisms", "baptisms")], ident="fbcFilters", wrap=True)
              + feat_head
              + txt(f'{FEATURED["title"]} &middot; {FEATURED["date"]} &middot; {FEATURED["photos"]} Photos', 17, TGRAY)
              + c("Lightroom embed: featured album (Lightroom > Share > Embed > copy the share id into the src)") + lr(FEATURED["share"]), pad="0")
@@ -252,11 +291,17 @@ g_albums = sec(T(TR(TD(h("h2", '<a id="albums" name="albums"></a>Browse Recent A
                + f'<div id="fbcNoAlbums" style="display:none;padding:24px 12px 36px 12px;font-family:{B};font-size:18px;color:{TGRAY};">No albums in this category yet.</div>'
                + c("Filter script: needs a CMS that keeps <script> tags (no style block or inline handlers needed)") + FILTER_JS, bg=LGRAY, pad="12px 0 0")
 
-g_cta_inner = TR(TD(h("h2", "Were you at an event?", 44, WHITE) + sp(10)
-                    + txt("Share your photos with the church family. Email them to the media team and we will add them to the albums.", 19, CREAM, extra="line-height:1.5;"),
-                    valign="middle", width="64%"),
-                 gap_col(48), TD(btn("Send us your photos", "#", GOLD, DARK, 15, "10px 10px"), valign="middle", align="right"))
-g_cta = section(TR(TD(rounded(T(g_cta_inner), DEEP, 20, "20px"))), pad="0")
+cta_col = fl_col
+cta_text = (h("h2", "Were you at an event?", 40, WHITE) + sp(12)
+            + txt("Share your photos with the church family. Email them to the media team and we&rsquo;ll add them to the albums.", 19, CREAM, extra="line-height:1.5;") + sp(14)
+            + f'<div style="margin:0;font-family:{B};font-size:16px;color:{CREAM};line-height:1.5;">Want a photo of you or your child removed? Please '
+            + link("reach out to the media team", "#", f"color:{GOLD};font-weight:bold;text-decoration:underline;")
+            + " and we will take it down right away.</div>")
+g_cta_inner = (cta_col(cta_text, "66%", 300, "0 24px 0 0")
+               + cta_col(btn("Send us your photos", "#", GOLD, DARK, 18, "14px 32px"), "34%", 240, "20px 0 0 0")
+               + '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>')
+g_cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones (floating tables with a minimum width)")
+                      + rounded(g_cta_inner, DEEP, 20, "32px 32px"))), pad="0")
 
 ghdr = f"""<!-- =====================================================================
   FBC PHOTO GALLERY PAGE - CMS EMBED (matches the CMS-verified v3)
