@@ -40,11 +40,12 @@ def grid3(cards, gap=24):
         rows.append(TR(cards[i], gap_col(gap), cards[i+1], gap_col(gap), cards[i+2]))
     return T(gap_row(gap, 5).join(rows))
 
-def flow_card(inner, pad=20, height=400):
+def flow_card(inner, pad=20, height=400, gap=24):
     """Self-wrapping card using the legacy HTML attribute align="left" (survives CMS sanitizers that strip
-    display / float / margin CSS). Three per row: width 33%; fixed height keeps the rows from snagging."""
+    display / float / margin CSS). Three per row: width 33%; fixed height keeps the rows from snagging.
+    gap = vertical space under each card row."""
     return ('<table role="presentation" align="left" width="33%" cellpadding="0" cellspacing="0" border="0" style="width:33.333%;border-collapse:separate;">'
-            f'<tr><td valign="top" height="{height + 24}" style="height:{height + 24}px;padding:0 12px 24px 12px;">'
+            f'<tr><td valign="top" height="{height + gap}" style="height:{height + gap}px;padding:0 12px {gap}px 12px;">'
             + rounded(inner, CREAM, 16, pad, f"border:1px solid {GOLD};") + "</td></tr></table>")
 def flow(cards, what):
     """Cards wrap into rows on their own: newest goes first, so adding one never means moving the others."""
@@ -52,7 +53,7 @@ def flow(cards, what):
     return (f"<!-- NEWEST {what.upper()} FIRST: paste the new card on the line below this one -->\n"
             f"{body}"
             f"<!-- To keep the list short, delete the last card above (the oldest) -->\n"
-            '<br clear="all" style="clear:both;line-height:0;">\n')
+            '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>\n')
 
 def head_row(title, right_html=""):
     return T(TR(TD(h("h2", title, 36, MAROON), valign="middle"), TD(right_html, valign="middle", align="right", style="white-space:nowrap;")))
@@ -173,8 +174,8 @@ def lr(share):
 
 cover = (f'<img src="{GALLERY_COVER}" alt="Photography ministry logo" width="1500" height="1500" '
          f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:400px;border:0;">')
-cover_cell = T(TR(f'<td align="center" valign="middle" height="400" bgcolor="{LGRAY}" style="height:400px;background-color:{LGRAY};border-radius:20px;text-align:center;">{cover}</td>'),
-               width="100%", style="border-radius:20px;")
+cover_cell = T(TR(f'<td align="center" valign="middle" height="400" style="height:400px;text-align:center;">{cover}</td>'),
+               width="100%")
 g_hero = section(TR(TD(
     eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1", "Photo Gallery", 64, MAROON, lh="1.04") + sp(20)
     + txt("Moments from worship, ministry, and community life at First Baptist Church of Manassas.", 21, TGRAY, extra="line-height:1.5;") + sp(28)
@@ -196,16 +197,15 @@ def album(a):
              + txt(a["title"], 22, MAROON, "600", H, "line-height:1.2;") + sp(8)
              + txt(f'{a["date"]} &middot; {a["photos"]} photos', 15, TGRAY) + sp(12)
              + link("View album &rarr;", a["link"], f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};"))
-    return flow_card(inner)
-g_albums = sec('<p><a id="albums" name="albums"></a></p>'
-               + T(TR(TD(h("h2", "Browse Recent Albums", 36, MAROON), valign="middle"), TD("&nbsp;", valign="middle", align="right"))) + sp(28)
-               + c("Album grid: newest first; cards re-flow automatically") + flow([album(a) for a in ALBUMS], "album"), bg=LGRAY, pad="10px 0")
+    return flow_card(inner, gap=12)
+g_albums = sec(T(TR(TD(h("h2", '<a id="albums" name="albums"></a>Browse Recent Albums', 36, MAROON), valign="middle"), TD("&nbsp;", valign="middle", align="right"))) + sp(12)
+               + c("Album grid: newest first; cards re-flow automatically") + flow([album(a) for a in ALBUMS], "album"), bg=LGRAY, pad="12px 0 0")
 
 g_cta_inner = TR(TD(h("h2", "Were you at an event?", 44, WHITE) + sp(10)
                     + txt("Share your photos with the church family. Email them to the media team and we will add them to the albums.", 19, CREAM, extra="line-height:1.5;"),
                     valign="middle", width="64%"),
                  gap_col(48), TD(btn("Send us your photos", "#", GOLD, DARK, 15, "10px 10px"), valign="middle", align="right"))
-g_cta = section(TR(TD(rounded(T(g_cta_inner), DEEP, 20, "20px"))), pad="0 0 20px")
+g_cta = section(TR(TD(rounded(T(g_cta_inner), DEEP, 20, "20px"))), pad="0")
 
 ghdr = f"""<!-- =====================================================================
   FBC PHOTO GALLERY PAGE - CMS EMBED (matches the CMS-verified v3)
