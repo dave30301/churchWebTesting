@@ -189,7 +189,7 @@ g_hero = section(TR(TD(
     valign="middle", width="48%", style="width:48%;"),
     TD(c("IMAGE: cover photo - replace the src with the CMS media URL") + cover_cell, valign="middle", width="52%")), pad="16px 0")
 
-feat_head = T(TR(TD(f'<h2 style="margin:0;padding:50px 0 10px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">Featured Album</h2>', valign="middle"),
+feat_head = T(TR(TD(f'<h2 style="margin:0;padding:20px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">Featured Album</h2>', valign="middle"),
                  TD(link("Open full album in Lightroom &rarr;", FEATURED["link"], f"margin:0;padding:0;font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"),
                     valign="middle", align="right", style="text-align:right;")))
 g_feat = sec(c("Filter chips: link each to the matching album/category page") + chips(["All", "Worship", "Youth", "Events", "Missions", "Baptisms"])
