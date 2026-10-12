@@ -40,6 +40,11 @@ def grid3(cards, gap=24):
         rows.append(TR(cards[i], gap_col(gap), cards[i+1], gap_col(gap), cards[i+2]))
     return T(gap_row(gap, 5).join(rows))
 
+def title_block(inner_html):
+    """Reserve room for a two-line card title (22px x 1.2 line-height x 2 = 53px) so every card in a row is the same height.
+    A table cell with a height attribute is used because it survives CMS sanitizers."""
+    return T(TR(TD(inner_html, valign="top", height="54", style="height:54px;")), width="100%")
+
 def flow_card(inner, pad=20, height=400, gap=24):
     """Self-wrapping card using the legacy HTML attribute align="left" (survives CMS sanitizers that strip
     display / float / margin CSS). Three per row: width 33%; fixed height keeps the rows from snagging.
@@ -96,8 +101,8 @@ featured = section(TR(TD(c("YouTube embed: latest sermon (use the full-size ifra
 
 def vid(series, title, who):
     inner = (embed("yt", 200, "Sermon video", "16:9", 12) + sp(16) + eyebrow(series, MAROON, 13) + sp(8)
-             + link(txt(title, 22, MAROON, "600", H, "line-height:1.2;"), "#", "") + sp(8) + txt(who, 15, TGRAY, extra="line-height:1.4;"))
-    return flow_card(inner, height=370)
+             + title_block(link(txt(title, 22, MAROON, "600", H, "line-height:1.2;"), "#", "")) + sp(8) + txt(who, 15, TGRAY, extra="line-height:1.4;"))
+    return flow_card(inner, height=397)
 vids = [vid("[Series name]", "[Sermon title one]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title two]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title three]", "[Pastor name] &middot; [Month 00, 2026]"),
@@ -194,10 +199,10 @@ g_feat = sec(c("Filter chips: link each to the matching album/category page") + 
 
 def album(a):
     inner = (lr(a["share"]) + sp(16)
-             + txt(a["title"], 22, MAROON, "600", H, "line-height:1.2;") + sp(8)
+             + title_block(txt(a["title"], 22, MAROON, "600", H, "line-height:1.2;")) + sp(8)
              + txt(f'{a["date"]} &middot; {a["photos"]} photos', 15, TGRAY) + sp(12)
              + link("View album &rarr;", a["link"], f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};"))
-    return flow_card(inner, height=320, gap=12)
+    return flow_card(inner, height=347, gap=12)
 g_albums = sec(T(TR(TD(h("h2", '<a id="albums" name="albums"></a>Browse Recent Albums', 36, MAROON), valign="middle"), TD("&nbsp;", valign="middle", align="right"))) + sp(12)
                + c("Album grid: newest first; cards re-flow automatically") + flow([album(a) for a in ALBUMS], "album"), bg=LGRAY, pad="12px 0 0")
 
