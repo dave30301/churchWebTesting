@@ -75,8 +75,19 @@ def flow(cards, what):
             f"<!-- To keep the list short, delete the last card above (the oldest) -->\n"
             '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>\n')
 
+def fl_col(inner, width, min_w, pad="0", td_id=None, tbl_id=None):
+    """Left-floating table (HTML align attribute). Two of them sit side by side when there is room; the second drops
+    underneath when the container is narrower than their min-widths. No media queries (this CMS strips style blocks)."""
+    ti = f' id="{td_id}"' if td_id else ""
+    bi = f' id="{tbl_id}"' if tbl_id else ""
+    return (f'<table role="presentation" align="left" width="{width}" cellpadding="0" cellspacing="0" border="0"{bi} '
+            f'style="width:{width};min-width:{min_w}px;max-width:100%;border-collapse:separate;"><tr><td valign="top"{ti} style="padding:{pad};">{inner}</td></tr></table>')
+def float_item(inner, pad="0 16px 12px 0"):
+    """Shrink-to-fit floating wrapper so buttons wrap onto a new line instead of overflowing."""
+    return f'<table role="presentation" align="left" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td style="padding:{pad};">{inner}</td></tr></table>'
+CLEAR = '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>'
 def head_row(title, right_html=""):
-    return T(TR(TD(h("h2", title, 36, MAROON), valign="middle"), TD(right_html, valign="middle", align="right", style="white-space:nowrap;")))
+    return T(TR(TD(h("h2", title, 36, MAROON), valign="middle"), TD(right_html, valign="middle", align="right")))
 
 def page(rows, header_comment, font_link=False):
     doc = header_comment + (FONT if font_link else "") + T(rows, width="100%", bg=WHITE, style=f"background-color:{WHITE};font-family:{B};color:{DARK};")
@@ -100,10 +111,11 @@ PALETTE = """  FBC COLOR CODES USED
 hero = section(TR(TD(
     eyebrow("Watch &amp; Listen", MAROON, 15, "0.16em") + sp(20) + h("h1", "Sermons", 64, MAROON, lh="1.04") + sp(20)
     + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;max-width:760px;") + sp(28)
-    + T(TR(TD(btn("Watch live Sunday 9:00 AM", "#", MAROON, WHITE, 18, "10px 32px"), valign="top"), gap_col(16), TD(btn("Subscribe on YouTube", "#", GOLD, DARK, 18, "10px 32px"), valign="top")), width="auto"),
-    valign="middle")), pad="16px 0")
+    + float_item(btn("Watch live Sunday 9:00 AM", "#", MAROON, WHITE, 18, "10px 32px"))
+    + float_item(btn("Subscribe on YouTube", "#", GOLD, DARK, 18, "10px 32px"))
+    + CLEAR, valign="middle")), pad="16px 0")
 
-feat_embed = embed("yt", 500, "Latest sermon", "16:9 player - paste the iframe from YouTube > Share > Embed", 20)
+feat_embed = embed("yt", 420, "Latest sermon", "16:9 player - paste the iframe from YouTube > Share > Embed", 20)
 def link_row(t): return link(t, "#", f"font-family:{B};font-size:17px;font-weight:600;color:{MAROON};")
 feat_side = (eyebrow("Latest message") + sp(14) + h("h2", "[Sermon title]", 32, MAROON, "600", "1.15") + sp(10)
     + txt("[Pastor name] &middot; [Month 00, 2026]", 17, TGRAY) + sp(18)
@@ -111,8 +123,10 @@ feat_side = (eyebrow("Latest message") + sp(14) + h("h2", "[Sermon title]", 32, 
         + TR(TD(txt("SCRIPTURE", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top"), TD(txt("[Book 0:00-00]", 17, DARK, "600"), valign="top")))
     + sp(22) + txt("[Two or three sentence summary of the message goes here.]", 17, TGRAY, extra="line-height:1.55;") + sp(24)
     + link_row("Sermon notes (PDF) &rarr;") + sp(10) + link_row("Listen as a podcast &rarr;") + sp(10) + link_row("Share this message &rarr;"))
-featured = section(TR(TD(c("YouTube embed: latest sermon (use the full-size iframe)") + feat_embed, valign="top", width="64%", style="width:64%;"), gap_col(40),
-                       TD(rounded(feat_side, CREAM, 16, 32, f"border:1px solid {GOLD};"), valign="top")), pad="0 0 0")
+featured = section(TR(TD(
+    c("YouTube embed: latest sermon (use the full-size iframe)") + fl_col(feat_embed, "62%", 340, "0 12px 24px 0")
+    + fl_col(rounded(feat_side, CREAM, 16, 32, f"border:1px solid {GOLD};"), "38%", 300, "0 0 24px 12px")
+    + CLEAR)), pad="0")
 
 def vid(series, title, who):
     inner = (embed("yt", 200, "Sermon video", "16:9", 12) + sp(16) + eyebrow(series, MAROON, 13) + sp(8)
@@ -125,21 +139,23 @@ vids = [vid("[Series name]", "[Sermon title one]", "[Pastor name] &middot; [Mont
         vid("[Series name]", "[Sermon title five]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Special Service", "[Sermon title six]", "[Pastor name] &middot; [Month 00, 2026]")]
 recent = sec(
-    c("Filter chips: link each to your CMS category/tag page") + chips(["All", "Sunday Worship", "Bible Study", "Special Services", "Series"]) + sp(40)
+    c("Filter chips: link each to your CMS category/tag page") + chips(["All", "Sunday Worship", "Bible Study", "Special Services", "Series"], wrap=True) + sp(28)
     + head_row("Recent messages", link("View all on YouTube &rarr;", "#", f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};")) + sp(28)
     + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon"), pad="72px 0 72px")
 
 def series_card(name, count):
-    return card(txt(name, 24, MAROON, "600", H, "line-height:1.2;") + sp(6) + txt(count, 16, TGRAY) + sp(14)
-                + link("Watch the series &rarr;", "#", f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};"), pad=28, width="32%")
-series = sec(h("h2", "Browse by series", 36, MAROON) + sp(28)
-                 + grid3([series_card("[Series name one]", "[00] messages"), series_card("[Series name two]", "[00] messages"), series_card("[Series name three]", "[00] messages")]),
-                 bg=LGRAY, pad="72px 0 72px")
+    inner = (txt(name, 24, MAROON, "600", H, "line-height:1.2;") + sp(6) + txt(count, 16, TGRAY) + sp(14)
+             + link("Watch the series &rarr;", "#", f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};"))
+    return flow_card(inner, pad=28, height=150, gap=12)
+series = sec(h("h2", "Browse by series", 36, MAROON) + sp(20)
+             + flow([series_card("[Series name one]", "[00] messages"), series_card("[Series name two]", "[00] messages"), series_card("[Series name three]", "[00] messages")], "series"),
+             bg=LGRAY, pad="72px 0 60px")
 
-cta_inner = TR(TD(h("h2", "Join us this Sunday", 44, WHITE) + sp(10)
-                  + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;"), valign="middle"),
-               gap_col(48), TD(btn("Plan a Visit", "#", GOLD, DARK, 19, "18px 36px"), valign="middle", align="right", style="white-space:nowrap;"))
-cta = section(TR(TD(rounded(T(cta_inner), DEEP, 20, "20px"))), pad="72px 0 20px")
+cta_s_text = (h("h2", "Join us this Sunday", 40, WHITE) + sp(12)
+              + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;"))
+cta_s_inner = (fl_col(cta_s_text, "66%", 300, "0 24px 0 0") + fl_col(btn("Plan a Visit", "#", GOLD, DARK, 18, "14px 32px"), "34%", 240, "20px 0 0 0") + CLEAR)
+cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones")
+                    + rounded(cta_s_inner, DEEP, 20, "32px 32px"))), pad="72px 0 0")
 
 hdr = f"""<!-- =====================================================================
   FBC SERMONS PAGE - CMS EMBED MOCKUP
@@ -151,12 +167,12 @@ hdr = f"""<!-- =================================================================
 
   YOUTUBE EMBEDS: on the video choose Share > Embed and copy the iframe. Replace each
   "[YOUTUBE EMBED]" box (the whole <table> inside its cell) with:
-    <iframe width="100%" height="500" src="https://www.youtube.com/embed/VIDEO_ID"
+    <iframe width="100%" height="420" src="https://www.youtube.com/embed/VIDEO_ID"
       title="Sermon title" frameborder="0" allow="accelerometer; autoplay; clipboard-write;
       encrypted-media; gyroscope; picture-in-picture" allowfullscreen
-      style="display:block;border:0;border-radius:16px;"></iframe>
-  Use height 500 for the featured player and 200 for the small cards (16:9 only holds
-  if width is fixed, so set height to match the column width).
+      style="display:block;width:100%;height:auto;aspect-ratio:16/9;border:0;border-radius:16px;"></iframe>
+  The aspect-ratio style keeps the player 16:9 at any width (phone or desktop). If your CMS strips it,
+  the height attribute (420 for the featured player, 200 for the small cards) is used instead.
   ADDING A NEW SERMON: copy one whole card (from "SERMON CARD START" to "SERMON CARD END"),
   paste it right under the "NEWEST SERMON FIRST" comment, then change its title, date and video.
   The other cards re-flow on their own. Delete the last card now and then to keep the list short.
@@ -227,17 +243,6 @@ FILTER_JS = """<script>
 def lr(share):
     return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999" style="max-width:100%;"></iframe>'
 
-def fl_col(inner, width, min_w, pad="0", td_id=None, tbl_id=None):
-    """Left-floating table (HTML align attribute). Two of them sit side by side when there is room; the second drops
-    underneath when the container is narrower than their min-widths. No media queries (this CMS strips style blocks)."""
-    ti = f' id="{td_id}"' if td_id else ""
-    bi = f' id="{tbl_id}"' if tbl_id else ""
-    return (f'<table role="presentation" align="left" width="{width}" cellpadding="0" cellspacing="0" border="0"{bi} '
-            f'style="width:{width};min-width:{min_w}px;max-width:100%;border-collapse:separate;"><tr><td valign="top"{ti} style="padding:{pad};">{inner}</td></tr></table>')
-def float_item(inner, pad="0 16px 12px 0"):
-    """Shrink-to-fit floating wrapper so buttons wrap onto a new line instead of overflowing."""
-    return f'<table role="presentation" align="left" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td style="padding:{pad};">{inner}</td></tr></table>'
-CLEAR = '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>'
 HERO_JS = """<script>
 (function () {
   // Vertically centers the header text beside the logo when they sit side by side (floats cannot do this on their own).
