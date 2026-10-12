@@ -24,15 +24,23 @@ def photo(label, height, radius=12):
     td = f'<td align="center" valign="middle" height="{height}" bgcolor="{LGRAY}" style="height:{height}px;background-color:{LGRAY};border:2px dashed {GOLD};{r}font-family:{B};font-size:15px;color:{TGRAY};text-align:center;">[CMS MEDIA: {label}]</td>'
     return T(TR(td), width="100%", style=r)
 
-def chips(items, active=0):
+def chips(items, active=0, ident=None):
+    """Filter chips. Items are 'Label' (plain link to #) or ('Label', 'key') for script-driven filtering:
+    the anchor gets data-filter="key" and href="#albums" (so it still jumps to the grid if scripts are blocked)."""
     cells = []
     for i, t in enumerate(items):
+        key = None
+        if isinstance(t, tuple):
+            t, key = t
         on = i == active
         bg, col, bd = (MAROON, WHITE, MAROON) if on else (CREAM, MAROON, GOLD)
-        cells.append(f'<td bgcolor="{bg}" style="background-color:{bg};border:1px solid {bd};border-radius:999px;">' +
-                     link(t, "#", f"display:block;white-space:nowrap;padding:10px 22px;font-family:{B};font-size:16px;font-weight:bold;color:{col};") + "</td>")
+        attrs = f' data-filter="{key}"' if key else ""
+        href = "#albums" if key else "#"
+        a = (f'<a href="{href}"{attrs} style="text-decoration:none;display:block;white-space:nowrap;padding:10px 22px;'
+             f'font-family:{B};font-size:16px;font-weight:bold;color:{col};">{t}</a>')
+        cells.append(f'<td bgcolor="{bg}" style="background-color:{bg};border:1px solid {bd};border-radius:999px;">{a}</td>')
         cells.append(gap_col(12))
-    return T(TR(*cells[:-1]), width="auto")
+    return T(TR(*cells[:-1]), width="auto", extra=f' id="{ident}"' if ident else "")
 
 def grid3(cards, gap=24):
     rows = []
@@ -45,11 +53,12 @@ def title_block(inner_html):
     A table cell with a height attribute is used because it survives CMS sanitizers."""
     return T(TR(TD(inner_html, valign="top", height="54", style="height:54px;")), width="100%")
 
-def flow_card(inner, pad=20, height=400, gap=24):
+def flow_card(inner, pad=20, height=400, gap=24, cats=None):
     """Self-wrapping card using the legacy HTML attribute align="left" (survives CMS sanitizers that strip
     display / float / margin CSS). Three per row: width 33%; fixed height keeps the rows from snagging.
     gap = vertical space under each card row."""
-    return ('<table role="presentation" align="left" width="33%" cellpadding="0" cellspacing="0" border="0" style="width:33.333%;border-collapse:separate;">'
+    dc = f' data-cats="{cats}"' if cats else ""
+    return (f'<table role="presentation" align="left" width="33%" cellpadding="0" cellspacing="0" border="0"{dc} style="width:33.333%;border-collapse:separate;">'
             f'<tr><td valign="top" height="{height + gap}" style="height:{height + gap}px;padding:0 12px {gap}px 12px;">'
             + rounded(inner, CREAM, 16, pad, f"border:1px solid {GOLD};") + "</td></tr></table>")
 def flow(cards, what):
@@ -167,13 +176,48 @@ FEATURED = dict(title="FBC Day Cruise", date="September 5, 2026", photos=173,
                 share="0c3cfd1047b241a8ac602f75972b7bf9", link="https://adobe.ly/4cX63Rn")
 # Newest first. Each album becomes one card with its own Lightroom slideshow.
 ALBUMS = [
-    dict(title="Usher's Anniversary", date="August 16, 2026", photos=107, share="f3d318fb178f467db2b670183518d86b", link="https://adobe.ly/4hVJePE"),
-    dict(title="Youth Splash Down", date="August 8, 2026", photos=22, share="ebc3219e0c854a44bd3e4fbbfef3c834", link="https://adobe.ly/4hUws3M"),
-    dict(title="Youth Spring Fest", date="May 9, 2026", photos=378, share="4d88c8d2efb04b05867a42c430050b3f", link="https://adobe.ly/4wq3oXI"),
-    dict(title="Graduation Service", date="June 15, 2026", photos=43, share="774e53a174c34868bb45082283f59d01", link="https://adobe.ly/4vC7bBd"),
-    dict(title="Youth Christmas Play", date="December 2025", photos=120, share="1cbef6d2190e4975aa6f5e3315529b37", link="https://adobe.ly/4psSmwH"),
-    dict(title="Missions Feed the Children", date="September 13, 2025", photos=94, share="ea82b57a566f45d49dad4999c053e932", link="https://adobe.ly/4grGpEO"),
+    dict(title="Usher's Anniversary", cats="worship events", date="August 16, 2026", photos=107, share="f3d318fb178f467db2b670183518d86b", link="https://adobe.ly/4hVJePE"),
+    dict(title="Youth Splash Down", cats="youth events", date="August 8, 2026", photos=22, share="ebc3219e0c854a44bd3e4fbbfef3c834", link="https://adobe.ly/4hUws3M"),
+    dict(title="Youth Spring Fest", cats="youth events", date="May 9, 2026", photos=378, share="4d88c8d2efb04b05867a42c430050b3f", link="https://adobe.ly/4wq3oXI"),
+    dict(title="Graduation Service", cats="worship events", date="June 15, 2026", photos=43, share="774e53a174c34868bb45082283f59d01", link="https://adobe.ly/4vC7bBd"),
+    dict(title="Youth Christmas Play", cats="youth worship", date="December 2025", photos=120, share="1cbef6d2190e4975aa6f5e3315529b37", link="https://adobe.ly/4psSmwH"),
+    dict(title="Missions Feed the Children", cats="missions events", date="September 13, 2025", photos=94, share="ea82b57a566f45d49dad4999c053e932", link="https://adobe.ly/4grGpEO"),
 ]
+FILTER_JS = """<script>
+(function () {
+  var bar = document.getElementById('fbcFilters');
+  if (!bar) { return; }
+  var links = bar.getElementsByTagName('a');
+  var cards = document.querySelectorAll('table[data-cats]');
+  var empty = document.getElementById('fbcNoAlbums');
+  function paint(a, on) {
+    var cell = a.parentNode;
+    cell.style.backgroundColor = on ? '#6B1735' : '#F7F3EC';
+    cell.style.borderColor = on ? '#6B1735' : '#C9A55C';
+    a.style.color = on ? '#ffffff' : '#6B1735';
+  }
+  function apply(key) {
+    var shown = 0, i;
+    for (i = 0; i < cards.length; i++) {
+      var cats = ' ' + (cards[i].getAttribute('data-cats') || '') + ' ';
+      var show = key === 'all' || cats.indexOf(' ' + key + ' ') > -1;
+      cards[i].style.display = show ? '' : 'none';
+      if (show) { shown++; }
+    }
+    for (i = 0; i < links.length; i++) { paint(links[i], links[i].getAttribute('data-filter') === key); }
+    if (empty) { empty.style.display = shown ? 'none' : 'block'; }
+  }
+  function onClick(e) {
+    e.preventDefault();
+    apply(this.getAttribute('data-filter'));
+    var target = document.getElementById('albums');
+    if (target && target.scrollIntoView) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
+  for (var i = 0; i < links.length; i++) {
+    if (links[i].getAttribute('data-filter')) { links[i].addEventListener('click', onClick); }
+  }
+})();
+</script>"""
 def lr(share):
     return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999"></iframe>'
 
@@ -192,7 +236,7 @@ g_hero = section(TR(TD(
 feat_head = T(TR(TD(f'<h2 style="margin:0;padding:20px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">Featured Album</h2>', valign="middle"),
                  TD(link("Open full album in Lightroom &rarr;", FEATURED["link"], f"margin:0;padding:0;font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"),
                     valign="middle", align="right", style="text-align:right;")))
-g_feat = sec(c("Filter chips: link each to the matching album/category page") + chips(["All", "Worship", "Youth", "Events", "Missions", "Baptisms"])
+g_feat = sec(c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of the albums section)") + chips([("All", "all"), ("Worship", "worship"), ("Youth", "youth"), ("Events", "events"), ("Missions", "missions"), ("Baptisms", "baptisms")], ident="fbcFilters")
              + feat_head
              + txt(f'{FEATURED["title"]} &middot; {FEATURED["date"]} &middot; {FEATURED["photos"]} Photos', 17, TGRAY)
              + c("Lightroom embed: featured album (Lightroom > Share > Embed > copy the share id into the src)") + lr(FEATURED["share"]), pad="0")
@@ -202,9 +246,11 @@ def album(a):
              + title_block(txt(a["title"], 22, MAROON, "600", H, "line-height:1.2;")) + sp(8)
              + txt(f'{a["date"]} &middot; {a["photos"]} photos', 15, TGRAY) + sp(12)
              + link("View album &rarr;", a["link"], f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};"))
-    return flow_card(inner, height=347, gap=12)
+    return flow_card(inner, height=347, gap=12, cats=a["cats"])
 g_albums = sec(T(TR(TD(h("h2", '<a id="albums" name="albums"></a>Browse Recent Albums', 36, MAROON), valign="middle"), TD("&nbsp;", valign="middle", align="right"))) + sp(12)
-               + c("Album grid: newest first; cards re-flow automatically") + flow([album(a) for a in ALBUMS], "album"), bg=LGRAY, pad="12px 0 0")
+               + c("Album grid: newest first; cards re-flow automatically") + flow([album(a) for a in ALBUMS], "album")
+               + f'<div id="fbcNoAlbums" style="display:none;padding:24px 12px 36px 12px;font-family:{B};font-size:18px;color:{TGRAY};">No albums in this category yet.</div>'
+               + c("Filter script: needs a CMS that keeps <script> tags (no style block or inline handlers needed)") + FILTER_JS, bg=LGRAY, pad="12px 0 0")
 
 g_cta_inner = TR(TD(h("h2", "Were you at an event?", 44, WHITE) + sp(10)
                     + txt("Share your photos with the church family. Email them to the media team and we will add them to the albums.", 19, CREAM, extra="line-height:1.5;"),
@@ -224,6 +270,11 @@ ghdr = f"""<!-- ================================================================
   paste it right under the "NEWEST ALBUM FIRST" comment, then change the Lightroom share id in the
   iframe src, the title, the date/photo count and the "View album" link. The other cards re-flow on
   their own. Delete the last card now and then to keep the list short.
+  FILTERS: each card carries data-cats="worship events" (space-separated keys). Each chip carries
+  data-filter="key"; clicking it shows only cards whose data-cats contains that key ("all" shows everything)
+  and scrolls to the albums. To tag a new album, set its data-cats. To add a chip, copy one in the chip row,
+  change its label and data-filter, and use that key in the cards. Needs the <script> at the bottom of the
+  albums section (it does not use style blocks or onclick attributes, which this CMS strips).
   LIGHTROOM: open the album in Lightroom web, Share > publish, copy the embed code; the long id
   between /embed/shares/ and /slideshow is the share id. Albums must be shared publicly.
 
