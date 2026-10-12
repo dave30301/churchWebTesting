@@ -25,6 +25,18 @@
     <tr>
       <td id="fbcT5" style="padding:12px 16px;background:#b00020;color:#ffffff;border-radius:8px;font-weight:bold;">5. Click handler added by script: <a href="#" id="fbcT5a" style="color:#ffffff;text-decoration:underline;">click me (FAIL until clicked)</a></td>
     </tr>
+    <tr>
+      <td id="fbcT6" style="padding:12px 16px;background:#b00020;color:#ffffff;border-radius:8px;font-weight:bold;">6. Script with less-than, greater-than and double-ampersand characters: FAIL</td>
+    </tr>
+    <tr>
+      <td id="fbcT7" style="padding:12px 16px;background:#b00020;color:#ffffff;border-radius:8px;font-weight:bold;">7. data-filter on a link and data-cats on a table kept: FAIL
+        <a href="#fbcT7" data-filter="youth" id="fbcT7a" style="color:#ffffff;">link</a>
+        <table role="presentation" id="fbcT7t" data-cats="youth events" cellpadding="0" cellspacing="0" border="0"><tr><td></td></tr></table>
+      </td>
+    </tr>
+    <tr>
+      <td id="fbcT8" style="padding:12px 16px;background:#b00020;color:#ffffff;border-radius:8px;font-weight:bold;">8. Page-wide click listener: <a href="#fbcT8" data-test8="1" id="fbcT8a" style="color:#ffffff;text-decoration:underline;">click me (FAIL until clicked)</a></td>
+    </tr>
   </table>
 
   <script>
@@ -37,6 +49,30 @@
         if (cat === 'worship youth') { t2.style.background = '#2e7d32'; t2.textContent = '2. data- attributes kept: PASS (' + cat + ')'; }
         else { t2.textContent = '2. data- attributes kept: FAIL (attribute was removed)'; }
       }
+      // Test 6: needs the characters < > and && to survive inside the script
+      var n = 0, i;
+      for (i = 0; i < 3; i++) { if (i > 0 && i < 3) { n += 1; } }
+      var t6 = document.getElementById('fbcT6');
+      if (t6) {
+        if (n === 2) { t6.style.background = '#2e7d32'; t6.textContent = '6. Script with less-than, greater-than and double-ampersand characters: PASS'; }
+      }
+      // Test 7: attributes on a link and a table
+      var t7 = document.getElementById('fbcT7');
+      var l7 = document.getElementById('fbcT7a'), tb7 = document.getElementById('fbcT7t');
+      if (t7) {
+        var f = l7 ? l7.getAttribute('data-filter') : null;
+        var c7 = tb7 ? tb7.getAttribute('data-cats') : null;
+        if (f === 'youth' && c7 === 'youth events') { t7.style.background = '#2e7d32'; t7.firstChild.textContent = '7. data-filter on a link and data-cats on a table kept: PASS '; }
+        else { t7.firstChild.textContent = '7. FAIL - link data-filter: ' + f + ', table data-cats: ' + c7 + ' '; }
+      }
+      // Test 8: one listener on the whole page
+      document.addEventListener('click', function (e) {
+        var hit = e.target.closest ? e.target.closest('a[data-test8]') : null;
+        if (!hit) { return; }
+        e.preventDefault();
+        document.getElementById('fbcT8').style.background = '#2e7d32';
+        hit.textContent = 'PASS - page listener ran';
+      });
       var a5 = document.getElementById('fbcT5a');
       if (a5) {
         a5.addEventListener('click', function (e) {

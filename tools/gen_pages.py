@@ -185,11 +185,8 @@ ALBUMS = [
 ]
 FILTER_JS = """<script>
 (function () {
-  var bar = document.getElementById('fbcFilters');
-  if (!bar) { return; }
-  var links = bar.getElementsByTagName('a');
-  var cards = document.querySelectorAll('table[data-cats]');
-  var empty = document.getElementById('fbcNoAlbums');
+  // Written without angle brackets or ampersands so CMS editors cannot HTML-escape them and break the script.
+  function each(list, fn) { Array.prototype.forEach.call(list, fn); }
   function paint(a, on) {
     var cell = a.parentNode;
     cell.style.backgroundColor = on ? '#6B1735' : '#F7F3EC';
@@ -197,25 +194,28 @@ FILTER_JS = """<script>
     a.style.color = on ? '#ffffff' : '#6B1735';
   }
   function apply(key) {
-    var shown = 0, i;
-    for (i = 0; i < cards.length; i++) {
-      var cats = ' ' + (cards[i].getAttribute('data-cats') || '') + ' ';
-      var show = key === 'all' || cats.indexOf(' ' + key + ' ') > -1;
-      cards[i].style.display = show ? '' : 'none';
-      if (show) { shown++; }
-    }
-    for (i = 0; i < links.length; i++) { paint(links[i], links[i].getAttribute('data-filter') === key); }
+    var shown = 0;
+    each(document.querySelectorAll('table[data-cats]'), function (card) {
+      var cats = ' ' + (card.getAttribute('data-cats') || '') + ' ';
+      var show = (key === 'all') || (cats.indexOf(' ' + key + ' ') !== -1);
+      card.style.display = show ? '' : 'none';
+      if (show) { shown += 1; }
+    });
+    each(document.querySelectorAll('a[data-filter]'), function (a) {
+      paint(a, a.getAttribute('data-filter') === key);
+    });
+    var empty = document.getElementById('fbcNoAlbums');
     if (empty) { empty.style.display = shown ? 'none' : 'block'; }
   }
-  function onClick(e) {
+  // One click listener on the whole page, so it works wherever the CMS places this script.
+  document.addEventListener('click', function (e) {
+    var chip = e.target.closest ? e.target.closest('a[data-filter]') : null;
+    if (!chip) { return; }
     e.preventDefault();
-    apply(this.getAttribute('data-filter'));
+    apply(chip.getAttribute('data-filter'));
     var target = document.getElementById('albums');
-    if (target && target.scrollIntoView) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-  }
-  for (var i = 0; i < links.length; i++) {
-    if (links[i].getAttribute('data-filter')) { links[i].addEventListener('click', onClick); }
-  }
+    if (target) { if (target.scrollIntoView) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+  });
 })();
 </script>"""
 def lr(share):
