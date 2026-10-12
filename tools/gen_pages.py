@@ -178,8 +178,8 @@ def lr(share):
     return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999"></iframe>'
 
 cover = (f'<img src="{GALLERY_COVER}" alt="Photography ministry logo" width="1500" height="1500" '
-         f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:340px;border:0;">')
-cover_cell = T(TR(f'<td align="center" valign="middle" height="340" style="height:340px;text-align:center;">{cover}</td>'),
+         f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;">')
+cover_cell = T(TR(f'<td align="center" valign="middle" height="510" style="height:510px;text-align:center;">{cover}</td>'),
                width="100%")
 g_hero = section(TR(TD(
     eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1", "Photo Gallery", 64, MAROON, lh="1.04") + sp(20)
