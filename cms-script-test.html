@@ -1,0 +1,50 @@
+<!-- CMS CAPABILITY TEST: paste this whole block into a throwaway CMS page (Source/HTML view), publish, and look at the live page. -->
+<div style="max-width:640px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.4;color:#171717;">
+  <h2 style="margin:0 0 12px 0;font-family:Georgia,serif;font-size:28px;color:#6B1735;">CMS capability test</h2>
+  <p style="margin:0 0 16px 0;color:#666666;">Each row should say PASS (green). Anything red or still saying FAIL tells me what your CMS strips.</p>
+
+  <style>
+    .fbcT3 { background:#2e7d32 !important; }
+  </style>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;border-spacing:0 8px;">
+    <tr>
+      <td id="fbcT1" style="padding:12px 16px;background:#b00020;color:#ffffff;border-radius:8px;font-weight:bold;">1. Script tag runs: FAIL (script was stripped or blocked)</td>
+    </tr>
+    <tr>
+      <td id="fbcT2" data-cat="worship youth" style="padding:12px 16px;background:#b00020;color:#ffffff;border-radius:8px;font-weight:bold;">2. data- attributes kept: FAIL (needs test 1 to pass first)</td>
+    </tr>
+    <tr>
+      <td class="fbcT3" style="padding:12px 16px;background:#b00020;color:#ffffff;border-radius:8px;font-weight:bold;">3. Style block applied: <span id="fbcT3t">green = PASS, red = FAIL (style tag was stripped)</span></td>
+    </tr>
+    <tr>
+      <td id="fbcT4" style="padding:12px 16px;background:#b00020;color:#ffffff;border-radius:8px;font-weight:bold;">
+        4. Click handler works: <a href="#" id="fbcT4a" onclick="document.getElementById('fbcT4').style.background='#2e7d32';this.textContent='PASS - handler ran';return false;" style="color:#ffffff;text-decoration:underline;">click me (FAIL until clicked)</a>
+      </td>
+    </tr>
+    <tr>
+      <td id="fbcT5" style="padding:12px 16px;background:#b00020;color:#ffffff;border-radius:8px;font-weight:bold;">5. Click handler added by script: <a href="#" id="fbcT5a" style="color:#ffffff;text-decoration:underline;">click me (FAIL until clicked)</a></td>
+    </tr>
+  </table>
+
+  <script>
+    (function () {
+      var t1 = document.getElementById('fbcT1');
+      if (t1) { t1.style.background = '#2e7d32'; t1.textContent = '1. Script tag runs: PASS'; }
+      var t2 = document.getElementById('fbcT2');
+      if (t2) {
+        var cat = t2.getAttribute('data-cat');
+        if (cat === 'worship youth') { t2.style.background = '#2e7d32'; t2.textContent = '2. data- attributes kept: PASS (' + cat + ')'; }
+        else { t2.textContent = '2. data- attributes kept: FAIL (attribute was removed)'; }
+      }
+      var a5 = document.getElementById('fbcT5a');
+      if (a5) {
+        a5.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.getElementById('fbcT5').style.background = '#2e7d32';
+          a5.textContent = 'PASS - listener ran';
+        });
+      }
+    })();
+  </script>
+</div>
