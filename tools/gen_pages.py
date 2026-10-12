@@ -178,8 +178,8 @@ def lr(share):
     return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999"></iframe>'
 
 cover = (f'<img src="{GALLERY_COVER}" alt="Photography ministry logo" width="1500" height="1500" '
-         f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:400px;border:0;">')
-cover_cell = T(TR(f'<td align="center" valign="middle" height="400" style="height:400px;text-align:center;">{cover}</td>'),
+         f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:340px;border:0;">')
+cover_cell = T(TR(f'<td align="center" valign="middle" height="340" style="height:340px;text-align:center;">{cover}</td>'),
                width="100%")
 g_hero = section(TR(TD(
     eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1", "Photo Gallery", 64, MAROON, lh="1.04") + sp(20)
@@ -187,7 +187,7 @@ g_hero = section(TR(TD(
     + T(TR(TD(btn("View all albums", "#albums", MAROON, WHITE, 18, "10px 32px"), valign="top"), gap_col(16),
            TD(btn("Contact Us", "#", GOLD, DARK, 18, "10px 32px"), valign="top")), width="auto"),
     valign="middle", width="48%", style="width:48%;"),
-    TD(c("IMAGE: cover photo - replace the src with the CMS media URL") + cover_cell, valign="middle", width="52%")), pad="16px 0")
+    TD(c("IMAGE: cover photo - replace the src with the CMS media URL") + cover_cell, valign="middle", width="52%")), pad="16px 0 0")
 
 feat_head = T(TR(TD(f'<h2 style="margin:0;padding:20px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">Featured Album</h2>', valign="middle"),
                  TD(link("Open full album in Lightroom &rarr;", FEATURED["link"], f"margin:0;padding:0;font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"),
