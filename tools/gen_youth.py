@@ -56,7 +56,7 @@ def media(label, w, h_, instr, alt, radius=12, size=15, circle=False, spec=""):
     return comment + T(TR(td), width=str(w) if circle else "100%", style=f"border-radius:{r};")
 
 def section(inner, bg=WHITE, pad="0 0"):
-    return f'<tr><td align="center" bgcolor="{bg}" style="background-color:{bg};padding:{pad};">' + T(inner, style="max-width:none;") + "</td></tr>"
+    return f'<tr><td align="center" bgcolor="{bg}" style="background-color:{bg};padding:{pad};">' + T(inner, style="max-width:none;table-layout:fixed;") + "</td></tr>"
 
 # HERO  (mockup: 2 equal cols, gap 64, padding 16 80 64)
 hero_left = (eyebrow("Kids &amp; Youth", MAROON, 15, "0.16em") + sp(20)

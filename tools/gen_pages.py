@@ -24,7 +24,7 @@ def photo(label, height, radius=12):
     td = f'<td align="center" valign="middle" height="{height}" bgcolor="{LGRAY}" style="height:{height}px;background-color:{LGRAY};border:2px dashed {GOLD};{r}font-family:{B};font-size:15px;color:{TGRAY};text-align:center;">[CMS MEDIA: {label}]</td>'
     return T(TR(td), width="100%", style=r)
 
-def chips(items, active=0, ident=None, wrap=False):
+def chips(items, active=0, ident=None, wrap=False, scroll=False):
     """Filter chips. Items are 'Label' (plain link to #) or ('Label', 'key') for script-driven filtering:
     the anchor gets data-filter="key" and href="#albums" (so it still jumps to the grid if scripts are blocked)."""
     cells = []
@@ -36,14 +36,22 @@ def chips(items, active=0, ident=None, wrap=False):
         bg, col, bd = (MAROON, WHITE, MAROON) if on else (CREAM, MAROON, GOLD)
         attrs = f' data-filter="{key}"' if key else ""
         href = "#albums" if key else "#"
-        a = (f'<a href="{href}"{attrs} style="text-decoration:none;display:block;white-space:nowrap;padding:10px 22px;'
-             f'font-family:{B};font-size:16px;font-weight:bold;color:{col};">{t}</a>')
+        if scroll:   # compact, fluid sizing; the first value in each pair is the fallback if clamp() is not supported
+            a = (f'<a href="{href}"{attrs} style="text-decoration:none;display:block;white-space:nowrap;padding:10px 16px;padding:10px clamp(12px,2.8vw,22px);'
+                 f'font-family:{B};font-size:15px;font-size:clamp(14px,3.6vw,16px);font-weight:bold;color:{col};">{t}</a>')
+        else:
+            a = (f'<a href="{href}"{attrs} style="text-decoration:none;display:block;white-space:nowrap;padding:10px 22px;'
+                 f'font-family:{B};font-size:16px;font-weight:bold;color:{col};">{t}</a>')
         cell = f'<td bgcolor="{bg}" style="background-color:{bg};border:1px solid {bd};border-radius:999px;">{a}</td>'
         if wrap:   # each chip floats, so the row wraps onto more lines on narrow screens
             cells.append(float_item(T(TR(cell), width="auto"), "0 12px 12px 0"))
         else:
             cells.append(cell)
-            cells.append(gap_col(12))
+            cells.append(gap_col(8 if scroll else 12))
+    if scroll:   # one unbroken row; swipes sideways on phones instead of wrapping
+        idattr = f' id="{ident}"' if ident else ""
+        return (f'<div{idattr} style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;padding-bottom:12px;">'
+                + T(TR(*cells[:-1]), width="auto", style="white-space:nowrap;") + "</div>")
     if wrap:
         return f'<div{(" id=" + chr(34) + ident + chr(34)) if ident else ""}>' + "".join(cells) + CLEAR + "</div>"
     return T(TR(*cells[:-1]), width="auto", extra=f' id="{ident}"' if ident else "")
@@ -82,6 +90,15 @@ def fl_col(inner, width, min_w, pad="0", td_id=None, tbl_id=None):
     bi = f' id="{tbl_id}"' if tbl_id else ""
     return (f'<table role="presentation" align="left" width="{width}" cellpadding="0" cellspacing="0" border="0"{bi} '
             f'style="width:{width};min-width:{min_w}px;max-width:100%;border-collapse:separate;"><tr><td valign="top"{ti} style="padding:{pad};">{inner}</td></tr></table>')
+def fluid_btn(label, href, bg, color, new_tab=False):
+    """Pill button whose text and padding shrink on narrow screens (first value of each pair = fallback if clamp() is unsupported)."""
+    tgt = ' target="_blank" rel="noopener noreferrer"' if new_tab else ""
+    a = (f'<a href="{href}"{tgt} style="text-decoration:none;display:block;white-space:nowrap;padding:10px 16px;padding:10px clamp(16px,1vw + 8px,32px);'
+         f'font-family:{B};font-size:15px;font-size:clamp(15px,0.9vw + 6px,18px);font-weight:bold;color:{color};text-align:center;">{label}</a>')
+    return T(TR(f'<td align="center" bgcolor="{bg}" style="background-color:{bg};border-radius:999px;">{a}</td>'), width="auto", style="border-radius:999px;")
+def button_row(left_btn, right_btn):
+    """Two buttons that always stay on one line (a single table row, not floats)."""
+    return T(TR(TD(left_btn, valign="top"), gap_col(12), TD(right_btn, valign="top")), width="auto", style="max-width:100%;")
 def float_item(inner, pad="0 16px 12px 0"):
     """Shrink-to-fit floating wrapper so buttons wrap onto a new line instead of overflowing."""
     return f'<table role="presentation" align="left" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td style="padding:{pad};">{inner}</td></tr></table>'
@@ -90,7 +107,7 @@ def head_row(title, right_html=""):
     return T(TR(TD(h("h2", title, 36, MAROON), valign="middle"), TD(right_html, valign="middle", align="right")))
 
 def page(rows, header_comment, font_link=False):
-    doc = header_comment + (FONT if font_link else "") + T(rows, width="100%", bg=WHITE, style=f"background-color:{WHITE};font-family:{B};color:{DARK};")
+    doc = header_comment + (FONT if font_link else "") + T(rows, width="100%", bg=WHITE, style=f"background-color:{WHITE};font-family:{B};color:{DARK};table-layout:fixed;")
     return doc
 FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap">\n'
 
@@ -153,9 +170,9 @@ series = sec(h("h2", "Browse by series", 36, MAROON) + sp(20)
 
 cta_s_text = (h("h2", "Join us this Sunday", 40, WHITE) + sp(12)
               + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;"))
-cta_s_inner = (fl_col(cta_s_text, "66%", 300, "0 24px 0 0") + fl_col(btn("Plan a Visit", "#", GOLD, DARK, 18, "14px 32px"), "34%", 240, "20px 0 0 0") + CLEAR)
+cta_s_inner = (fl_col(cta_s_text, "66%", 240, "0 24px 0 0") + fl_col(btn("Plan a Visit", "#", GOLD, DARK, 18, "14px 32px"), "34%", 220, "20px 0 0 0") + CLEAR)
 cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones")
-                    + rounded(cta_s_inner, DEEP, 20, "32px 32px"))), pad="72px 0 0")
+                    + rounded(cta_s_inner, DEEP, 20, "28px 24px"))), pad="72px 0 0")
 
 hdr = f"""<!-- =====================================================================
   FBC SERMONS PAGE - CMS EMBED MOCKUP
@@ -270,19 +287,18 @@ cover = (f'<img src="{GALLERY_COVER}" alt="Photography ministry logo" width="150
          f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;">')
 hero_text = (eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1", "Photo Gallery", 64, MAROON, lh="1.04") + sp(20)
              + txt("Moments from worship, ministry, and community life at First Baptist Church of Manassas.", 21, TGRAY, extra="line-height:1.5;") + sp(28)
-             + float_item(btn("View Full Portfolio", PORTFOLIO_URL, MAROON, WHITE, 18, "10px 32px"))
-             + float_item(btn("Contact Us", "mailto:" + PHOTO_EMAIL, GOLD, DARK, 18, "10px 32px"))
-             + CLEAR)
+             + button_row(fluid_btn("View Full Portfolio", PORTFOLIO_URL, MAROON, WHITE, new_tab=True),
+                          fluid_btn("Contact Us", "mailto:" + PHOTO_EMAIL, GOLD, DARK)))
 g_hero = section(TR(TD(
-    fl_col(hero_text, "48%", 320, "0 24px 0 0", td_id="fbcHeroText")
+    fl_col(hero_text, "48%", 320, "0", td_id="fbcHeroText")
     + c("IMAGE: cover photo - replace the src with the CMS media URL")
-    + fl_col(f'<div style="text-align:center;">{cover}</div>', "52%", 260, "0", tbl_id="fbcHeroLogo")
+    + fl_col(f'<div style="text-align:center;">{cover}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
     + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="16px 0 0")
 
 feat_head = T(TR(TD(f'<h2 style="margin:0;padding:8px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">Featured Album</h2>', valign="middle"),
                  TD(link("Open full album &rarr;", FEATURED["link"], f"margin:0;padding:0;font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"),
                     valign="middle", align="right", style="text-align:right;")))
-g_feat = sec(c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of the albums section)") + chips([("All", "all"), ("Worship", "worship"), ("Youth", "youth"), ("Events", "events"), ("Missions", "missions"), ("Baptisms", "baptisms")], ident="fbcFilters", wrap=True)
+g_feat = sec(c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of the albums section)") + chips([("All", "all"), ("Worship", "worship"), ("Youth", "youth"), ("Events", "events"), ("Missions", "missions"), ("Baptisms", "baptisms")], ident="fbcFilters", scroll=True)
              + feat_head
              + txt(f'{FEATURED["title"]} &middot; {FEATURED["date"]} &middot; {FEATURED["photos"]} Photos', 17, TGRAY)
              + c("Lightroom embed: featured album (Lightroom > Share > Embed > copy the share id into the src)") + lr(FEATURED["share"]), pad="0")
@@ -304,11 +320,11 @@ cta_text = (h("h2", "Were you at an event?", 40, WHITE) + sp(12)
             + f'<div style="margin:0;font-family:{B};font-size:16px;color:{CREAM};line-height:1.5;">Want a photo of you or your child removed? Please '
             + link("reach out to the media team", "mailto:" + PHOTO_EMAIL + "?subject=Photo%20removal%20request", f"color:{GOLD};font-weight:bold;text-decoration:underline;")
             + " and we will take it down right away.</div>")
-g_cta_inner = (cta_col(cta_text, "66%", 300, "0 24px 0 0")
-               + cta_col(btn("Send us your photos", "mailto:" + PHOTO_EMAIL + "?subject=Photos%20for%20the%20FBC%20gallery", GOLD, DARK, 18, "14px 32px"), "34%", 240, "20px 0 0 0")
+g_cta_inner = (cta_col(cta_text, "66%", 240, "0 24px 0 0")
+               + cta_col(btn("Send us your photos", "mailto:" + PHOTO_EMAIL + "?subject=Photos%20for%20the%20FBC%20gallery", GOLD, DARK, 18, "14px 32px"), "34%", 220, "20px 0 0 0")
                + '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>')
 g_cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones (floating tables with a minimum width)")
-                      + rounded(g_cta_inner, DEEP, 20, "32px 32px"))), pad="0")
+                      + rounded(g_cta_inner, DEEP, 20, "28px 24px"))), pad="0")
 
 ghdr = f"""<!-- =====================================================================
   FBC PHOTO GALLERY PAGE - CMS EMBED (matches the CMS-verified v3)
