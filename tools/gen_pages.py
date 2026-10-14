@@ -127,7 +127,10 @@ HERO_JS = """<script>
 def head_row(title, right_html="", pad_top=0):
     hd = (h("h2", title, 36, MAROON) if not pad_top else
           f'<h2 style="margin:0;padding:{pad_top}px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">{title}</h2>')
-    return T(TR(TD(hd, valign="middle"), TD(right_html, valign="middle", align="right")))
+    # right cell: explicit width + three redundant right-alignments (attribute, cell style, inner block) so it holds in any CMS
+    right = f'<div style="margin:0;padding:0;text-align:right;">{right_html}</div>' if right_html else ""
+    return T(TR(TD(hd, valign="middle", width="55%", style="width:55%;"),
+                TD(right, valign="middle", align="right", width="45%", style="width:45%;text-align:right;padding-left:12px;")))
 
 def page(rows, header_comment, font_link=False):
     doc = header_comment + (FONT if font_link else "") + T(rows, width="100%", bg=WHITE, style=f"background-color:{WHITE};font-family:{B};color:{DARK};table-layout:fixed;")
@@ -153,7 +156,7 @@ SERMONS_LOGO = "https://fbcmanassas.org/wp-content/uploads/SermonsLogo-Backgroun
 YT_SUBSCRIBE = "#"   # TODO: YouTube channel subscribe link
 YT_LIVE = "#"        # TODO: YouTube live stream link
 sermons_cover = (f'<img src="{SERMONS_LOGO}" alt="First Baptist Church of Manassas Sermons, Media and Archives" width="900" height="900" '
-                 f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:420px;border:0;">')
+                 f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;">')
 hero_s_text = (eyebrow("Watch &amp; Listen", MAROON, 15, "0.16em") + sp(12) + h("h1", "Sermons", 64, MAROON, lh="1.04") + sp(12)
                + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;") + sp(20)
                + button_row(fluid_btn("Watch Live", YT_LIVE, MAROON, WHITE, new_tab=True),
@@ -164,7 +167,7 @@ hero = section(TR(TD(
     + fl_col(f'<div style="text-align:center;">{sermons_cover}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
     + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="16px 0 0")
 
-feat_embed = embed("yt", 380, "Latest sermon", "16:9 player - paste the iframe from YouTube > Share > Embed", 20)
+feat_embed = embed("yt", 352, "Latest sermon", "16:9 player - paste the iframe from YouTube > Share > Embed", 20)
 def link_row(t): return link(t, "#", f"font-family:{B};font-size:17px;font-weight:600;color:{MAROON};")
 feat_side = (eyebrow("Latest message") + sp(10) + h("h2", "[Sermon title]", 32, MAROON, "600", "1.15") + sp(8)
     + txt("[Pastor name] &middot; [Month 00, 2026]", 17, TGRAY) + sp(12)
@@ -173,8 +176,8 @@ feat_side = (eyebrow("Latest message") + sp(10) + h("h2", "[Sermon title]", 32, 
     + sp(14) + txt("[Two or three sentence summary of the message goes here.]", 17, TGRAY, extra="line-height:1.5;") + sp(14)
     + link_row("Sermon notes (PDF) &rarr;") + sp(8) + link_row("Listen as a podcast &rarr;") + sp(8) + link_row("Share this message &rarr;"))
 featured = section(TR(TD(
-    c("YouTube embed: latest sermon (use the full-size iframe)") + fl_col(feat_embed, "62%", 340, "0 12px 12px 0")
-    + fl_col(rounded(feat_side, CREAM, 16, 24, f"border:1px solid {GOLD};"), "38%", 300, "0 0 12px 12px")
+    c("YouTube embed: latest sermon (use the full-size iframe)") + fl_col(feat_embed, "62%", 340, "0 12px 8px 0")
+    + fl_col(rounded(feat_side, CREAM, 16, 24, f"border:1px solid {GOLD};"), "38%", 300, "0 0 8px 12px")
     + CLEAR)), pad="0")
 
 def vid(series, title, who):
@@ -186,20 +189,15 @@ vids = [vid("[Series name]", "[Sermon title one]", "[Pastor name] &middot; [Mont
         vid("Sunday Worship", "[Sermon title three]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title four]", "[Teacher name] &middot; [Month 00, 2026]"),
         vid("[Series name]", "[Sermon title five]", "[Pastor name] &middot; [Month 00, 2026]"),
-        vid("Special Service", "[Sermon title six]", "[Pastor name] &middot; [Month 00, 2026]")]
+        vid("Special Service", "[Sermon title six]", "[Pastor name] &middot; [Month 00, 2026]"),
+        vid("Sunday Worship", "[Sermon title seven]", "[Pastor name] &middot; [Month 00, 2026]"),
+        vid("Sunday Worship", "[Sermon title eight]", "[Pastor name] &middot; [Month 00, 2026]"),
+        vid("Special Service", "[Sermon title nine]", "[Pastor name] &middot; [Month 00, 2026]")]
 recent = sec(
-    sp(16) + c("Filter chips: link each to your CMS category/tag page; one row, swipes sideways on narrow screens")
+    c("Filter chips: link each to your CMS category/tag page; one row, swipes sideways on narrow screens")
     + chips(["All", "Sunday Worship", "Special Services"], scroll=True)
     + head_row("Recent messages", link("View all on YouTube &rarr;", "#", f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"), pad_top=2) + sp(8)
-    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon"), pad="0")
-
-def series_card(name, count):
-    inner = (txt(name, 24, MAROON, "600", H, "line-height:1.2;") + sp(6) + txt(count, 16, TGRAY) + sp(10)
-             + link("Watch the series &rarr;", "#", f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};"))
-    return flow_card(inner, pad=20, height=126, gap=12)
-series = sec(h("h2", "Browse by series", 36, MAROON) + sp(8)
-             + flow([series_card("[Series name one]", "[00] messages"), series_card("[Series name two]", "[00] messages"), series_card("[Series name three]", "[00] messages")], "series"),
-             bg=LGRAY, pad="8px 0 0")
+    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon"), pad="0 0 12px")
 
 cta_s_text = (h("h2", "Join us this Sunday", 40, WHITE) + sp(8)
               + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;"))
@@ -237,9 +235,8 @@ hdr = f"""<!-- =================================================================
 """
 sermons = page(c("SECTION 1: Header - title, intro, watch/subscribe buttons") + hero
                + c("SECTION 2: Latest sermon - big YouTube player (left) + message details card (right)") + featured
-               + c("SECTION 3: Filter chips + recent messages grid (6 YouTube embeds)") + recent
-               + c("SECTION 4: Browse by series - 3 cards") + series
-               + c("SECTION 5: Call to action - Join us this Sunday") + cta, hdr)
+               + c("SECTION 3: Filter chips + recent messages grid (9 YouTube embeds)") + recent
+               + c("SECTION 4: Call to action - Join us this Sunday") + cta, hdr)
 write("sermons", sermons)
 
 # =====================================================================
