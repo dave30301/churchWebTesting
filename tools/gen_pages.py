@@ -155,8 +155,8 @@ import os as _os
 SERMONS_LOGO = "https://fbcmanassas.org/wp-content/uploads/SermonsLogo-Background-Removed.png"
 YT_SUBSCRIBE = "#"   # TODO: YouTube channel subscribe link
 YT_LIVE = "#"        # TODO: YouTube live stream link
-sermons_cover = (f'<img src="{SERMONS_LOGO}" alt="First Baptist Church of Manassas Sermons, Media and Archives" width="900" height="900" '
-                 f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;">')
+sermons_cover = (f'<img src="{SERMONS_LOGO}" alt="First Baptist Church of Manassas Sermons, Media and Archives" width="510" height="510" '
+                 f'style="display:block;margin:0 auto;width:100%;max-width:510px;height:auto;border:0;">')
 hero_s_text = (eyebrow("Watch &amp; Listen", MAROON, 15, "0.16em") + sp(12) + h("h1", "Sermons", 64, MAROON, lh="1.04") + sp(12)
                + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;") + sp(20)
                + button_row(fluid_btn("Watch Live", YT_LIVE, MAROON, WHITE, new_tab=True),
