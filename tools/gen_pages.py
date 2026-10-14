@@ -245,8 +245,12 @@ FILTER_JS = """<script>
     each(document.querySelectorAll('a[data-filter]'), function (a) {
       paint(a, a.getAttribute('data-filter') === key);
     });
+    // The message is an empty element in the page and is only filled in (and styled) here when nothing matches.
     var empty = document.getElementById('fbcNoAlbums');
-    if (empty) { empty.style.display = shown ? 'none' : 'block'; }
+    if (empty) {
+      empty.textContent = shown ? '' : 'No albums in this category yet.';
+      empty.style.cssText = shown ? '' : 'padding:24px 12px 36px 12px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#666666;';
+    }
   }
   // One click listener on the whole page, so it works wherever the CMS places this script.
   document.addEventListener('click', function (e) {
@@ -311,18 +315,19 @@ def album(a):
     return flow_card(inner, height=347, gap=12, cats=a["cats"])
 g_albums = sec(T(TR(TD(h("h2", '<a id="albums" name="albums"></a>Browse Recent Albums', 36, MAROON), valign="middle"), TD("&nbsp;", valign="middle", align="right"))) + sp(12)
                + c("Album grid: newest first; cards re-flow automatically") + flow([album(a) for a in ALBUMS], "album")
-               + f'<div id="fbcNoAlbums" style="display:none;padding:24px 12px 36px 12px;font-family:{B};font-size:18px;color:{TGRAY};">No albums in this category yet.</div>'
+               + '<div id="fbcNoAlbums"></div>'
                + c("Filter script: needs a CMS that keeps <script> tags (no style block or inline handlers needed)") + FILTER_JS, bg=LGRAY, pad="12px 0 0")
 
 cta_col = fl_col
 cta_text = (h("h2", "Were you at an event?", 40, WHITE) + sp(12)
-            + txt("Share your photos with the church family. Email them to the media team and we&rsquo;ll add them to the albums.", 19, CREAM, extra="line-height:1.5;") + sp(14)
-            + f'<div style="margin:0;font-family:{B};font-size:16px;color:{CREAM};line-height:1.5;">Want a photo of you or your child removed? Please '
-            + link("reach out to the media team", "mailto:" + PHOTO_EMAIL + "?subject=Photo%20removal%20request", f"color:{GOLD};font-weight:bold;text-decoration:underline;")
-            + " and we will take it down right away.</div>")
+            + txt("Share your photos with the church family. Email them to the media team and we&rsquo;ll add them to the albums.", 19, CREAM, extra="line-height:1.5;"))
+cta_removal = (f'<div style="margin:0;font-family:{B};font-size:14px;color:{CREAM};line-height:1.5;">Want a photo of you or your child removed? Please '
+               + link("reach out to the media team", "mailto:" + PHOTO_EMAIL + "?subject=Photo%20removal%20request", f"color:{GOLD};font-weight:bold;text-decoration:underline;")
+               + " and we will take it down right away.</div>")
 g_cta_inner = (cta_col(cta_text, "66%", 240, "0 24px 0 0")
                + cta_col(btn("Send us your photos", "mailto:" + PHOTO_EMAIL + "?subject=Photos%20for%20the%20FBC%20gallery", GOLD, DARK, 18, "14px 32px"), "34%", 220, "20px 0 0 0")
-               + '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>')
+               + '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>'
+               + sp(16) + cta_removal)
 g_cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones (floating tables with a minimum width)")
                       + rounded(g_cta_inner, DEEP, 20, "28px 24px"))), pad="0")
 
