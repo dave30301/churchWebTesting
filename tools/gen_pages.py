@@ -167,16 +167,24 @@ hero = section(TR(TD(
     + fl_col(f'<div style="text-align:center;">{sermons_cover}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
     + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="16px 0 0")
 
-feat_embed = embed("yt", 352, "Latest sermon", "16:9 player - paste the iframe from YouTube > Share > Embed", 20)
+# Latest sermon. Edit this block each week. Anything still in [brackets] is a placeholder for you to fill in.
+LATEST = dict(video_id="sjCGtIPS8AU", video_title="154th Church Anniversary, October 11, 2026",
+              title="154th Church Anniversary", pastor="[Pastor name]", date="October 11, 2026",
+              series="[Series name]", scripture="[Book 0:00-00]",
+              summary="[Two or three sentence summary of the message goes here.]")
+feat_embed = (f'<iframe width="979" height="551" src="https://www.youtube.com/embed/{LATEST["video_id"]}" title="{LATEST["video_title"]}" frameborder="0" '
+              'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
+              'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen '
+              'style="display:block;width:100%;height:auto;aspect-ratio:16/9;border:0;border-radius:16px;"></iframe>')
 def link_row(t): return link(t, "#", f"font-family:{B};font-size:17px;font-weight:600;color:{MAROON};")
-feat_side = (eyebrow("Latest message") + sp(10) + h("h2", "[Sermon title]", 32, MAROON, "600", "1.15") + sp(8)
-    + txt("[Pastor name] &middot; [Month 00, 2026]", 17, TGRAY) + sp(12)
-    + T(TR(TD(txt("SERIES", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top") , TD(txt("[Series name]", 17, DARK, "600"), valign="top")) + gap_row(6, 2)
-        + TR(TD(txt("SCRIPTURE", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top"), TD(txt("[Book 0:00-00]", 17, DARK, "600"), valign="top")))
-    + sp(14) + txt("[Two or three sentence summary of the message goes here.]", 17, TGRAY, extra="line-height:1.5;") + sp(14)
+feat_side = (eyebrow("Latest message") + sp(10) + h("h2", LATEST["title"], 32, MAROON, "600", "1.15") + sp(8)
+    + txt(LATEST["pastor"] + " &middot; " + LATEST["date"], 17, TGRAY) + sp(12)
+    + T(TR(TD(txt("SERIES", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top") , TD(txt(LATEST["series"], 17, DARK, "600"), valign="top")) + gap_row(6, 2)
+        + TR(TD(txt("SCRIPTURE", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top"), TD(txt(LATEST["scripture"], 17, DARK, "600"), valign="top")))
+    + sp(14) + txt(LATEST["summary"], 17, TGRAY, extra="line-height:1.5;") + sp(14)
     + link_row("Sermon notes (PDF) &rarr;") + sp(8) + link_row("Listen as a podcast &rarr;") + sp(8) + link_row("Share this message &rarr;"))
 featured = section(TR(TD(
-    c("YouTube embed: latest sermon (use the full-size iframe)") + fl_col(feat_embed, "62%", 340, "0 12px 8px 0")
+    c("YouTube embed: latest sermon. To change it, replace the video id in the iframe src and the title") + fl_col(feat_embed, "62%", 340, "0 12px 8px 0")
     + fl_col(rounded(feat_side, CREAM, 16, 24, f"border:1px solid {GOLD};"), "38%", 300, "0 0 8px 12px")
     + CLEAR)), pad="0")
 
