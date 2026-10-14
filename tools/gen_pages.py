@@ -103,8 +103,31 @@ def float_item(inner, pad="0 16px 12px 0"):
     """Shrink-to-fit floating wrapper so buttons wrap onto a new line instead of overflowing."""
     return f'<table role="presentation" align="left" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;"><tr><td style="padding:{pad};">{inner}</td></tr></table>'
 CLEAR = '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>'
-def head_row(title, right_html=""):
-    return T(TR(TD(h("h2", title, 36, MAROON), valign="middle"), TD(right_html, valign="middle", align="right")))
+HERO_JS = """<script>
+(function () {
+  // Vertically centers the header text beside the logo when they sit side by side (floats cannot do this on their own).
+  // On narrow screens the logo drops below the text and no extra padding is added.
+  function center() {
+    var t = document.getElementById('fbcHeroText');
+    var l = document.getElementById('fbcHeroLogo');
+    if (!t) { return; }
+    if (!l) { return; }
+    t.style.paddingTop = '0px';
+    var tr = t.getBoundingClientRect();
+    var lr = l.getBoundingClientRect();
+    if (Math.round((lr.top - tr.top) / 5) !== 0) { return; }
+    t.style.paddingTop = Math.max(0, Math.round((lr.height - tr.height) / 2)) + 'px';
+  }
+  center();
+  window.addEventListener('load', center);
+  window.addEventListener('resize', center);
+})();
+</script>"""
+
+def head_row(title, right_html="", pad_top=0):
+    hd = (h("h2", title, 36, MAROON) if not pad_top else
+          f'<h2 style="margin:0;padding:{pad_top}px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">{title}</h2>')
+    return T(TR(TD(hd, valign="middle"), TD(right_html, valign="middle", align="right")))
 
 def page(rows, header_comment, font_link=False):
     doc = header_comment + (FONT if font_link else "") + T(rows, width="100%", bg=WHITE, style=f"background-color:{WHITE};font-family:{B};color:{DARK};table-layout:fixed;")
@@ -125,12 +148,22 @@ PALETTE = """  FBC COLOR CODES USED
 # =====================================================================
 # SERMONS
 # =====================================================================
+import os as _os
+SERMONS_LOGO_URL = ""   # after uploading images/sermons-logo.webp to the CMS media library, paste its URL here to keep the HTML small
+SERMONS_LOGO = SERMONS_LOGO_URL or open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "sermons_logo_data_uri.txt")).read().strip()
+YT_SUBSCRIBE = "#"   # TODO: YouTube channel subscribe link
+YT_LIVE = "#"        # TODO: YouTube live stream link
+sermons_cover = (f'<img src="{SERMONS_LOGO}" alt="First Baptist Church of Manassas Sermons, Media and Archives" width="900" height="900" '
+                 f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;">')
+hero_s_text = (eyebrow("Watch &amp; Listen", MAROON, 15, "0.16em") + sp(20) + h("h1", "Sermons", 64, MAROON, lh="1.04") + sp(20)
+               + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;") + sp(28)
+               + button_row(fluid_btn("Watch Live", YT_LIVE, MAROON, WHITE, new_tab=True),
+                            fluid_btn("Subscribe", YT_SUBSCRIBE, GOLD, DARK, new_tab=True)))
 hero = section(TR(TD(
-    eyebrow("Watch &amp; Listen", MAROON, 15, "0.16em") + sp(20) + h("h1", "Sermons", 64, MAROON, lh="1.04") + sp(20)
-    + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;max-width:760px;") + sp(28)
-    + float_item(btn("Watch live Sunday 9:00 AM", "#", MAROON, WHITE, 18, "10px 32px"))
-    + float_item(btn("Subscribe on YouTube", "#", GOLD, DARK, 18, "10px 32px"))
-    + CLEAR, valign="middle")), pad="16px 0")
+    fl_col(hero_s_text, "48%", 320, "0", td_id="fbcHeroText")
+    + c("IMAGE: Sermons logo - replace the src with the CMS media URL")
+    + fl_col(f'<div style="text-align:center;">{sermons_cover}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
+    + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="16px 0 0")
 
 feat_embed = embed("yt", 420, "Latest sermon", "16:9 player - paste the iframe from YouTube > Share > Embed", 20)
 def link_row(t): return link(t, "#", f"font-family:{B};font-size:17px;font-weight:600;color:{MAROON};")
@@ -148,7 +181,7 @@ featured = section(TR(TD(
 def vid(series, title, who):
     inner = (embed("yt", 200, "Sermon video", "16:9", 12) + sp(16) + eyebrow(series, MAROON, 13) + sp(8)
              + title_block(link(txt(title, 22, MAROON, "600", H, "line-height:1.2;"), "#", "")) + sp(8) + txt(who, 15, TGRAY, extra="line-height:1.4;"))
-    return flow_card(inner, height=397)
+    return flow_card(inner, height=397, gap=12)
 vids = [vid("[Series name]", "[Sermon title one]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title two]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title three]", "[Pastor name] &middot; [Month 00, 2026]"),
@@ -156,23 +189,24 @@ vids = [vid("[Series name]", "[Sermon title one]", "[Pastor name] &middot; [Mont
         vid("[Series name]", "[Sermon title five]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Special Service", "[Sermon title six]", "[Pastor name] &middot; [Month 00, 2026]")]
 recent = sec(
-    c("Filter chips: link each to your CMS category/tag page") + chips(["All", "Sunday Worship", "Bible Study", "Special Services", "Series"], wrap=True) + sp(28)
-    + head_row("Recent messages", link("View all on YouTube &rarr;", "#", f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};")) + sp(28)
-    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon"), pad="72px 0 72px")
+    sp(28) + c("Filter chips: link each to your CMS category/tag page; one row, swipes sideways on narrow screens")
+    + chips(["All", "Sunday Worship", "Bible Study", "Special Services", "Series"], scroll=True)
+    + head_row("Recent messages", link("View all on YouTube &rarr;", "#", f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"), pad_top=8) + sp(12)
+    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon"), pad="0")
 
 def series_card(name, count):
     inner = (txt(name, 24, MAROON, "600", H, "line-height:1.2;") + sp(6) + txt(count, 16, TGRAY) + sp(14)
              + link("Watch the series &rarr;", "#", f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};"))
     return flow_card(inner, pad=28, height=150, gap=12)
-series = sec(h("h2", "Browse by series", 36, MAROON) + sp(20)
+series = sec(h("h2", "Browse by series", 36, MAROON) + sp(12)
              + flow([series_card("[Series name one]", "[00] messages"), series_card("[Series name two]", "[00] messages"), series_card("[Series name three]", "[00] messages")], "series"),
-             bg=LGRAY, pad="72px 0 60px")
+             bg=LGRAY, pad="12px 0 0")
 
 cta_s_text = (h("h2", "Join us this Sunday", 40, WHITE) + sp(12)
               + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;"))
 cta_s_inner = (fl_col(cta_s_text, "66%", 240, "0 24px 0 0") + fl_col(btn("Plan a Visit", "#", GOLD, DARK, 18, "14px 32px"), "34%", 220, "20px 0 0 0") + CLEAR)
 cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones")
-                    + rounded(cta_s_inner, DEEP, 20, "28px 24px"))), pad="72px 0 0")
+                    + rounded(cta_s_inner, DEEP, 20, "28px 24px"))), pad="0")
 
 hdr = f"""<!-- =====================================================================
   FBC SERMONS PAGE - CMS EMBED MOCKUP
@@ -181,6 +215,12 @@ hdr = f"""<!-- =================================================================
   Georgia/Arial). If your theme does not already load them, add this to the site <head>:
   https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap
   Site header, breadcrumb and footer come from your CMS template (not included).
+
+  LOGO: the header uses images/sermons-logo.webp (also .jpg) embedded in the page so it works immediately.
+  To keep the HTML small, upload that file to the CMS media library and set SERMONS_LOGO_URL in
+  tools/gen_pages.py (or just replace the long src="data:..." in the HTML with the CMS URL).
+  LINKS: "Watch Live" and "Subscribe" currently link to # - set YT_LIVE and YT_SUBSCRIBE in tools/gen_pages.py
+  (or edit the hrefs). Both open in a new tab.
 
   YOUTUBE EMBEDS: on the video choose Share > Embed and copy the iframe. Replace each
   "[YOUTUBE EMBED]" box (the whole <table> inside its cell) with:
@@ -266,26 +306,7 @@ FILTER_JS = """<script>
 def lr(share):
     return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999" style="max-width:100%;"></iframe>'
 
-HERO_JS = """<script>
-(function () {
-  // Vertically centers the header text beside the logo when they sit side by side (floats cannot do this on their own).
-  // On narrow screens the logo drops below the text and no extra padding is added.
-  function center() {
-    var t = document.getElementById('fbcHeroText');
-    var l = document.getElementById('fbcHeroLogo');
-    if (!t) { return; }
-    if (!l) { return; }
-    t.style.paddingTop = '0px';
-    var tr = t.getBoundingClientRect();
-    var lr = l.getBoundingClientRect();
-    if (Math.round((lr.top - tr.top) / 5) !== 0) { return; }
-    t.style.paddingTop = Math.max(0, Math.round((lr.height - tr.height) / 2)) + 'px';
-  }
-  center();
-  window.addEventListener('load', center);
-  window.addEventListener('resize', center);
-})();
-</script>"""
+
 
 cover = (f'<img src="{GALLERY_COVER}" alt="Photography ministry logo" width="1500" height="1500" '
          f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;">')
