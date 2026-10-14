@@ -193,6 +193,8 @@ write("sermons", sermons)
 # Edit the data below, then run:  python3 tools/gen_pages.py
 # =====================================================================
 GALLERY_COVER = "https://fbcmanassas.org/files/PhotographyLogo2-1.jpg"
+PORTFOLIO_URL = "https://fbcphotography.myportfolio.com/home"
+PHOTO_EMAIL = "fbcphotodirectory@gmail.com"
 # Featured album (big Lightroom slideshow). share = the id in the Lightroom embed URL.
 FEATURED = dict(title="FBC Day Cruise", date="September 5, 2026", photos=173,
                 share="0c3cfd1047b241a8ac602f75972b7bf9", link="https://adobe.ly/4cX63Rn")
@@ -268,8 +270,8 @@ cover = (f'<img src="{GALLERY_COVER}" alt="Photography ministry logo" width="150
          f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;">')
 hero_text = (eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1", "Photo Gallery", 64, MAROON, lh="1.04") + sp(20)
              + txt("Moments from worship, ministry, and community life at First Baptist Church of Manassas.", 21, TGRAY, extra="line-height:1.5;") + sp(28)
-             + float_item(btn("View all albums in Lightroom", "#albums", MAROON, WHITE, 18, "10px 32px"))
-             + float_item(btn("Contact Us", "#", GOLD, DARK, 18, "10px 32px"))
+             + float_item(btn("View Full Portfolio", PORTFOLIO_URL, MAROON, WHITE, 18, "10px 32px"))
+             + float_item(btn("Contact Us", "mailto:" + PHOTO_EMAIL, GOLD, DARK, 18, "10px 32px"))
              + CLEAR)
 g_hero = section(TR(TD(
     fl_col(hero_text, "48%", 320, "0 24px 0 0", td_id="fbcHeroText")
@@ -300,10 +302,10 @@ cta_col = fl_col
 cta_text = (h("h2", "Were you at an event?", 40, WHITE) + sp(12)
             + txt("Share your photos with the church family. Email them to the media team and we&rsquo;ll add them to the albums.", 19, CREAM, extra="line-height:1.5;") + sp(14)
             + f'<div style="margin:0;font-family:{B};font-size:16px;color:{CREAM};line-height:1.5;">Want a photo of you or your child removed? Please '
-            + link("reach out to the media team", "#", f"color:{GOLD};font-weight:bold;text-decoration:underline;")
+            + link("reach out to the media team", "mailto:" + PHOTO_EMAIL + "?subject=Photo%20removal%20request", f"color:{GOLD};font-weight:bold;text-decoration:underline;")
             + " and we will take it down right away.</div>")
 g_cta_inner = (cta_col(cta_text, "66%", 300, "0 24px 0 0")
-               + cta_col(btn("Send us your photos", "#", GOLD, DARK, 18, "14px 32px"), "34%", 240, "20px 0 0 0")
+               + cta_col(btn("Send us your photos", "mailto:" + PHOTO_EMAIL + "?subject=Photos%20for%20the%20FBC%20gallery", GOLD, DARK, 18, "14px 32px"), "34%", 240, "20px 0 0 0")
                + '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>')
 g_cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones (floating tables with a minimum width)")
                       + rounded(g_cta_inner, DEEP, 20, "32px 32px"))), pad="0")
