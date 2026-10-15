@@ -59,7 +59,7 @@ def section(inner, bg=WHITE, pad="0 0"):
     return f'<tr><td align="center" bgcolor="{bg}" style="background-color:{bg};padding:{pad};">' + T(inner, style="max-width:none;table-layout:fixed;") + "</td></tr>"
 
 # HERO  (mockup: 2 equal cols, gap 64, padding 16 80 64)
-hero_left = (eyebrow("Kids &amp; Youth", MAROON, 15, "0.16em") + sp(20)
+hero_left = (eyebrow("Kids & Youth", MAROON, 15, "0.16em") + sp(20)
     + h("h1", "Youth Ministry", 64, MAROON, lh="1.04") + sp(20)
     + txt("Helping children and teens grow in faith, from the nursery through 12th grade.", 21, TGRAY, extra="line-height:1.5;") + sp(28)
     + T(TR(TD(btn("Plan your child&rsquo;s first visit", "#", MAROON, WHITE), valign="top"), gap_col(16),
