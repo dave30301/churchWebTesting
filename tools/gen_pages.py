@@ -155,16 +155,16 @@ import os as _os
 SERMONS_LOGO = "https://fbcmanassas.org/wp-content/uploads/SermonsLogo-Background-Removed.png"
 YT_SUBSCRIBE = "#"   # TODO: YouTube channel subscribe link
 YT_LIVE = "#"        # TODO: YouTube live stream link
-sermons_cover = (f'<img src="{SERMONS_LOGO}" alt="First Baptist Church of Manassas Sermons, Media and Archives" width="510" height="510" '
-                 f'style="display:block;margin:0 auto;width:100%;max-width:510px;height:auto;aspect-ratio:1/1;object-fit:cover;object-position:center;border:0;">')
+sermons_cover = (f'<img src="{SERMONS_LOGO}" alt="First Baptist Church of Manassas Sermons, Media and Archives" width="580" height="580" '
+                 f'style="display:block;margin:0 auto;width:100%;max-width:580px;height:auto;aspect-ratio:1/1;object-fit:cover;object-position:center;border:0;">')
 hero_s_text = (eyebrow("Watch &amp; Listen", MAROON, 15, "0.16em") + sp(12) + h("h1", "Sermons", 64, MAROON, lh="1.04") + sp(12)
                + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;") + sp(20)
                + button_row(fluid_btn("Watch Live", YT_LIVE, MAROON, WHITE, new_tab=True),
                             fluid_btn("Subscribe", YT_SUBSCRIBE, GOLD, DARK, new_tab=True)))
 hero = section(TR(TD(
-    fl_col(hero_s_text, "48%", 320, "0", td_id="fbcHeroText")
+    fl_col(hero_s_text, "45%", 320, "0", td_id="fbcHeroText")
     + c("IMAGE: Sermons logo - replace the src with the CMS media URL")
-    + fl_col(f'<div style="text-align:center;">{sermons_cover}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
+    + fl_col(f'<div style="text-align:center;">{sermons_cover}</div>', "55%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
     + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="16px 0 0")
 
 # Latest sermon. Edit this block each week. Anything still in [brackets] is a placeholder for you to fill in.
