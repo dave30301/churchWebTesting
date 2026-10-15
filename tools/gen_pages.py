@@ -24,7 +24,7 @@ def photo(label, height, radius=12):
     td = f'<td align="center" valign="middle" height="{height}" bgcolor="{LGRAY}" style="height:{height}px;background-color:{LGRAY};border:2px dashed {GOLD};{r}font-family:{B};font-size:15px;color:{TGRAY};text-align:center;">[CMS MEDIA: {label}]</td>'
     return T(TR(td), width="100%", style=r)
 
-def chips(items, active=0, ident=None, wrap=False, scroll=False):
+def chips(items, active=0, ident=None, wrap=False, scroll=False, target="#albums"):
     """Filter chips. Items are 'Label' (plain link to #) or ('Label', 'key') for script-driven filtering:
     the anchor gets data-filter="key" and href="#albums" (so it still jumps to the grid if scripts are blocked)."""
     cells = []
@@ -35,7 +35,7 @@ def chips(items, active=0, ident=None, wrap=False, scroll=False):
         on = i == active
         bg, col, bd = (MAROON, WHITE, MAROON) if on else (CREAM, MAROON, GOLD)
         attrs = f' data-filter="{key}"' if key else ""
-        href = "#albums" if key else "#"
+        href = target if key else "#"
         if scroll:   # compact, fluid sizing; the first value in each pair is the fallback if clamp() is not supported
             a = (f'<a href="{href}"{attrs} style="text-decoration:none;display:block;white-space:nowrap;padding:10px 16px;padding:10px clamp(12px,2.8vw,22px);'
                  f'font-family:{B};font-size:15px;font-size:clamp(14px,3.6vw,16px);font-weight:bold;color:{col};">{t}</a>')
@@ -153,6 +153,52 @@ EQ_JS = """<script>
 })();
 </script>"""
 
+_FILTER_TEMPLATE = """<script>
+(function () {
+  // Written without angle brackets or ampersands so CMS editors cannot HTML-escape them and break the script.
+  function each(list, fn) { Array.prototype.forEach.call(list, fn); }
+  function paint(a, on) {
+    var cell = a.parentNode;
+    cell.style.backgroundColor = on ? '#6B1735' : '#F7F3EC';
+    cell.style.borderColor = on ? '#6B1735' : '#C9A55C';
+    a.style.color = on ? '#ffffff' : '#6B1735';
+  }
+  function apply(key) {
+    var shown = 0;
+    each(document.querySelectorAll('table[data-cats]'), function (card) {
+      var cats = ' ' + (card.getAttribute('data-cats') || '') + ' ';
+      var show = (key === 'all') || (cats.indexOf(' ' + key + ' ') !== -1);
+      card.style.display = show ? '' : 'none';
+      if (show) { shown += 1; }
+    });
+    each(document.querySelectorAll('a[data-filter]'), function (a) {
+      paint(a, a.getAttribute('data-filter') === key);
+    });
+    // The message is an empty element in the page and is only filled in (and styled) here when nothing matches.
+    var empty = document.getElementById('@EMPTY@');
+    if (empty) {
+      empty.textContent = shown ? '' : '@MESSAGE@';
+      empty.style.cssText = shown ? '' : 'padding:24px 12px 36px 12px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#666666;';
+    }
+  }
+  // One click listener on the whole page, so it works wherever the CMS places this script.
+  document.addEventListener('click', function (e) {
+    var chip = e.target.closest ? e.target.closest('a[data-filter]') : null;
+    if (!chip) { return; }
+    e.preventDefault();
+    apply(chip.getAttribute('data-filter'));
+    var target = document.getElementById('@TARGET@');
+    if (target) { if (target.scrollIntoView) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+  });
+})();
+</script>"""
+def filter_js(empty_id, target_id, message):
+    """Chip filter script. Cards carry data-cats, chips carry data-filter; the empty-state message is created by the script
+    (this CMS strips display:none, so it is not hidden in the markup)."""
+    return _FILTER_TEMPLATE.replace("@EMPTY@", empty_id).replace("@TARGET@", target_id).replace("@MESSAGE@", message)
+FILTER_JS = filter_js("fbcNoAlbums", "albums", "No albums in this category yet.")
+SERMON_FILTER_JS = filter_js("fbcNoSermons", "recent", "No messages in this category yet.")
+
 def head_row(title, right_html="", pad_top=0):
     hd = (h("h2", title, 36, MAROON) if not pad_top else
           f'<h2 style="margin:0;padding:{pad_top}px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">{title}</h2>')
@@ -231,10 +277,10 @@ def yt_card_embed(video_id, title_attr, w=971, h_=546, start=None):
             'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
             'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen '
             'style="display:block;width:100%;height:auto;aspect-ratio:16/9;border:0;border-radius:12px;"></iframe>')
-def vid(series, title, who, player=None):
+def vid(series, title, who, player=None, cats=None):
     inner = ((player or yt_placeholder()) + sp(12) + eyebrow(series, MAROON, 13) + sp(6)
              + title_block(link(txt(title, 22, MAROON, "600", H, "line-height:1.2;"), "#", "")) + sp(4) + txt(who, 15, TGRAY, extra="line-height:1.4;"))
-    return flow_card(inner, pad=16, height=346, gap=8, eq=True)
+    return flow_card(inner, pad=16, height=346, gap=8, cats=cats, eq=True)
 # Recent messages, newest first. Each tuple: (category tag, card title, pastor, date, YouTube id, iframe title).
 # Titles and dates come from each video's own YouTube title; pastor is a placeholder until you fill it in.
 SERMONS = [
@@ -248,13 +294,18 @@ SERMONS = [
     ("Special Service", "57th Annual Ushers Day Celebration", "August 16, 2026", "bzloOxNOQmU", "57th Annual Ushers Day Celebration - Sunday, August 16, 2026"),
     ("Sunday Worship",  "3rd Sunday",        "August 16, 2026",    "vA_zMAKdSHQ", "3rd Sunday, August 16, 2026"),
 ]
-vids = [vid(tag, title, "[Pastor name] &middot; " + date, player=yt_card_embed(vid_id, title_attr)) for tag, title, date, vid_id, title_attr in SERMONS]
+# Category keys match the chips: sunday = Sunday Worship, special = Special Services. A card can list several, e.g. "sunday special".
+def sermon_cats(tag): return "special" if "special" in tag.lower() else "sunday"
+vids = [vid(tag, title, "[Pastor name] &middot; " + date, player=yt_card_embed(vid_id, title_attr), cats=sermon_cats(tag)) for tag, title, date, vid_id, title_attr in SERMONS]
 
 recent = sec(
-    c("Filter chips: link each to your CMS category/tag page; one row, swipes sideways on narrow screens")
-    + chips(["All", "Sunday Worship", "Special Services"], scroll=True)
+    '<a id="recent" name="recent"></a>' + c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of this section); one row, swipes sideways on narrow screens")
+    + chips([("All", "all"), ("Sunday Worship", "sunday"), ("Special Services", "special")], ident="fbcSermonFilters", scroll=True, target="#recent")
     + head_row("Recent messages", link("View all on YouTube &rarr;", YT_STREAMS, f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};", ' target="_blank" rel="noopener noreferrer"'), pad_top=2) + sp(8)
-    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon") + c("Script: equalizes the video card heights (optional; the fixed heights are the fallback)") + EQ_JS, pad="0")
+    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon")
+    + '<div id="fbcNoSermons"></div>'
+    + c("Script: equalizes the video card heights (optional; the fixed heights are the fallback)") + EQ_JS
+    + c("Filter script: needs a CMS that keeps <script> tags (no style block or inline handlers needed)") + SERMON_FILTER_JS, pad="0")
 
 cta_s_text = (h("h2", "Join us this Sunday", 40, WHITE) + sp(8)
               + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;"))
@@ -315,45 +366,7 @@ ALBUMS = [
     dict(title="Youth Christmas Play", cats="youth worship", date="December 2025", photos=120, share="1cbef6d2190e4975aa6f5e3315529b37", link="https://adobe.ly/4psSmwH"),
     dict(title="Missions Feed the Children", cats="missions events", date="September 13, 2025", photos=94, share="ea82b57a566f45d49dad4999c053e932", link="https://adobe.ly/4grGpEO"),
 ]
-FILTER_JS = """<script>
-(function () {
-  // Written without angle brackets or ampersands so CMS editors cannot HTML-escape them and break the script.
-  function each(list, fn) { Array.prototype.forEach.call(list, fn); }
-  function paint(a, on) {
-    var cell = a.parentNode;
-    cell.style.backgroundColor = on ? '#6B1735' : '#F7F3EC';
-    cell.style.borderColor = on ? '#6B1735' : '#C9A55C';
-    a.style.color = on ? '#ffffff' : '#6B1735';
-  }
-  function apply(key) {
-    var shown = 0;
-    each(document.querySelectorAll('table[data-cats]'), function (card) {
-      var cats = ' ' + (card.getAttribute('data-cats') || '') + ' ';
-      var show = (key === 'all') || (cats.indexOf(' ' + key + ' ') !== -1);
-      card.style.display = show ? '' : 'none';
-      if (show) { shown += 1; }
-    });
-    each(document.querySelectorAll('a[data-filter]'), function (a) {
-      paint(a, a.getAttribute('data-filter') === key);
-    });
-    // The message is an empty element in the page and is only filled in (and styled) here when nothing matches.
-    var empty = document.getElementById('fbcNoAlbums');
-    if (empty) {
-      empty.textContent = shown ? '' : 'No albums in this category yet.';
-      empty.style.cssText = shown ? '' : 'padding:24px 12px 36px 12px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#666666;';
-    }
-  }
-  // One click listener on the whole page, so it works wherever the CMS places this script.
-  document.addEventListener('click', function (e) {
-    var chip = e.target.closest ? e.target.closest('a[data-filter]') : null;
-    if (!chip) { return; }
-    e.preventDefault();
-    apply(chip.getAttribute('data-filter'));
-    var target = document.getElementById('albums');
-    if (target) { if (target.scrollIntoView) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
-  });
-})();
-</script>"""
+
 
 
 def lr(share):
