@@ -216,6 +216,14 @@ featured = section(TR(TD(
     + fl_col(rounded(feat_side, CREAM, 16, 24, f"border:1px solid {GOLD};"), "38%", 300, "0 0 4px 12px")
     + CLEAR)), pad="0")
 
+def yt_placeholder(radius=12):
+    """Stand-in for a YouTube player: always 16:9 like the real iframe, so placeholder and real cards are the same size at any width."""
+    play = (f'<div style="width:56px;height:56px;margin:0 auto 10px auto;border-radius:50%;background-color:{GOLD};color:{DARK};'
+            f'font-size:22px;line-height:56px;text-align:center;">&#9654;</div>')
+    label = (f'<div style="font-family:{B};font-size:14px;font-weight:600;color:{WHITE};line-height:1.3;">[YOUTUBE EMBED]</div>'
+             f'<div style="font-family:{B};font-size:12px;color:{CREAM};line-height:1.4;padding-top:2px;">paste the iframe here</div>')
+    return (f'<div style="position:relative;width:100%;aspect-ratio:16/9;box-sizing:border-box;background-color:{DEEP};border:2px dashed {GOLD};border-radius:{radius}px;">'
+            f'<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;text-align:center;">{play}{label}</div></div>')
 def yt_card_embed(video_id, title_attr, w=971, h_=546, start=None):
     """Real YouTube player for a video card: fluid, always 16:9 (attributes are the fallback if the style is stripped)."""
     qs = f"?start={start}" if start else ""
@@ -224,7 +232,7 @@ def yt_card_embed(video_id, title_attr, w=971, h_=546, start=None):
             'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen '
             'style="display:block;width:100%;height:auto;aspect-ratio:16/9;border:0;border-radius:12px;"></iframe>')
 def vid(series, title, who, player=None):
-    inner = ((player or embed("yt", 191, "Sermon video", "16:9", 12)) + sp(12) + eyebrow(series, MAROON, 13) + sp(6)
+    inner = ((player or yt_placeholder()) + sp(12) + eyebrow(series, MAROON, 13) + sp(6)
              + title_block(link(txt(title, 22, MAROON, "600", H, "line-height:1.2;"), "#", "")) + sp(4) + txt(who, 15, TGRAY, extra="line-height:1.4;"))
     return flow_card(inner, pad=16, height=346, gap=8, eq=True)
 vids = [vid("[Series name]", "Women's Day", "[Pastor name] &middot; October 4, 2026",
