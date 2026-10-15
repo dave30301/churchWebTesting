@@ -21,7 +21,7 @@ def eyebrow(s, color=MAROON, size=14, ls="0.14em"):
     return txt(s.upper(), size, color, "bold", extra=f"letter-spacing:{ls};line-height:1.3;")
 def h(tag, s, size, color=MAROON, weight="normal", lh="1.15"):
     return f'<{tag} style="margin:0;padding:0;font-family:{H};font-size:{size}px;font-weight:{weight};line-height:{lh};color:{color};">{s}</{tag}>'
-def link(s, href, style): return f'<a href="{href}" style="text-decoration:none;{style}">{s}</a>'
+def link(s, href, style, attrs=""): return f'<a href="{href}"{attrs} style="text-decoration:none;{style}">{s}</a>'
 
 def btn(s, href, bg=GOLD, color=DARK, size=18, pad="16px 32px", full=False):
     a = link(s, href, f"display:block;white-space:nowrap;padding:{pad};font-family:{B};font-size:{size}px;font-weight:bold;color:{color};text-align:center;")

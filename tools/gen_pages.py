@@ -153,14 +153,13 @@ PALETTE = """  FBC COLOR CODES USED
 # =====================================================================
 import os as _os
 SERMONS_LOGO = "https://fbcmanassas.org/wp-content/uploads/SermonsLogo-Background-Removed.png"
-YT_SUBSCRIBE = "#"   # TODO: YouTube channel subscribe link
-YT_LIVE = "#"        # TODO: YouTube live stream link
+YT_STREAMS = "https://www.youtube.com/@fbcmanassas5180/streams"   # live and past streams
+PLAN_A_VISIT = "https://fbcmanassas.org/about/times/"
 sermons_cover = (f'<img src="{SERMONS_LOGO}" alt="First Baptist Church of Manassas Sermons, Media and Archives" width="700" height="700" '
                  f'style="display:block;margin:0 auto;width:100%;max-width:700px;height:auto;aspect-ratio:1/1;object-fit:cover;object-position:center;transform:scale(1.1);transform-origin:center;border:0;">')
 hero_s_text = (eyebrow("Watch & Listen", MAROON, 15, "0.16em") + sp(12) + h("h1", "Sermons", 64, MAROON, lh="1.04") + sp(12)
                + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;") + sp(20)
-               + button_row(fluid_btn("Watch Live", YT_LIVE, MAROON, WHITE, new_tab=True),
-                            fluid_btn("Subscribe", YT_SUBSCRIBE, GOLD, DARK, new_tab=True)))
+               + fluid_btn("Watch Live", YT_STREAMS, MAROON, WHITE, new_tab=True))
 hero = section(TR(TD(
     fl_col(hero_s_text, "42%", 320, "0", td_id="fbcHeroText")
     + c("IMAGE: Sermons logo - replace the src with the CMS media URL")
@@ -182,16 +181,16 @@ feat_side = (eyebrow("Latest message") + sp(10) + h("h2", LATEST["title"], 32, M
     + T(TR(TD(txt("SERIES", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top") , TD(txt(LATEST["series"], 17, DARK, "600"), valign="top")) + gap_row(6, 2)
         + TR(TD(txt("SCRIPTURE", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top"), TD(txt(LATEST["scripture"], 17, DARK, "600"), valign="top")))
     + sp(14) + txt(LATEST["summary"], 17, TGRAY, extra="line-height:1.5;") + sp(14)
-    + link_row("Sermon notes (PDF) &rarr;") + sp(8) + link_row("Listen as a podcast &rarr;") + sp(8) + link_row("Share this message &rarr;"))
+    + link_row("Sermon notes (PDF) &rarr;"))
 featured = section(TR(TD(
-    c("YouTube embed: latest sermon. To change it, replace the video id in the iframe src and the title") + fl_col(feat_embed, "62%", 340, "0 12px 8px 0")
-    + fl_col(rounded(feat_side, CREAM, 16, 24, f"border:1px solid {GOLD};"), "38%", 300, "0 0 8px 12px")
+    c("YouTube embed: latest sermon. To change it, replace the video id in the iframe src and the title") + fl_col(feat_embed, "62%", 340, "0 12px 4px 0")
+    + fl_col(rounded(feat_side, CREAM, 16, 24, f"border:1px solid {GOLD};"), "38%", 300, "0 0 4px 12px")
     + CLEAR)), pad="0")
 
 def vid(series, title, who):
     inner = (embed("yt", 200, "Sermon video", "16:9", 12) + sp(12) + eyebrow(series, MAROON, 13) + sp(6)
              + title_block(link(txt(title, 22, MAROON, "600", H, "line-height:1.2;"), "#", "")) + sp(4) + txt(who, 15, TGRAY, extra="line-height:1.4;"))
-    return flow_card(inner, pad=16, height=350, gap=12)
+    return flow_card(inner, pad=16, height=350, gap=8)
 vids = [vid("[Series name]", "[Sermon title one]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title two]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title three]", "[Pastor name] &middot; [Month 00, 2026]"),
@@ -204,12 +203,12 @@ vids = [vid("[Series name]", "[Sermon title one]", "[Pastor name] &middot; [Mont
 recent = sec(
     c("Filter chips: link each to your CMS category/tag page; one row, swipes sideways on narrow screens")
     + chips(["All", "Sunday Worship", "Special Services"], scroll=True)
-    + head_row("Recent messages", link("View all on YouTube &rarr;", "#", f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"), pad_top=2) + sp(8)
-    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon"), pad="0 0 12px")
+    + head_row("Recent messages", link("View all on YouTube &rarr;", YT_STREAMS, f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};", ' target="_blank" rel="noopener noreferrer"'), pad_top=2) + sp(8)
+    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon"), pad="0")
 
 cta_s_text = (h("h2", "Join us this Sunday", 40, WHITE) + sp(8)
               + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;"))
-cta_s_inner = (fl_col(cta_s_text, "66%", 240, "0 24px 0 0") + fl_col(btn("Plan a Visit", "#", GOLD, DARK, 18, "14px 32px"), "34%", 220, "14px 0 0 0") + CLEAR)
+cta_s_inner = (fl_col(cta_s_text, "66%", 240, "0 24px 0 0") + fl_col(btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px"), "34%", 220, "14px 0 0 0") + CLEAR)
 cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones")
                     + rounded(cta_s_inner, DEEP, 20, "22px 24px"))), pad="0")
 
@@ -222,8 +221,8 @@ hdr = f"""<!-- =================================================================
   Site header, breadcrumb and footer come from your CMS template (not included).
 
   LOGO: loaded from the CMS (SERMONS_LOGO in tools/gen_pages.py). The src is the full-size PNG; it scales down to fit.
-  LINKS: "Watch Live" and "Subscribe" currently link to # - set YT_LIVE and YT_SUBSCRIBE in tools/gen_pages.py
-  (or edit the hrefs). Both open in a new tab.
+  LINKS: "Watch Live" and "View all on YouTube" open the YouTube streams page in a new tab (YT_STREAMS in
+  tools/gen_pages.py). "Plan a Visit" goes to PLAN_A_VISIT.
 
   YOUTUBE EMBEDS: on the video choose Share > Embed and copy the iframe. Replace each
   "[YOUTUBE EMBED]" box (the whole <table> inside its cell) with:
