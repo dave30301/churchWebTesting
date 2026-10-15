@@ -216,9 +216,10 @@ featured = section(TR(TD(
     + fl_col(rounded(feat_side, CREAM, 16, 24, f"border:1px solid {GOLD};"), "38%", 300, "0 0 4px 12px")
     + CLEAR)), pad="0")
 
-def yt_card_embed(video_id, title_attr, w=971, h_=546):
+def yt_card_embed(video_id, title_attr, w=971, h_=546, start=None):
     """Real YouTube player for a video card: fluid, always 16:9 (attributes are the fallback if the style is stripped)."""
-    return (f'<iframe width="{w}" height="{h_}" src="https://www.youtube.com/embed/{video_id}" title="{title_attr}" frameborder="0" '
+    qs = f"?start={start}" if start else ""
+    return (f'<iframe width="{w}" height="{h_}" src="https://www.youtube.com/embed/{video_id}{qs}" title="{title_attr}" frameborder="0" '
             'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
             'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen '
             'style="display:block;width:100%;height:auto;aspect-ratio:16/9;border:0;border-radius:12px;"></iframe>')
@@ -228,7 +229,8 @@ def vid(series, title, who, player=None):
     return flow_card(inner, pad=16, height=346, gap=8, eq=True)
 vids = [vid("[Series name]", "Women's Day", "[Pastor name] &middot; October 4, 2026",
             player=yt_card_embed("kWJuPjSuThk", "Women&#39;s Day, October 4, 2026")),
-        vid("Sunday Worship", "[Sermon title two]", "[Pastor name] &middot; [Month 00, 2026]"),
+        vid("Sunday Worship", "4th Sunday", "[Pastor name] &middot; September 27, 2026",
+            player=yt_card_embed("tU35vDOLQPg", "4th Sunday, September 27, 2026", start=234)),   # start=234 skips to where the message begins (3:54)
         vid("Sunday Worship", "[Sermon title three]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title four]", "[Teacher name] &middot; [Month 00, 2026]"),
         vid("[Series name]", "[Sermon title five]", "[Pastor name] &middot; [Month 00, 2026]"),
