@@ -235,17 +235,22 @@ def vid(series, title, who, player=None):
     inner = ((player or yt_placeholder()) + sp(12) + eyebrow(series, MAROON, 13) + sp(6)
              + title_block(link(txt(title, 22, MAROON, "600", H, "line-height:1.2;"), "#", "")) + sp(4) + txt(who, 15, TGRAY, extra="line-height:1.4;"))
     return flow_card(inner, pad=16, height=346, gap=8, eq=True)
-vids = [vid("[Series name]", "Women's Day", "[Pastor name] &middot; October 4, 2026",
-            player=yt_card_embed("kWJuPjSuThk", "Women&#39;s Day, October 4, 2026")),
-        vid("Sunday Worship", "4th Sunday", "[Pastor name] &middot; September 27, 2026",
-            player=yt_card_embed("tU35vDOLQPg", "4th Sunday, September 27, 2026", start=234)),   # start=234 skips to where the message begins (3:54)
-        vid("Sunday Worship", "[Sermon title three]", "[Pastor name] &middot; [Month 00, 2026]"),
-        vid("Sunday Worship", "[Sermon title four]", "[Teacher name] &middot; [Month 00, 2026]"),
-        vid("[Series name]", "[Sermon title five]", "[Pastor name] &middot; [Month 00, 2026]"),
-        vid("Special Service", "[Sermon title six]", "[Pastor name] &middot; [Month 00, 2026]"),
-        vid("Sunday Worship", "[Sermon title seven]", "[Pastor name] &middot; [Month 00, 2026]"),
-        vid("Sunday Worship", "[Sermon title eight]", "[Pastor name] &middot; [Month 00, 2026]"),
-        vid("Special Service", "[Sermon title nine]", "[Pastor name] &middot; [Month 00, 2026]")]
+# Recent messages, newest first. Each tuple: (category tag, card title, pastor, date, YouTube id, iframe title).
+# Titles and dates come from each video's own YouTube title; pastor is a placeholder until you fill it in.
+SERMONS = [
+    ("[Series name]",   "Women's Day",       "October 4, 2026",   "kWJuPjSuThk", "Women&#39;s Day, October 4, 2026"),
+    ("Sunday Worship",  "4th Sunday",        "September 27, 2026", "tU35vDOLQPg", "4th Sunday, September 27, 2026"),
+    ("Sunday Worship",  "3rd Sunday",        "September 20, 2026", "o8ufjlde2J0", "3rd Sunday, September 20, 2026"),
+    ("Sunday Worship",  "2nd Sunday",        "September 13, 2026", "FyupYxk9vFs", "2nd Sunday, September 13, 2026"),
+    ("Sunday Worship",  "1st Sunday",        "September 6, 2026",  "J1bDxhWXn7w", "1st Sunday, September 6, 2026"),
+    ("Sunday Worship",  "5th Sunday",        "August 30, 2026",    "FeZDPJYwOHw", "5th Sunday, August 30, 2026"),
+    ("Sunday Worship",  "4th Sunday",        "August 23, 2026",    "ciLDidOW6IY", "4th Sunday, August 23, 2026"),
+    ("Special Service", "57th Annual Ushers Day Celebration", "August 16, 2026", "bzloOxNOQmU", "57th Annual Ushers Day Celebration - Sunday, August 16, 2026"),
+]
+vids = [vid(tag, title, "[Pastor name] &middot; " + date, player=yt_card_embed(vid_id, title_attr)) for tag, title, date, vid_id, title_attr in SERMONS]
+# Remaining slot(s) stay as placeholders until there is another video to add.
+vids += [vid("Sunday Worship", "[Sermon title nine]", "[Pastor name] &middot; [Month 00, 2026]")]
+
 recent = sec(
     c("Filter chips: link each to your CMS category/tag page; one row, swipes sideways on narrow screens")
     + chips(["All", "Sunday Worship", "Special Services"], scroll=True)
