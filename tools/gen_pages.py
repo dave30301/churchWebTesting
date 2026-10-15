@@ -238,7 +238,7 @@ def vid(series, title, who, player=None):
 # Recent messages, newest first. Each tuple: (category tag, card title, pastor, date, YouTube id, iframe title).
 # Titles and dates come from each video's own YouTube title; pastor is a placeholder until you fill it in.
 SERMONS = [
-    ("[Series name]",   "Women's Day",       "October 4, 2026",   "kWJuPjSuThk", "Women&#39;s Day, October 4, 2026"),
+    ("Special Service", "Women's Day",       "October 4, 2026",   "kWJuPjSuThk", "Women&#39;s Day, October 4, 2026"),
     ("Sunday Worship",  "4th Sunday",        "September 27, 2026", "tU35vDOLQPg", "4th Sunday, September 27, 2026"),
     ("Sunday Worship",  "3rd Sunday",        "September 20, 2026", "o8ufjlde2J0", "3rd Sunday, September 20, 2026"),
     ("Sunday Worship",  "2nd Sunday",        "September 13, 2026", "FyupYxk9vFs", "2nd Sunday, September 13, 2026"),
@@ -246,10 +246,9 @@ SERMONS = [
     ("Sunday Worship",  "5th Sunday",        "August 30, 2026",    "FeZDPJYwOHw", "5th Sunday, August 30, 2026"),
     ("Sunday Worship",  "4th Sunday",        "August 23, 2026",    "ciLDidOW6IY", "4th Sunday, August 23, 2026"),
     ("Special Service", "57th Annual Ushers Day Celebration", "August 16, 2026", "bzloOxNOQmU", "57th Annual Ushers Day Celebration - Sunday, August 16, 2026"),
+    ("Sunday Worship",  "3rd Sunday",        "August 16, 2026",    "vA_zMAKdSHQ", "3rd Sunday, August 16, 2026"),
 ]
 vids = [vid(tag, title, "[Pastor name] &middot; " + date, player=yt_card_embed(vid_id, title_attr)) for tag, title, date, vid_id, title_attr in SERMONS]
-# Remaining slot(s) stay as placeholders until there is another video to add.
-vids += [vid("Sunday Worship", "[Sermon title nine]", "[Pastor name] &middot; [Month 00, 2026]")]
 
 recent = sec(
     c("Filter chips: link each to your CMS category/tag page; one row, swipes sideways on narrow screens")
