@@ -67,11 +67,11 @@ def title_block(inner_html):
     A table cell with a height attribute is used because it survives CMS sanitizers."""
     return T(TR(TD(inner_html, valign="top", height="54", style="height:54px;")), width="100%")
 
-def flow_card(inner, pad=20, height=400, gap=24, cats=None):
+def flow_card(inner, pad=20, height=400, gap=24, cats=None, eq=False):
     """Self-wrapping card using the legacy HTML attribute align="left" (survives CMS sanitizers that strip
     display / float / margin CSS). Three per row: width 33%; fixed height keeps the rows from snagging.
     gap = vertical space under each card row."""
-    dc = f' data-cats="{cats}"' if cats else ""
+    dc = (f' data-cats="{cats}"' if cats else "") + (' data-eq="1"' if eq else "")
     return (f'<table role="presentation" align="left" width="33%" cellpadding="0" cellspacing="0" border="0"{dc} style="width:33.333%;min-width:300px;max-width:100%;border-collapse:separate;">'
             f'<tr><td valign="top" height="{height + gap}" style="height:{height + gap}px;padding:0 12px {gap}px 12px;">'
             + rounded(inner, CREAM, 16, pad, f"border:1px solid {GOLD};") + "</td></tr></table>")
@@ -121,6 +121,35 @@ HERO_JS = """<script>
   center();
   window.addEventListener('load', center);
   window.addEventListener('resize', center);
+})();
+</script>"""
+
+EQ_JS = """<script>
+(function () {
+  // Makes every video card exactly as tall as the tallest one, so the float grid never snags when a real
+  // YouTube player is a little taller than a placeholder. The fixed heights in the HTML are the fallback.
+  function each(list, fn) { Array.prototype.forEach.call(list, fn); }
+  function equalize() {
+    var cards = document.querySelectorAll('table[data-eq]');
+    var best = 0;
+    each(cards, function (card) {
+      var td = card.getElementsByTagName('td')[0];
+      td.style.height = 'auto';
+    });
+    each(cards, function (card) {
+      var td = card.getElementsByTagName('td')[0];
+      var inner = td.getElementsByTagName('table')[0];
+      best = Math.max(best, Math.ceil(inner.getBoundingClientRect().height));
+    });
+    each(cards, function (card) {
+      var td = card.getElementsByTagName('td')[0];
+      var gap = parseFloat(window.getComputedStyle(td).paddingBottom) || 0;
+      td.style.height = (best + gap) + 'px';
+    });
+  }
+  equalize();
+  window.addEventListener('load', equalize);
+  window.addEventListener('resize', equalize);
 })();
 </script>"""
 
@@ -187,11 +216,18 @@ featured = section(TR(TD(
     + fl_col(rounded(feat_side, CREAM, 16, 24, f"border:1px solid {GOLD};"), "38%", 300, "0 0 4px 12px")
     + CLEAR)), pad="0")
 
-def vid(series, title, who):
-    inner = (embed("yt", 200, "Sermon video", "16:9", 12) + sp(12) + eyebrow(series, MAROON, 13) + sp(6)
+def yt_card_embed(video_id, title_attr, w=971, h_=546):
+    """Real YouTube player for a video card: fluid, always 16:9 (attributes are the fallback if the style is stripped)."""
+    return (f'<iframe width="{w}" height="{h_}" src="https://www.youtube.com/embed/{video_id}" title="{title_attr}" frameborder="0" '
+            'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
+            'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen '
+            'style="display:block;width:100%;height:auto;aspect-ratio:16/9;border:0;border-radius:12px;"></iframe>')
+def vid(series, title, who, player=None):
+    inner = ((player or embed("yt", 191, "Sermon video", "16:9", 12)) + sp(12) + eyebrow(series, MAROON, 13) + sp(6)
              + title_block(link(txt(title, 22, MAROON, "600", H, "line-height:1.2;"), "#", "")) + sp(4) + txt(who, 15, TGRAY, extra="line-height:1.4;"))
-    return flow_card(inner, pad=16, height=350, gap=8)
-vids = [vid("[Series name]", "[Sermon title one]", "[Pastor name] &middot; [Month 00, 2026]"),
+    return flow_card(inner, pad=16, height=346, gap=8, eq=True)
+vids = [vid("[Series name]", "Women's Day", "[Pastor name] &middot; October 4, 2026",
+            player=yt_card_embed("kWJuPjSuThk", "Women&#39;s Day, October 4, 2026")),
         vid("Sunday Worship", "[Sermon title two]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title three]", "[Pastor name] &middot; [Month 00, 2026]"),
         vid("Sunday Worship", "[Sermon title four]", "[Teacher name] &middot; [Month 00, 2026]"),
@@ -204,7 +240,7 @@ recent = sec(
     c("Filter chips: link each to your CMS category/tag page; one row, swipes sideways on narrow screens")
     + chips(["All", "Sunday Worship", "Special Services"], scroll=True)
     + head_row("Recent messages", link("View all on YouTube &rarr;", YT_STREAMS, f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};", ' target="_blank" rel="noopener noreferrer"'), pad_top=2) + sp(8)
-    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon"), pad="0")
+    + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon") + c("Script: equalizes the video card heights (optional; the fixed heights are the fallback)") + EQ_JS, pad="0")
 
 cta_s_text = (h("h2", "Join us this Sunday", 40, WHITE) + sp(8)
               + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;"))
@@ -304,6 +340,8 @@ FILTER_JS = """<script>
   });
 })();
 </script>"""
+
+
 def lr(share):
     return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999" style="max-width:100%;"></iframe>'
 
