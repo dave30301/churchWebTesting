@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FBC Page Editor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout concept: a left-hand form that follows the page top to bottom, a sticky live preview on the right, a copy bar that never leaves the screen.
+   Palette: the church's maroon and gold on warm paper; Fraunces for headings, Source Sans 3 for everything you operate. */
+:root {
+  --bg: #F6F1E9; --surface: #FFFFFF; --surface-2: #FBF8F3; --ink: #1A1416; --muted: #6B6165; --line: #E4DACB;
+  --accent: #6B1735; --accent-ink: #FFFFFF; --accent-soft: #F3E3E9; --gold: #C9A55C; --gold-ink: #171717;
+  --ok: #2B6B3A; --ok-soft: #E3F0E6; --warn: #8A5A00; --warn-soft: #FBF0D8; --bad: #A12A2A; --bad-soft: #F8E1E1;
+  --field: #FFFFFF; --shadow: 0 1px 2px rgba(60,30,40,.08), 0 6px 20px rgba(60,30,40,.06);
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --sans: 'Source Sans 3', 'Source Sans Pro', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #170D11; --surface: #231419; --surface-2: #1D1115; --ink: #F3EAE2; --muted: #B3A39B; --line: #3A262D;
+    --accent: #9B2E56; --accent-ink: #FFFFFF; --accent-soft: #3A1B27; --gold: #D4B068; --gold-ink: #171717;
+    --ok: #7CC38D; --ok-soft: #17301F; --warn: #E2B25A; --warn-soft: #36290F; --bad: #F08A8A; --bad-soft: #3B1818;
+    --field: #1A0F13; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #170D11; --surface: #231419; --surface-2: #1D1115; --ink: #F3EAE2; --muted: #B3A39B; --line: #3A262D;
+  --accent: #9B2E56; --accent-ink: #FFFFFF; --accent-soft: #3A1B27; --gold: #D4B068; --gold-ink: #171717;
+  --ok: #7CC38D; --ok-soft: #17301F; --warn: #E2B25A; --warn-soft: #36290F; --bad: #F08A8A; --bad-soft: #3B1818;
+  --field: #1A0F13; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--sans); }
+.wrap { max-width: 1500px; margin: 0 auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 110px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* top bar */
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mark { width: 42px; height: 42px; border-radius: 12px; background: var(--accent); display: grid; place-items: center; flex: none; }
+.mark svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.brand h1 { font-size: 1.45rem; line-height: 1.1; }
+.brand p { color: var(--muted); font-size: .9rem; }
+.steps { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.step { display: flex; align-items: center; gap: 8px; padding: 7px 12px 7px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-size: .9rem; font-weight: 600; cursor: default; }
+.step b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); font-size: .8rem; }
+.step.on { color: var(--ink); border-color: var(--accent); }
+.step.on b { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.step.done b { background: var(--ok); color: #fff; border-color: var(--ok); }
+button.step { cursor: pointer; }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 9px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; cursor: pointer; text-decoration: none; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.gold { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+.btn.small { min-height: 34px; padding: 5px 12px; font-size: .9rem; border-radius: 8px; }
+.btn.ghost { background: transparent; }
+.btn.danger:hover { border-color: var(--bad); color: var(--bad); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* paste view */
+.paste { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); min-width: 0; }
+.card h2 { font-size: 1.25rem; margin-bottom: 4px; }
+.card .sub { color: var(--muted); font-size: .95rem; margin-bottom: 14px; }
+textarea.big { width: 100%; min-height: 300px; max-height: 60vh; resize: vertical; font: 13px/1.45 var(--mono); background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.how { display: grid; gap: 14px; padding: 0; margin: 0; list-style: none; counter-reset: s; }
+.how li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; gap: 10px; }
+.how li::before { content: counter(s); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.how strong { display: block; }
+.how span { color: var(--muted); font-size: .95rem; }
+.pages { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: .85rem; font-weight: 600; }
+.msg { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: .95rem; }
+.msg.bad { background: var(--bad-soft); color: var(--bad); }
+.msg.warn { background: var(--warn-soft); color: var(--warn); }
+.msg.ok { background: var(--ok-soft); color: var(--ok); }
+
+/* edit view */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 46%); gap: 24px; align-items: start; }
+.formcol { display: grid; gap: 16px; min-width: 0; }
+.status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.status h2 { font-size: 1.3rem; }
+.status .meta { color: var(--muted); font-size: .95rem; }
+.status .spacer { margin-left: auto; }
+details.sec { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); min-width: 0; }
+details.sec > summary { list-style: none; cursor: pointer; padding: 16px 20px; display: flex; align-items: center; gap: 10px; }
+details.sec > summary::-webkit-details-marker { display: none; }
+details.sec > summary h3 { font-size: 1.15rem; }
+details.sec > summary .count { color: var(--muted); font-size: .9rem; }
+details.sec > summary .caret { margin-left: auto; width: 10px; height: 10px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s; }
+details.sec[open] > summary .caret { transform: rotate(225deg); }
+.sec-body { padding: 0 20px 20px; display: grid; gap: 14px; }
+.field { display: grid; gap: 5px; min-width: 0; }
+.field label { font-weight: 600; font-size: .92rem; display: flex; align-items: center; gap: 8px; }
+.field .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); display: none; }
+.field.changed .dot { display: inline-block; }
+.field .inwrap { display: flex; gap: 8px; align-items: flex-start; }
+.field input[type=text], .field textarea, .field select { width: 100%; min-width: 0; background: var(--field); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; }
+.field textarea { min-height: 92px; resize: vertical; line-height: 1.45; }
+.field.changed input[type=text], .field.changed textarea { border-color: var(--gold); }
+.field .hint { font-size: .85rem; color: var(--muted); min-height: 1em; overflow-wrap: anywhere; }
+.field .hint.ok { color: var(--ok); } .field .hint.bad { color: var(--bad); }
+.field .reset { flex: none; }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.cats { display: flex; flex-wrap: wrap; gap: 8px; }
+.cats label { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-weight: 600; cursor: pointer; background: var(--surface-2); }
+.cats input { accent-color: var(--accent); }
+.item { border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); min-width: 0; }
+.item > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 12px; flex-wrap: wrap; }
+.item > summary::-webkit-details-marker { display: none; }
+.item .num { display: grid; place-items: center; min-width: 28px; height: 28px; padding: 0 6px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: .85rem; }
+.item .ttl { font-weight: 600; min-width: 0; overflow-wrap: anywhere; flex: 1 1 160px; }
+.item .tools { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+.item .badge { font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--gold); color: var(--gold-ink); }
+.item .badge.warn { background: var(--warn-soft); color: var(--warn); }
+.item-body { padding: 4px 14px 16px; display: grid; gap: 12px; border-top: 1px dashed var(--line); }
+.listbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.listbar .note { color: var(--muted); font-size: .9rem; }
+.tools-card summary { cursor: pointer; font-weight: 600; }
+.fr { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; margin-top: 12px; align-items: end; }
+.fr label { display: grid; gap: 4px; font-size: .88rem; font-weight: 600; }
+.fr input { background: var(--field); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; width: 100%; min-width: 0; }
+
+/* preview */
+.previewcol { position: sticky; top: 12px; min-width: 0; }
+.pv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.pv-head h2 { font-size: 1.1rem; margin-right: auto; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 5px 12px; font-weight: 600; font-size: .88rem; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); }
+.pv-frame { background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; height: calc(100vh - 150px); min-height: 360px; position: relative; }
+.pv-frame iframe { border: 0; background: #fff; transform-origin: 0 0; position: absolute; left: 0; top: 0; }
+.pv-note { color: var(--muted); font-size: .82rem; margin-top: 8px; }
+
+/* output */
+.out textarea { width: 100%; min-height: 190px; max-height: 50vh; resize: vertical; font: 12.5px/1.45 var(--mono); background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.checks { display: grid; gap: 6px; margin: 12px 0; padding: 0; list-style: none; font-size: .93rem; }
+.checks li::before { content: "\2713"; color: var(--ok); font-weight: 700; margin-right: 8px; }
+.checks li.warn::before { content: "!"; color: var(--warn); }
+.changes { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: .92rem; max-height: 220px; overflow: auto; }
+.changes b { color: var(--ink); font-weight: 600; }
+
+/* copy bar */
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(40,20,30,.12);
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.bar-in { max-width: 1500px; margin: 0 auto; display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; }
+.bar .info { color: var(--muted); font-size: .95rem; margin-right: auto; }
+.bar .info b { color: var(--ink); }
+.toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; z-index: 30; max-width: 90vw; }
+
+@media (max-width: 1000px) {
+  .paste, .grid { grid-template-columns: minmax(0, 1fr); }
+  .previewcol { position: static; order: 2; }
+  .pv-frame { height: 70vh; }
+  .steps { margin-left: 0; }
+}
+@media (max-width: 560px) { .pair, .fr { grid-template-columns: minmax(0, 1fr); } .item .tools { margin-left: 0; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></span>
+      <div><h1>FBC Page Editor</h1><p>Paste a page, change the details, copy it back to your CMS.</p></div>
+    </div>
+    <nav class="steps" aria-label="Steps">
+      <span class="step on" id="st1"><b>1</b>Paste page</span>
+      <button class="step" id="st2" type="button" disabled><b>2</b>Edit details</button>
+      <button class="step" id="st3" type="button" disabled><b>3</b>Copy HTML</button>
+    </nav>
+  </header>
+
+  <!-- STEP 1 -->
+  <section id="viewPaste" class="paste">
+    <div class="card">
+      <h2>Paste your page HTML</h2>
+      <p class="sub">Everything stays in this browser tab. Nothing is uploaded.</p>
+      <label class="sr" for="src">Page HTML</label>
+      <textarea id="src" class="big" spellcheck="false" placeholder="Paste the full page HTML here (it starts with <table ...> or <!-- FBC ... -->)"></textarea>
+      <div class="row">
+        <button id="load" class="btn primary" type="button">Load page</button>
+        <label class="btn" for="file">Open an .html file</label>
+        <input id="file" class="sr" type="file" accept=".html,.htm,.txt,text/html">
+        <button id="restore" class="btn ghost" type="button" hidden>Restore my last draft</button>
+        <button id="clear" class="btn ghost" type="button">Clear</button>
+      </div>
+      <div id="pasteMsg" role="status" aria-live="polite"></div>
+    </div>
+    <div class="card">
+      <h2>How it works</h2>
+      <p class="sub">Three steps, every time something changes.</p>
+      <ol class="how">
+        <li><div><strong>Copy the page from your CMS</strong><span>Open the page in Source / HTML view, select everything, and paste it on the left.</span></div></li>
+        <li><div><strong>Fill in the fields</strong><span>Titles, dates, preachers, videos, links. Add a new message or album at the top in one click.</span></div></li>
+        <li><div><strong>Copy the updated HTML</strong><span>Paste it back into the same CMS block and save.</span></div></li>
+      </ol>
+      <div class="pages"><span class="chip">Sermons</span><span class="chip">Photo Gallery</span><span class="chip">Youth Ministry</span></div>
+      <p class="sub" style="margin:14px 0 0">Use the newest version of each page (it carries invisible edit labels). Older pasted copies can still use Find &amp; replace.</p>
+    </div>
+  </section>
+
+  <!-- STEPS 2 and 3 -->
+  <section id="viewEdit" hidden>
+    <div class="grid">
+      <div class="formcol" id="formcol">
+        <div class="card status">
+          <h2 id="pageName">Page</h2>
+          <span class="meta" id="pageMeta"></span>
+          <span class="spacer"></span>
+          <button id="startOver" class="btn small ghost" type="button">Start over</button>
+        </div>
+        <div id="noMarkers" class="card" hidden>
+          <h2>No edit labels found</h2>
+          <p class="sub">This copy of the page was made before editing labels were added, so the fields can't be filled in automatically. Re-copy the newest version of the page, or use Find &amp; replace below for a quick text change.</p>
+        </div>
+        <div id="sections" class="formcol"></div>
+        <details class="card tools-card" id="toolsCard">
+          <summary>Find &amp; replace across the whole page</summary>
+          <div class="fr">
+            <label>Find<input id="frFind" type="text" autocomplete="off" spellcheck="false"></label>
+            <label>Replace with<input id="frRepl" type="text" autocomplete="off" spellcheck="false"></label>
+            <button id="frGo" class="btn" type="button">Replace all</button>
+          </div>
+          <p class="hint" id="frMsg" style="margin-top:8px;color:var(--muted);font-size:.9rem" role="status"></p>
+        </details>
+        <div class="card out" id="outCard">
+          <h2>Updated HTML</h2>
+          <p class="sub">Copy this and paste it over the old HTML in your CMS block.</p>
+          <ul class="checks" id="checks"></ul>
+          <label class="sr" for="out">Updated page HTML</label>
+          <textarea id="out" readonly spellcheck="false"></textarea>
+          <ol class="changes" id="changes"></ol>
+        </div>
+      </div>
+      <aside class="previewcol" aria-label="Live preview">
+        <div class="pv-head">
+          <h2>Live preview</h2>
+          <div class="seg" role="group" aria-label="Preview width">
+            <button type="button" data-w="1200" aria-pressed="true">Desktop</button>
+            <button type="button" data-w="820" aria-pressed="false">Tablet</button>
+            <button type="button" data-w="390" aria-pressed="false">Phone</button>
+          </div>
+        </div>
+        <div class="pv-frame" id="pvFrame"><iframe id="pv" title="Page preview" sandbox="allow-scripts"></iframe></div>
+        <p class="pv-note">The preview runs the page's own scripts, so the filters and cards behave as they will on your site. Videos and photos may not load inside this preview.</p>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<div class="bar" id="bar" hidden>
+  <div class="bar-in">
+    <p class="info" id="barInfo"></p>
+    <button id="toOut" class="btn ghost small" type="button">View HTML</button>
+    <button id="copy" class="btn gold" type="button">Copy updated HTML</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  function mk(tag, props, kids) {
+    var e = document.createElement(tag);
+    Object.keys(props || {}).forEach(function (k) {
+      if (k === 'class') e.className = props[k];
+      else if (k === 'text') e.textContent = props[k];
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), props[k]);
+      else if (props[k] !== false && props[k] != null) e.setAttribute(k, props[k] === true ? '' : props[k]);
+    });
+    (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  var LS = 'fbc-page-editor-draft-v1';
+  function lsGet() { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { return null; } }
+  function lsSet(v) { try { localStorage.setItem(LS, JSON.stringify(v)); } catch (e) { /* storage unavailable: drafts just aren't kept */ } }
+
+  /* ---------- names shown in the form ---------- */
+  var PAGES = { sermons: 'Sermons', gallery: 'Photo Gallery', youth: 'Youth Ministry' };
+  var GROUPS = { hero: 'Header', latest: 'Latest message', recent: 'Recent messages', sermons: 'Recent messages', cta: 'Call-to-action band', featured: 'Featured album', albums: 'Browse albums',
+    info: 'Info strip', about: 'About', groups: 'Groups by age', events: 'Coming up', leader: 'Meet the leader', parents: 'For parents', more: 'More for young people' };
+  var LISTS = { sermons: { group: 'recent', one: 'Message', many: 'messages', add: 'Add a new message at the top' },
+    albums: { group: 'albums', one: 'Album', many: 'albums', add: 'Add a new album at the top' },
+    groups: { group: 'groups', one: 'Group', many: 'groups' }, events: { group: 'events', one: 'Event', many: 'events' }, more: { group: 'more', one: 'Card', many: 'cards' } };
+  var LABELS = {
+    'hero.eyebrow': 'Small heading above the title', 'hero.title': 'Page title', 'hero.intro': 'Intro text', 'hero.watch': 'Button text', 'hero.watch_url': 'Button link',
+    'hero.portfolio': 'First button text', 'hero.portfolio_url': 'First button link', 'hero.contact': 'Second button text', 'hero.contact_url': 'Second button link (an email address works)',
+    'hero.primary': 'First button text', 'hero.primary_url': 'First button link', 'hero.secondary': 'Second button text', 'hero.secondary_url': 'Second button link',
+    'hero.logo': 'Logo image', 'hero.cover': 'Cover image',
+    'latest.title': 'Message title', 'latest.pastor': 'Preacher', 'latest.date': 'Date', 'latest.series': 'Series', 'latest.scripture': 'Scripture', 'latest.summary': 'Summary',
+    'latest.notes': 'Notes link text', 'latest.notes_url': 'Notes link (PDF address)', 'latest.video': 'YouTube video',
+    'recent.view_all_url': '"View all on YouTube" link',
+    'cta.heading': 'Heading', 'cta.text': 'Text', 'cta.button': 'Button text', 'cta.button_url': 'Button link (an email address works)', 'cta.removal_url': 'Photo-removal link (an email address works)',
+    'featured.title': 'Album title', 'featured.date': 'Date', 'featured.photos': 'Number of photos', 'featured.link': '"Open full album" link', 'featured.embed': 'Lightroom album',
+    'info.who': 'Who', 'info.when': 'When', 'info.when_sub': 'When (second line)', 'info.where': 'Where', 'info.where_sub': 'Where (second line)', 'info.contact': 'Contact name', 'info.contact_sub': 'Contact email text', 'info.contact_url': 'Contact link (an email address works)',
+    'about.heading': 'Heading', 'about.text': 'Paragraph', 'groups.heading': 'Section heading', 'events.calendar_url': '"Full calendar" link', 'leader.name': 'Name', 'leader.role': 'Role', 'leader.message': 'Button text', 'leader.message_url': 'Button link (an email address works)',
+    'parents.slip': 'First link text', 'parents.slip_url': 'First link address', 'parents.schedule': 'Second link text', 'parents.schedule_url': 'Second link address', 'more.heading': 'Section heading',
+    /* inside a card */
+    'tag': 'Category label (shown above the title)', 'title': 'Title', 'pastor': 'Preacher', 'date': 'Date', 'video': 'YouTube video', 'photos': 'Number of photos', 'link': 'Album link (adobe.ly)', 'embed': 'Lightroom album',
+    'name': 'Name', 'ages': 'Ages', 'when': 'When', 'month': 'Month', 'day': 'Day', 'sub': 'Second line', 'url': 'Link'
+  };
+  var ORDER = ['eyebrow', 'title', 'name', 'heading', 'pastor', 'date', 'photos', 'series', 'scripture', 'ages', 'when', 'month', 'day', 'sub', 'text', 'summary', 'intro', 'video', 'embed', 'notes', 'notes_url', 'tag', 'button', 'button_url', 'link', 'url'];
+  function rank(f) { var i = ORDER.indexOf(f.name.split('.').pop()); return i < 0 ? 100 : i; }
+  function byOrder(a, b) { return rank(a) - rank(b) || a.seq - b.seq; }
+  function humanize(n) { var s = n.split('.').pop().replace(/_/g, ' '); return s.charAt(0).toUpperCase() + s.slice(1); }
+  function labelFor(f) {
+    var base = LABELS[f.name] || humanize(f.name);
+    if (f.kind === 'img-alt') return base.replace(/ image$/, '') + ' description (alt text)';
+    return base;
+  }
+
+  /* ---------- parsing helpers ---------- */
+  function decode(s) { var t = document.createElement('textarea'); t.innerHTML = s; return t.value; }
+  function parseTime(t) {
+    if (/^\d+$/.test(t)) return +t;
+    var m = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
+    return m ? (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0) : 0;
+  }
+  function parseYouTube(input) {
+    var s = (input || '').trim(), title = null, id = null, start = 0;
+    if (!s) return null;
+    var ifr = s.match(/<iframe[^>]*>/i);
+    if (ifr) {
+      var m = ifr[0].match(/\ssrc\s*=\s*["']([^"']+)["']/i);
+      if (!m) return null;
+      s = decode(m[1]);
+      var t = ifr[0].match(/\stitle\s*=\s*"([^"]*)"/i) || ifr[0].match(/\stitle\s*=\s*'([^']*)'/i);
+      if (t) title = decode(t[1]);
+    }
+    if (/^[\w-]{11}$/.test(s)) id = s;
+    else {
+      var u;
+      try { u = new URL(/^\/\//.test(s) ? 'https:' + s : /^https?:/i.test(s) ? s : 'https://' + s); } catch (e) { return null; }
+      var host = u.hostname.replace(/^(www|m)\./, ''), p = u.pathname.split('/').filter(Boolean);
+      if (host === 'youtu.be') id = p[0];
+      else if (/(^|\.)youtube(-nocookie)?\.com$/.test(host)) {
+        if (p[0] === 'watch') id = u.searchParams.get('v');
+        else if (['embed', 'shorts', 'live', 'v'].indexOf(p[0]) > -1) id = p[1];
+      }
+      var tt = u.searchParams.get('t') || u.searchParams.get('start');
+      if (tt) start = parseTime(tt);
+    }
+    if (!id || !/^[\w-]{11}$/.test(id)) return null;
+    return { id: id, start: start, title: title };
+  }
+  function ytFromSrc(src) { return parseYouTube(src || ''); }
+  function ytCanon(v) { return v ? 'https://www.youtube.com/watch?v=' + v.id + (v.start ? '&t=' + v.start + 's' : '') : ''; }
+  function parseLR(input) {
+    var s = (input || '').trim(), m = s.match(/shares\/([0-9a-f]{32})/i) || s.match(/^([0-9a-f]{32})$/i);
+    return m ? { id: m[1].toLowerCase() } : null;
+  }
+  function lrSrc(id) { return 'https://lightroom.adobe.com/embed/shares/' + id + '/slideshow?background_color=%232D2D2D&color=%23999999'; }
+  function fmtTime(sec) { var m = Math.floor(sec / 60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+  function normHref(v) {
+    v = v.trim();
+    if (/^[^\s@\/:]+@[^\s@\/:]+\.[^\s@\/:]+$/.test(v)) return 'mailto:' + v;
+    if (/^www\./i.test(v)) return 'https://' + v;
+    return v;
+  }
+  function plainHref(h) { return (h || '').replace(/^mailto:/i, function (m) { return m; }); }
+
+  /* ---------- state ---------- */
+  var S = null, uid = 0, structChanges = 0, added = 0, removed = 0, previewTimer = 0, saveTimer = 0, outTimer = 0, pvWidth = 1200;
+
+  function parseHtml(html) {
+    var doc = document.implementation.createHTMLDocument('');
+    doc.body.innerHTML = html;
+    return doc;
+  }
+  function serialize(doc) { return doc.body.innerHTML; }
+
+  /* A field is one editable value. kinds: text, href, video, lr, img-src, img-alt */
+  function readField(f) {
+    var n = f.node;
+    if (f.kind === 'text') return n.textContent.replace(/\s+/g, ' ').trim();
+    if (f.kind === 'href') return n.getAttribute('href') || '';
+    if (f.kind === 'video') return ytCanon(ytFromSrc(n.getAttribute('src')));
+    if (f.kind === 'lr') { var m = parseLR(n.getAttribute('src')); return m ? m.id : ''; }
+    if (f.kind === 'img-src') return n.getAttribute('src') || '';
+    if (f.kind === 'img-alt') return n.getAttribute('alt') || '';
+    return '';
+  }
+  function scan(doc) {
+    var fields = [], lists = {}, order = [];
+    $$('[data-fbc-item]', doc.body).forEach(function (it) {
+      var name = it.getAttribute('data-fbc-item');
+      if (!lists[name]) { lists[name] = { name: name, fixed: it.hasAttribute('data-fbc-fixed'), parent: null, items: [] }; order.push(name); }
+      lists[name].items.push(it);
+    });
+    function owner(n) { var o = n.closest ? n.closest('[data-fbc-item]') : null; return o; }
+    $$('[data-fbc],[data-fbc-href],[data-fbc-video],[data-fbc-lr],[data-fbc-img]', doc.body).forEach(function (n) {
+      var own = owner(n);
+      function add(kind, name) { fields.push({ kind: kind, node: n, name: name, owner: own, upper: n.hasAttribute('data-fbc-upper'), long: n.hasAttribute('data-fbc-long'), id: 'f' + (++uid) }); }
+      if (n.hasAttribute('data-fbc')) add('text', n.getAttribute('data-fbc'));
+      if (n.hasAttribute('data-fbc-href')) add('href', n.getAttribute('data-fbc-href'));
+      if (n.hasAttribute('data-fbc-video')) add('video', n.getAttribute('data-fbc-video'));
+      if (n.hasAttribute('data-fbc-lr')) add('lr', n.getAttribute('data-fbc-lr'));
+      if (n.hasAttribute('data-fbc-img')) { add('img-src', n.getAttribute('data-fbc-img')); add('img-alt', n.getAttribute('data-fbc-img')); }
+    });
+    fields.forEach(function (f, i) { f.orig = readField(f); f.seq = i; });
+    return { fields: fields, lists: lists, listOrder: order };
+  }
+
+  function writeField(f, raw) {
+    var n = f.node, r = { ok: true, msg: '' };
+    if (f.kind === 'text') { n.textContent = f.upper ? raw.toUpperCase() : raw; }
+    else if (f.kind === 'href') { n.setAttribute('href', normHref(raw)); }
+    else if (f.kind === 'img-src') { n.setAttribute('src', raw.trim()); }
+    else if (f.kind === 'img-alt') { n.setAttribute('alt', raw); }
+    else if (f.kind === 'video') {
+      var v = parseYouTube(raw);
+      if (!raw.trim()) { r = { ok: false, msg: 'Paste a YouTube link, the embed code, or the 11-character video ID.' }; }
+      else if (!v) { r = { ok: false, msg: 'Could not find a YouTube video in that. Paste the link, the embed code or the video ID.' }; }
+      else {
+        n.setAttribute('src', 'https://www.youtube.com/embed/' + v.id + (v.start ? '?start=' + v.start : ''));
+        var t = v.title || autoTitle(f);
+        if (t) n.setAttribute('title', t);
+        r = { ok: true, msg: 'Video ' + v.id + (v.start ? ', starts at ' + fmtTime(v.start) : '') };
+      }
+    } else if (f.kind === 'lr') {
+      var l = parseLR(raw);
+      if (!raw.trim()) r = { ok: false, msg: 'Paste the Lightroom embed code, the share link, or the 32-character share ID.' };
+      else if (!l) r = { ok: false, msg: 'Could not find a Lightroom share ID in that. It is the long code between /shares/ and /slideshow.' };
+      else { n.setAttribute('src', lrSrc(l.id)); r = { ok: true, msg: 'Album ' + l.id.slice(0, 8) + '...' }; }
+    }
+    return r;
+  }
+  function autoTitle(f) {
+    if (!f.owner) return '';
+    var t = fieldIn(f.owner, 'title'), d = fieldIn(f.owner, 'date');
+    return [t && readField(t), d && readField(d)].filter(Boolean).join(', ');
+  }
+  function fieldIn(item, name) { for (var i = 0; i < S.fields.length; i++) { var f = S.fields[i]; if (f.owner === item && f.name === name && f.kind === 'text') return f; } return null; }
+  function fieldsOf(item) { return S.fields.filter(function (f) { return f.owner === item; }); }
+  function globals() { return S.fields.filter(function (f) { return !f.owner; }); }
+  function isChanged(f) { return f.orig === null ? false : readField(f) !== f.orig; }
+
+  /* ---------- rendering the form ---------- */
+  function chipOptions() {
+    var seen = {}, out = [];
+    $$('a[data-filter]', S.doc.body).forEach(function (a) {
+      var k = a.getAttribute('data-filter');
+      if (k && k !== 'all' && !seen[k]) { seen[k] = 1; out.push({ key: k, label: a.textContent.replace(/\s+/g, ' ').trim() }); }
+    });
+    return out;
+  }
+  function inputFor(f, onchange) {
+    var id = 'in-' + f.id, val = readField(f), el;
+    if (f.kind === 'video') val = val; // canonical link shown
+    if (f.kind === 'text' && (f.long || val.length > 90)) el = mk('textarea', { id: id, rows: 3, spellcheck: 'true' });
+    else el = mk('input', { id: id, type: 'text', autocomplete: 'off', spellcheck: f.kind === 'text' ? 'true' : 'false' });
+    el.value = val;
+    el.addEventListener('input', function () { onchange(el.value, false); });
+    el.addEventListener('change', function () { onchange(el.value, true); });
+    return el;
+  }
+  function fieldRow(f) {
+    var hint = mk('div', { class: 'hint', 'aria-live': 'polite' });
+    var wrap = mk('div', { class: 'field' });
+    var lab = mk('label', { for: 'in-' + f.id }, [mk('span', { text: labelFor(f) }), mk('span', { class: 'dot', title: 'Changed' })]);
+    var reset = mk('button', { class: 'btn small ghost reset', type: 'button', title: 'Put back the original', 'aria-label': 'Reset ' + labelFor(f), text: 'Reset' });
+    var input;
+    function sync() { wrap.classList.toggle('changed', isChanged(f)); }
+    function setHint(kind, msg) { hint.className = 'hint' + (kind ? ' ' + kind : ''); hint.textContent = msg || ''; }
+    function describe() {
+      if (f.kind === 'video') { var v = ytFromSrc(f.node.getAttribute('src')); setHint(v ? 'ok' : 'bad', v ? 'Video ' + v.id + (v.start ? ', starts at ' + fmtTime(v.start) : '') : 'No video yet. Paste a YouTube link or embed code.'); }
+      else if (f.kind === 'lr') { var l = parseLR(f.node.getAttribute('src')); setHint(l ? 'ok' : 'bad', l ? 'Album ' + l.id.slice(0, 8) + '...' : 'No album yet. Paste the Lightroom embed code or share link.'); }
+      else if (f.kind === 'href') { setHint('', ''); }
+    }
+    input = inputFor(f, function (v, final) {
+      var res = writeField(f, v);
+      if (f.kind === 'video' || f.kind === 'lr') { setHint(res.ok ? 'ok' : 'bad', res.msg); }
+      if (final && res.ok && (f.kind === 'video')) { input.value = readField(f); }
+      if (final && f.kind === 'lr' && res.ok) { input.value = readField(f); }
+      sync(); touched();
+      refreshItemTitles();
+    });
+    reset.addEventListener('click', function () {
+      var o = f.orig == null ? '' : f.orig;
+      if (f.kind === 'video') writeField(f, o || ''); else if (f.kind === 'lr') writeField(f, o || ''); else writeField(f, o);
+      input.value = readField(f); describe(); sync(); touched(); refreshItemTitles();
+    });
+    wrap.appendChild(lab);
+    wrap.appendChild(mk('div', { class: 'inwrap' }, [input, reset]));
+    wrap.appendChild(hint);
+    describe(); sync();
+    f.ui = { wrap: wrap, sync: sync, input: input };
+    return wrap;
+  }
+  function catsRow(item) {
+    var opts = chipOptions(), cur = (item.getAttribute('data-cats') || '').split(/\s+/).filter(Boolean);
+    var wrap = mk('div', { class: 'field' });
+    wrap.appendChild(mk('label', { text: 'Shows under these filters' }));
+    if (!opts.length) {
+      var inp = mk('input', { type: 'text', value: cur.join(' '), 'aria-label': 'Filter keys', spellcheck: 'false' });
+      inp.addEventListener('input', function () { item.setAttribute('data-cats', inp.value.trim()); touched(); });
+      wrap.appendChild(inp); return wrap;
+    }
+    var box = mk('div', { class: 'cats' });
+    opts.forEach(function (o) {
+      var cb = mk('input', { type: 'checkbox' });
+      cb.checked = cur.indexOf(o.key) > -1;
+      cb.addEventListener('change', function () {
+        var now = opts.filter(function (x, i) { return box.querySelectorAll('input')[i].checked; }).map(function (x) { return x.key; });
+        item.setAttribute('data-cats', now.join(' ')); touched();
+      });
+      box.appendChild(mk('label', {}, [cb, o.label]));
+    });
+    wrap.appendChild(box);
+    var hint = mk('div', { class: 'hint' });
+    function setHint() {
+      var none = !(item.getAttribute('data-cats') || '').trim();
+      hint.className = 'hint' + (none ? ' bad' : '');
+      hint.textContent = none ? 'No filter picked yet. This card will only appear under "All".' : 'Pick every filter this should appear under. "All" always shows everything.';
+    }
+    box.addEventListener('change', setHint); setHint();
+    wrap.appendChild(hint);
+    return wrap;
+  }
+  function itemSummary(item) {
+    var t = fieldIn(item, 'title') || fieldIn(item, 'name'), d = fieldIn(item, 'date');
+    var title = t ? readField(t) : 'Item';
+    return d && readField(d) ? title + '  ·  ' + readField(d) : title;
+  }
+  var itemTitleEls = [];
+  function refreshItemTitles() { itemTitleEls.forEach(function (x) { x.el.textContent = itemSummary(x.item); }); }
+
+  function sectionKeyFor(listName) { return (LISTS[listName] && LISTS[listName].group) || listName; }
+  function renderForm() {
+    var host = $('#sections'); host.textContent = ''; itemTitleEls = [];
+    var secs = {}, order = [];
+    function sec(key) {
+      if (!secs[key]) { secs[key] = { key: key, fields: [], lists: [], pos: null }; order.push(key); }
+      return secs[key];
+    }
+    function pos(node) { return node; }
+    globals().forEach(function (f) { var s = sec(f.name.split('.')[0]); s.fields.push(f); if (!s.pos) s.pos = f.node; });
+    Object.keys(secs).forEach(function (k) { secs[k].fields.sort(byOrder); });
+    S.listOrder.forEach(function (n) { var s = sec(sectionKeyFor(n)); s.lists.push(S.lists[n]); if (!s.pos) s.pos = S.lists[n].items[0]; });
+    order.sort(function (a, b) {
+      var pa = secs[a].pos, pb = secs[b].pos;
+      if (!pa || !pb) return 0;
+      return pa.compareDocumentPosition(pb) & 4 ? -1 : 1;
+    });
+    var first = true;
+    order.forEach(function (key) {
+      var s = secs[key], count = s.fields.length + s.lists.reduce(function (n, l) { return n + l.items.length; }, 0);
+      var det = mk('details', { class: 'sec', open: first || count <= 12 });
+      first = false;
+      det.appendChild(mk('summary', {}, [mk('h3', { text: GROUPS[key] || humanize(key) }),
+        mk('span', { class: 'count', text: s.lists.length ? s.lists.reduce(function (n, l) { return n + l.items.length; }, 0) + ' ' + (LISTS[s.lists[0].name] ? LISTS[s.lists[0].name].many : 'items') : s.fields.length + ' fields' }), mk('span', { class: 'caret' })]));
+      var body = mk('div', { class: 'sec-body' });
+      var pairs = {};
+      s.fields.forEach(function (f) { body.appendChild(fieldRow(f)); });
+      s.lists.forEach(function (l) { body.appendChild(renderList(l)); });
+      det.appendChild(body); host.appendChild(det);
+    });
+    $('#noMarkers').hidden = S.fields.length > 0 || S.listOrder.length > 0 ? true : false;
+    if (!S.fields.length && !S.listOrder.length) { $('#toolsCard').open = true; }
+  }
+  function renderList(l) {
+    var meta = LISTS[l.name] || { one: 'Item', many: 'items' }, box = mk('div', { class: 'formcol' });
+    var bar = mk('div', { class: 'listbar' });
+    if (!l.fixed) {
+      bar.appendChild(mk('button', { class: 'btn primary small', type: 'button', text: '+ ' + (meta.add || 'Add a new ' + meta.one.toLowerCase()), onclick: function () { addItem(l); } }));
+      bar.appendChild(mk('span', { class: 'note', text: 'Newest first. The page re-flows the other cards for you.' }));
+    }
+    box.appendChild(bar);
+    l.items.forEach(function (item, i) { box.appendChild(renderItem(l, item, i)); });
+    return box;
+  }
+  function renderItem(l, item, i) {
+    var meta = LISTS[l.name] || { one: 'Item' };
+    var det = mk('details', { class: 'item' });
+    var titleEl = mk('span', { class: 'ttl', text: itemSummary(item) });
+    itemTitleEls.push({ el: titleEl, item: item });
+    var tools = mk('span', { class: 'tools' });
+    function stop(fn) { return function (e) { e.preventDefault(); e.stopPropagation(); fn(); }; }
+    if (!l.fixed) {
+      tools.appendChild(mk('button', { class: 'btn small ghost', type: 'button', text: '↑', title: 'Move up', 'aria-label': 'Move up', disabled: i === 0, onclick: stop(function () { moveItem(l, i, -1); }) }));
+      tools.appendChild(mk('button', { class: 'btn small ghost', type: 'button', text: '↓', title: 'Move down', 'aria-label': 'Move down', disabled: i === l.items.length - 1, onclick: stop(function () { moveItem(l, i, 1); }) }));
+      tools.appendChild(mk('button', { class: 'btn small ghost', type: 'button', text: 'Duplicate', onclick: stop(function () { duplicateItem(l, i); }) }));
+      tools.appendChild(mk('button', { class: 'btn small ghost danger', type: 'button', text: 'Remove', onclick: stop(function () { removeItem(l, i); }) }));
+    }
+    var sm = mk('summary', {}, [mk('span', { class: 'num', text: String(i + 1) }), titleEl]);
+    if (item._new) sm.appendChild(mk('span', { class: 'badge', text: 'New' }));
+    sm.appendChild(tools);
+    det.appendChild(sm);
+    var body = mk('div', { class: 'item-body' });
+    var fs = fieldsOf(item).sort(byOrder), skip = {};
+    var tag = fs.filter(function (f) { return f.name === 'tag'; })[0];
+    fs.forEach(function (f) {
+      if (f.kind === 'img-alt' || skip[f.id]) return;
+      body.appendChild(fieldRow(f));
+    });
+    if (item.hasAttribute('data-cats')) body.appendChild(catsRow(item));
+    det.appendChild(body);
+    if (item._new) det.open = true;
+    return det;
+  }
+
+  /* ---------- list operations ---------- */
+  function newItemFrom(src) {
+    var c = src.cloneNode(true);
+    c._new = true;
+    $$('[data-fbc],[data-fbc-href],[data-fbc-video],[data-fbc-lr],[data-fbc-img]', c).forEach(function (n) {
+      if (n.hasAttribute('data-fbc-video') || n.hasAttribute('data-fbc-lr')) n.setAttribute('src', 'about:blank');
+    });
+    return c;
+  }
+  function stripCardComments(item) {
+    ['previousSibling', 'nextSibling'].forEach(function (dir) {
+      var n = item[dir];
+      while (n && (n.nodeType === 3 && !n.textContent.trim())) n = n[dir];
+      if (n && n.nodeType === 8 && /CARD (START|END)/.test(n.textContent)) n.parentNode.removeChild(n);
+    });
+  }
+  function addItem(l) {
+    var first = l.items[0]; if (!first) return;
+    var c = newItemFrom(first);
+    // blank text so nothing from the copied card is left behind by accident
+    $$('[data-fbc]', c).forEach(function (n) { n.textContent = n.hasAttribute('data-fbc-upper') ? 'CATEGORY' : '[' + humanize(n.getAttribute('data-fbc')) + ']'; });
+    if (c.hasAttribute('data-cats')) c.setAttribute('data-cats', '');   // a new card starts with no filter picked, so it is never mis-filed by accident
+    first.parentNode.insertBefore(c, first);
+    added++; structChanges++;
+    rescanAfter(c, true);
+  }
+  function duplicateItem(l, i) {
+    var src = l.items[i], c = src.cloneNode(true); c._new = true;
+    src.parentNode.insertBefore(c, src.nextSibling);
+    added++; structChanges++; rescanAfter(c, true);
+  }
+  function removeItem(l, i) {
+    var it = l.items[i];
+    if (it.parentNode) { stripCardComments(it); it.parentNode.removeChild(it); }
+    removed++; structChanges++; rescanAfter(null, false);
+  }
+  function moveItem(l, i, d) {
+    var a = l.items[i], b = l.items[i + d]; if (!a || !b) return;
+    if (d < 0) b.parentNode.insertBefore(a, b); else b.parentNode.insertBefore(a, b.nextSibling);
+    structChanges++; rescanAfter(a, false);
+  }
+  function rescanAfter(focusItem, openIt) {
+    var scrollY = window.scrollY;
+    var carry = S.fields.map(function (f) { return { node: f.node, kind: f.kind, orig: f.orig }; });
+    var fresh = scan(S.doc);
+    fresh.fields.forEach(function (nf) {
+      var p = carry.filter(function (c) { return c.node === nf.node && c.kind === nf.kind; })[0];
+      nf.orig = p ? p.orig : null;   // brand-new cards have no original value
+    });
+    S.fields = fresh.fields; S.lists = fresh.lists; S.listOrder = fresh.listOrder;
+    renderForm();
+    if (focusItem) {
+      var det = null;
+      $$('.item', $('#sections')).forEach(function (d) { });
+      var idx = -1, listName = focusItem.getAttribute('data-fbc-item');
+      if (S.lists[listName]) idx = S.lists[listName].items.indexOf(focusItem);
+      if (idx > -1) {
+        var itemEls = $$('details.item', $('#sections'));
+        var base = 0, found = null;
+        S.listOrder.forEach(function (n) { if (n === listName) found = base + idx; else if (found === null) base += S.lists[n].items.length; });
+        // locate within the rendered section for this list
+        var cands = $$('details.item', $('#sections')).filter(function (d) { return true; });
+        var target = cands[found === null ? idx : found];
+        if (target) { if (openIt) target.open = true; var s = target.closest('details.sec'); if (s) s.open = true; try { target.scrollIntoView({ block: 'center' }); } catch (e) { /* ignore */ } }
+      }
+    } else window.scrollTo(0, scrollY);
+    touched();
+  }
+
+  /* ---------- output, checks, preview ---------- */
+  function counts(html) {
+    var d = parseHtml(html);
+    return { tables: d.body.querySelectorAll('table').length, scripts: d.body.querySelectorAll('script').length, labels: d.body.querySelectorAll('[data-fbc],[data-fbc-href],[data-fbc-video],[data-fbc-lr],[data-fbc-img]').length, items: d.body.querySelectorAll('[data-fbc-item]').length };
+  }
+  function changedList() {
+    var out = [];
+    S.fields.forEach(function (f) {
+      if (f.orig === null) return;
+      var now = readField(f);
+      if (now !== f.orig) {
+        var where = f.owner ? (LISTS[f.owner.getAttribute('data-fbc-item')] ? LISTS[f.owner.getAttribute('data-fbc-item')].one : 'Item') + ' “' + itemSummary(f.owner).split('  ·  ')[0].slice(0, 40) + '”' : (GROUPS[f.name.split('.')[0]] || '');
+        out.push({ where: where, label: labelFor(f), from: f.orig, to: now });
+      }
+    });
+    return out;
+  }
+  function totalChanges() { return changedList().length + added + removed + (structChanges - added - removed > 0 ? structChanges - added - removed : 0); }
+  function refreshOutput() {
+    var html = serialize(S.doc), ta = $('#out');
+    ta.value = html;
+    var c = counts(html), o = S.counts, ul = $('#checks'); ul.textContent = '';
+    function add(ok, text) { ul.appendChild(mk('li', { class: ok ? '' : 'warn', text: text })); }
+    add(true, Math.round(html.length / 1024 * 10) / 10 + ' KB of HTML, ready to paste');
+    add(c.scripts === o.scripts, c.scripts === o.scripts ? c.scripts + ' script' + (c.scripts === 1 ? '' : 's') + ' kept (filters and sizing still work)' : 'Script count changed: ' + o.scripts + ' before, ' + c.scripts + ' now');
+    add(c.labels >= o.labels - 12 * removed || true, 'Edit labels kept, so the next edit works too');
+    var ch = changedList(), n = ch.length + added + removed + Math.max(0, structChanges - added - removed);
+    var ol = $('#changes'); ol.textContent = '';
+    if (!n) ol.appendChild(mk('li', { text: 'No changes yet.' }));
+    if (added) ol.appendChild(mk('li', {}, [mk('b', { text: added + ' card' + (added === 1 ? '' : 's') + ' added' })]));
+    if (removed) ol.appendChild(mk('li', {}, [mk('b', { text: removed + ' card' + (removed === 1 ? '' : 's') + ' removed' })]));
+    ch.slice(0, 60).forEach(function (x) {
+      function cut(s) { return s.length > 70 ? s.slice(0, 67) + '...' : s; }
+      ol.appendChild(mk('li', {}, [mk('b', { text: (x.where ? x.where + ' · ' : '') + x.label + ': ' }), cut(x.from || '(empty)') + '  →  ' + cut(x.to || '(empty)')]));
+    });
+    $('#barInfo').textContent = '';
+    var info = $('#barInfo');
+    info.appendChild(mk('b', { text: n ? n + ' change' + (n === 1 ? '' : 's') : 'No changes yet' }));
+    info.appendChild(document.createTextNode(n ? ' · ready to copy' : ' · edit a field, then copy'));
+    return html;
+  }
+  function previewDoc(html) {
+    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap"><style>html,body{margin:0;background:#fff}</style></head><body>' + html + '</body></html>';
+  }
+  function layoutPreview() {
+    var fr = $('#pvFrame'), ifr = $('#pv'), w = pvWidth, avail = fr.clientWidth || w, scale = Math.min(1, avail / w);
+    ifr.style.width = w + 'px'; ifr.style.height = (fr.clientHeight / scale) + 'px'; ifr.style.transform = 'scale(' + scale + ')';
+    if (w < avail) ifr.style.left = Math.max(0, (avail - w) / 2) + 'px'; else ifr.style.left = '0';
+  }
+  function schedule() {
+    clearTimeout(outTimer); outTimer = setTimeout(refreshOutput, 120);
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(function () { $('#pv').srcdoc = previewDoc(serialize(S.doc)); layoutPreview(); }, 450);
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () { lsSet({ page: S.pageKey, savedAt: Date.now(), html: serialize(S.doc) }); }, 800);
+  }
+  function touched() { refreshChangeDots(); schedule(); }
+  function refreshChangeDots() { S.fields.forEach(function (f) { if (f.ui) f.ui.sync(); }); }
+
+  /* ---------- views ---------- */
+  function showEdit() {
+    $('#viewPaste').hidden = true; $('#viewEdit').hidden = false; $('#bar').hidden = false;
+    $('#st1').className = 'step done'; $('#st2').className = 'step on'; $('#st2').disabled = false; $('#st3').disabled = false;
+    window.scrollTo(0, 0);
+  }
+  function showPaste() {
+    $('#viewPaste').hidden = false; $('#viewEdit').hidden = true; $('#bar').hidden = true;
+    $('#st1').className = 'step on'; $('#st2').className = 'step'; $('#st2').disabled = true; $('#st3').disabled = true;
+    var d = lsGet(); $('#restore').hidden = !(d && d.html);
+  }
+  function load(html, fromDraft) {
+    var msg = $('#pasteMsg'); msg.textContent = '';
+    html = (html || '').trim();
+    if (!/<(table|div|h1|section)\b/i.test(html)) { msg.className = 'msg bad'; msg.textContent = 'That does not look like page HTML. Paste the full HTML from your CMS (it should contain <table> tags).'; return; }
+    var doc = parseHtml(html);
+    var root = doc.body.querySelector('[data-fbc-page]');
+    S = { doc: doc, pageKey: root ? root.getAttribute('data-fbc-page') : '', fields: [], lists: {}, listOrder: [] };
+    var sc = scan(doc); S.fields = sc.fields; S.lists = sc.lists; S.listOrder = sc.listOrder;
+    S.counts = counts(html); structChanges = 0; added = 0; removed = 0;
+    $('#pageName').textContent = PAGES[S.pageKey] || 'Your page';
+    var nItems = S.listOrder.reduce(function (n, k) { return n + S.lists[k].items.length; }, 0);
+    $('#pageMeta').textContent = S.fields.length + ' fields' + (nItems ? ' · ' + nItems + ' cards' : '') + (fromDraft ? ' · restored draft' : '');
+    renderForm(); showEdit();
+    $('#pv').srcdoc = previewDoc(serialize(S.doc)); layoutPreview(); refreshOutput();
+    if (!S.fields.length) { $('#noMarkers').hidden = false; }
+    lsSet({ page: S.pageKey, savedAt: Date.now(), html: serialize(S.doc) });
+  }
+
+  function copyText(text) {
+    var done = function (ok) { toast(ok ? 'Copied. Paste it into your CMS block.' : 'Could not copy automatically. Select the text in the box and press Ctrl+C.'); };
+    function fallback() {
+      var ta = $('#out'); ta.focus(); ta.select();
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      if (!ok) $('#outCard').scrollIntoView({ block: 'center' });
+      done(ok);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+    else fallback();
+  }
+  var toastT = 0;
+  function toast(t) { var el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { el.hidden = true; }, 3200); }
+
+  /* ---------- wiring ---------- */
+  $('#load').addEventListener('click', function () { load($('#src').value, false); });
+  $('#clear').addEventListener('click', function () { $('#src').value = ''; $('#pasteMsg').textContent = ''; $('#pasteMsg').className = ''; $('#src').focus(); });
+  $('#restore').addEventListener('click', function () { var d = lsGet(); if (d && d.html) { $('#src').value = d.html; load(d.html, true); } });
+  $('#file').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    var r = new FileReader(); r.onload = function () { $('#src').value = String(r.result); load(String(r.result), false); }; r.readAsText(f);
+  });
+  $('#src').addEventListener('paste', function () { setTimeout(function () { var m = $('#pasteMsg'); if ($('#src').value.trim()) { m.className = 'msg ok'; m.textContent = Math.round($('#src').value.length / 1024) + ' KB pasted. Press Load page.'; } }, 0); });
+  $('#startOver').addEventListener('click', function () { showPaste(); });
+  $('#copy').addEventListener('click', function () { copyText(refreshOutput()); });
+  $('#toOut').addEventListener('click', function () { $('#outCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  $('#st2').addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  $('#st3').addEventListener('click', function () { $('#outCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  $$('.seg button').forEach(function (b) { b.addEventListener('click', function () { pvWidth = +b.getAttribute('data-w'); $$('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); layoutPreview(); }); });
+  window.addEventListener('resize', function () { if (S) layoutPreview(); });
+  $('#frGo').addEventListener('click', function () {
+    if (!S) return;
+    var find = $('#frFind').value, rep = $('#frRepl').value, msg = $('#frMsg');
+    if (!find) { msg.textContent = 'Type the text to find.'; return; }
+    var html = serialize(S.doc), n = html.split(find).length - 1;
+    if (!n) { msg.textContent = 'No matches found.'; return; }
+    var out = html.split(find).join(rep);
+    load(out, false); $('#toolsCard').open = true;
+    $('#frMsg').textContent = 'Replaced ' + n + ' match' + (n === 1 ? '' : 'es') + '.'; $('#frFind').value = find; $('#frRepl').value = rep;
+    toast('Replaced ' + n + ' match' + (n === 1 ? '' : 'es'));
+  });
+  var d0 = lsGet(); $('#restore').hidden = !(d0 && d0.html);
+})();
+</script>
+</body>
+</html>

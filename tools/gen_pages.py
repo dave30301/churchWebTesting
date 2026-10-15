@@ -67,11 +67,11 @@ def title_block(inner_html):
     A table cell with a height attribute is used because it survives CMS sanitizers."""
     return T(TR(TD(inner_html, valign="top", height="54", style="height:54px;")), width="100%")
 
-def flow_card(inner, pad=20, height=400, gap=24, cats=None, eq=False):
+def flow_card(inner, pad=20, height=400, gap=24, cats=None, eq=False, item=""):
     """Self-wrapping card using the legacy HTML attribute align="left" (survives CMS sanitizers that strip
     display / float / margin CSS). Three per row: width 33%; fixed height keeps the rows from snagging.
     gap = vertical space under each card row."""
-    dc = (f' data-cats="{cats}"' if cats else "") + (' data-eq="1"' if eq else "")
+    dc = (f' data-cats="{cats}"' if cats else "") + (' data-eq="1"' if eq else "") + item
     return (f'<table role="presentation" align="left" width="33%" cellpadding="0" cellspacing="0" border="0"{dc} style="width:33.333%;min-width:300px;max-width:100%;border-collapse:separate;">'
             f'<tr><td valign="top" height="{height + gap}" style="height:{height + gap}px;padding:0 12px {gap}px 12px;">'
             + rounded(inner, CREAM, 16, pad, f"border:1px solid {GOLD};") + "</td></tr></table>")
@@ -90,9 +90,9 @@ def fl_col(inner, width, min_w, pad="0", td_id=None, tbl_id=None):
     bi = f' id="{tbl_id}"' if tbl_id else ""
     return (f'<table role="presentation" align="left" width="{width}" cellpadding="0" cellspacing="0" border="0"{bi} '
             f'style="width:{width};min-width:{min_w}px;max-width:100%;border-collapse:separate;"><tr><td valign="top"{ti} style="padding:{pad};">{inner}</td></tr></table>')
-def fluid_btn(label, href, bg, color, new_tab=False):
+def fluid_btn(label, href, bg, color, new_tab=False, fbl=None, fbh=None):
     """Pill button whose text and padding shrink on narrow screens (first value of each pair = fallback if clamp() is unsupported)."""
-    tgt = ' target="_blank" rel="noopener noreferrer"' if new_tab else ""
+    tgt = (' target="_blank" rel="noopener noreferrer"' if new_tab else "") + (F(fbl) if fbl else "") + (FH(fbh) if fbh else "")
     a = (f'<a href="{href}"{tgt} style="text-decoration:none;display:block;white-space:nowrap;padding:10px 16px;padding:10px clamp(16px,1vw + 8px,32px);'
          f'font-family:{B};font-size:15px;font-size:clamp(15px,0.9vw + 6px,18px);font-weight:bold;color:{color};text-align:center;">{label}</a>')
     return T(TR(f'<td align="center" bgcolor="{bg}" style="background-color:{bg};border-radius:999px;">{a}</td>'), width="auto", style="border-radius:999px;")
@@ -209,8 +209,8 @@ def head_row(title, right_html="", pad_top=0):
     return T(TR(TD(hd, valign="middle", width="55%", style="width:55%;"),
                 TD(right, valign="middle", align="right", width="45%", style="width:45%;text-align:right;padding-left:12px;")))
 
-def page(rows, header_comment, font_link=False):
-    doc = header_comment + (FONT if font_link else "") + T(rows, width="100%", bg=WHITE, style=f"background-color:{WHITE};font-family:{B};color:{DARK};table-layout:fixed;")
+def page(rows, header_comment, font_link=False, key=""):
+    doc = header_comment + (FONT if font_link else "") + T(rows, width="100%", bg=WHITE, style=f"background-color:{WHITE};font-family:{B};color:{DARK};table-layout:fixed;", extra=f' data-fbc-page="{key}"')
     return doc
 FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap">\n'
 
@@ -232,11 +232,11 @@ import os as _os
 SERMONS_LOGO = "https://fbcmanassas.org/wp-content/uploads/SermonsLogo-Background-Removed.png"
 YT_STREAMS = "https://www.youtube.com/@fbcmanassas5180/streams"   # live and past streams
 PLAN_A_VISIT = "https://fbcmanassas.org/about/times/"
-sermons_cover = (f'<img src="{SERMONS_LOGO}" alt="First Baptist Church of Manassas Sermons, Media and Archives" width="700" height="700" '
+sermons_cover = (f'<img src="{SERMONS_LOGO}"{FI("hero.logo")} alt="First Baptist Church of Manassas Sermons, Media and Archives" width="700" height="700" '
                  f'style="display:block;margin:0 auto;width:100%;max-width:700px;height:auto;aspect-ratio:1/1;object-fit:cover;object-position:center;transform:scale(1.1);transform-origin:center;border:0;">')
 hero_s_text = (eyebrow("Watch & Listen", MAROON, 15, "0.16em") + sp(12) + h("h1", "Sermons", 64, MAROON, lh="1.04") + sp(12)
-               + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;") + sp(20)
-               + fluid_btn("Watch Live", YT_STREAMS, MAROON, WHITE, new_tab=True))
+               + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;", fb=F("hero.intro", long=True)) + sp(20)
+               + fluid_btn("Watch Live", YT_STREAMS, MAROON, WHITE, new_tab=True, fbl="hero.watch", fbh="hero.watch_url"))
 hero = section(TR(TD(
     fl_col(hero_s_text, "42%", 320, "0", td_id="fbcHeroText")
     + c("IMAGE: Sermons logo - replace the src with the CMS media URL")
@@ -248,17 +248,17 @@ LATEST = dict(video_id="sjCGtIPS8AU", video_title="154th Church Anniversary, Oct
               title="154th Church Anniversary", pastor="[Pastor name]", date="October 11, 2026",
               series="[Series name]", scripture="[Book 0:00-00]",
               summary="[Two or three sentence summary of the message goes here.]")
-feat_embed = (f'<iframe width="979" height="551" src="https://www.youtube.com/embed/{LATEST["video_id"]}" title="{LATEST["video_title"]}" frameborder="0" '
+feat_embed = (f'<iframe width="979" height="551" src="https://www.youtube.com/embed/{LATEST["video_id"]}" title="{LATEST["video_title"]}"{FV("latest.video")} frameborder="0" '
               'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
               'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen '
               'style="display:block;width:100%;height:auto;aspect-ratio:16/9;border:0;border-radius:16px;"></iframe>')
-def link_row(t): return link(t, "#", f"font-family:{B};font-size:17px;font-weight:600;color:{MAROON};")
-feat_side = (eyebrow("Latest message") + sp(10) + h("h2", LATEST["title"], 32, MAROON, "600", "1.15") + sp(8)
-    + txt(LATEST["pastor"] + " &middot; " + LATEST["date"], 17, TGRAY) + sp(12)
-    + T(TR(TD(txt("SERIES", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top") , TD(txt(LATEST["series"], 17, DARK, "600"), valign="top")) + gap_row(6, 2)
-        + TR(TD(txt("SCRIPTURE", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top"), TD(txt(LATEST["scripture"], 17, DARK, "600"), valign="top")))
-    + sp(14) + txt(LATEST["summary"], 17, TGRAY, extra="line-height:1.5;") + sp(14)
-    + link_row("Sermon notes (PDF) &rarr;"))
+def link_row(t, attrs=""): return link(t, "#", f"font-family:{B};font-size:17px;font-weight:600;color:{MAROON};", attrs)
+feat_side = (eyebrow("Latest message") + sp(10) + h("h2", LATEST["title"], 32, MAROON, "600", "1.15", fb=F("latest.title")) + sp(8)
+    + txt(SPANS([("latest.pastor", LATEST["pastor"]), ("latest.date", LATEST["date"])]), 17, TGRAY) + sp(12)
+    + T(TR(TD(txt("SERIES", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top") , TD(txt(LATEST["series"], 17, DARK, "600", fb=F("latest.series")), valign="top")) + gap_row(6, 2)
+        + TR(TD(txt("SCRIPTURE", 12, MAROON, "bold", extra="letter-spacing:0.14em;"), width="110", valign="top"), TD(txt(LATEST["scripture"], 17, DARK, "600", fb=F("latest.scripture")), valign="top")))
+    + sp(14) + txt(LATEST["summary"], 17, TGRAY, extra="line-height:1.5;", fb=F("latest.summary", long=True)) + sp(14)
+    + link_row("Sermon notes (PDF) &rarr;", F("latest.notes") + FH("latest.notes_url")))
 featured = section(TR(TD(
     c("YouTube embed: latest sermon. To change it, replace the video id in the iframe src and the title") + fl_col(feat_embed, "62%", 340, "0 12px 4px 0")
     + fl_col(rounded(feat_side, CREAM, 16, 24, f"border:1px solid {GOLD};"), "38%", 300, "0 0 4px 12px")
@@ -275,14 +275,15 @@ def yt_placeholder(radius=12):
 def yt_card_embed(video_id, title_attr, w=971, h_=546, start=None):
     """Real YouTube player for a video card: fluid, always 16:9 (attributes are the fallback if the style is stripped)."""
     qs = f"?start={start}" if start else ""
-    return (f'<iframe width="{w}" height="{h_}" src="https://www.youtube.com/embed/{video_id}{qs}" title="{title_attr}" frameborder="0" '
+    return (f'<iframe width="{w}" height="{h_}" src="https://www.youtube.com/embed/{video_id}{qs}" title="{title_attr}"{FV("video")} frameborder="0" '
             'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
             'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen '
             'style="display:block;width:100%;height:auto;aspect-ratio:16/9;border:0;border-radius:12px;"></iframe>')
-def vid(series, title, who, player=None, cats=None):
-    inner = ((player or yt_placeholder()) + sp(12) + eyebrow(series, MAROON, 13) + sp(6)
-             + title_block(link(txt(title, 22, MAROON, "600", H, "line-height:1.2;"), "#", "")) + sp(4) + txt(who, 15, TGRAY, extra="line-height:1.4;"))
-    return flow_card(inner, pad=16, height=346, gap=8, cats=cats, eq=True)
+def vid(series, title, pastor, date, player=None, cats=None):
+    inner = ((player or yt_placeholder()) + sp(12) + eyebrow(series, MAROON, 13, fb=F("tag", upper=True)) + sp(6)
+             + title_block(link(txt(title, 22, MAROON, "600", H, "line-height:1.2;", fb=F("title")), "#", "")) + sp(4)
+             + txt(SPANS([("pastor", pastor), ("date", date)]), 15, TGRAY, extra="line-height:1.4;"))
+    return flow_card(inner, pad=16, height=346, gap=8, cats=cats, eq=True, item=FITEM("sermons"))
 # Recent messages, newest first. Each tuple: (category tag, card title, pastor, date, YouTube id, iframe title).
 # Titles and dates come from each video's own YouTube title; pastor is a placeholder until you fill it in.
 SERMONS = [
@@ -298,20 +299,20 @@ SERMONS = [
 ]
 # Category keys match the chips: sunday = Sunday Worship, special = Special Services. A card can list several, e.g. "sunday special".
 def sermon_cats(tag): return "special" if "special" in tag.lower() else "sunday"
-vids = [vid(tag, title, "[Pastor name] &middot; " + date, player=yt_card_embed(vid_id, title_attr), cats=sermon_cats(tag)) for tag, title, date, vid_id, title_attr in SERMONS]
+vids = [vid(tag, title, "[Pastor name]", date, player=yt_card_embed(vid_id, title_attr), cats=sermon_cats(tag)) for tag, title, date, vid_id, title_attr in SERMONS]
 
 recent = sec(
     c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of this section); one row, swipes sideways on narrow screens")
     + chips([("All", "all"), ("Sunday Worship", "sunday"), ("Special Services", "special")], ident="fbcSermonFilters", scroll=True, target="#fbcSermonFilters")
-    + head_row("Recent messages", link("View all on YouTube &rarr;", YT_STREAMS, f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};", ' target="_blank" rel="noopener noreferrer"'), pad_top=2) + sp(8)
+    + head_row("Recent messages", link("View all on YouTube &rarr;", YT_STREAMS, f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};", ' target="_blank" rel="noopener noreferrer"' + FH("recent.view_all_url")), pad_top=2) + sp(8)
     + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon")
     + '<div id="fbcNoSermons"></div>'
     + c("Script: equalizes the video card heights (optional; the fixed heights are the fallback)") + EQ_JS
     + c("Filter script: needs a CMS that keeps <script> tags (no style block or inline handlers needed)") + SERMON_FILTER_JS, pad="0")
 
-cta_s_text = (h("h2", "Join us this Sunday", 40, WHITE) + sp(8)
-              + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;"))
-cta_s_inner = (fl_col(cta_s_text, "66%", 240, "0 24px 0 0") + fl_col(btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px"), "34%", 220, "14px 0 0 0") + CLEAR)
+cta_s_text = (h("h2", "Join us this Sunday", 40, WHITE, fb=F("cta.heading")) + sp(8)
+              + txt("Worship starts at 9:00 AM at 9258 Center Street, Manassas. We would love to worship with you in person.", 19, CREAM, extra="line-height:1.5;", fb=F("cta.text", long=True)))
+cta_s_inner = (fl_col(cta_s_text, "66%", 240, "0 24px 0 0") + fl_col(btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url"), "34%", 220, "14px 0 0 0") + CLEAR)
 cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones")
                     + rounded(cta_s_inner, DEEP, 20, "22px 24px"))), pad="0")
 
@@ -346,7 +347,7 @@ hdr = f"""<!-- =================================================================
 sermons = page(c("SECTION 1: Header - title, intro, watch/subscribe buttons") + hero
                + c("SECTION 2: Latest sermon - big YouTube player (left) + message details card (right)") + featured
                + c("SECTION 3: Filter chips + recent messages grid (9 YouTube embeds)") + recent
-               + c("SECTION 4: Call to action - Join us this Sunday") + cta, hdr)
+               + c("SECTION 4: Call to action - Join us this Sunday") + cta, hdr, key="sermons")
 write("sermons", sermons)
 
 # =====================================================================
@@ -371,17 +372,17 @@ ALBUMS = [
 
 
 
-def lr(share):
-    return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999" style="max-width:100%;"></iframe>'
+def lr(share, fb=""):
+    return f'<iframe src="https://lightroom.adobe.com/embed/shares/{share}/slideshow?background_color=%232D2D2D&amp;color=%23999999"{fb} style="max-width:100%;"></iframe>'
 
 
 
-cover = (f'<img src="{GALLERY_COVER}" alt="Photography ministry logo" width="1500" height="1500" '
+cover = (f'<img src="{GALLERY_COVER}"{FI("hero.cover")} alt="Photography ministry logo" width="1500" height="1500" '
          f'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;">')
 hero_text = (eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1", "Photo Gallery", 64, MAROON, lh="1.04") + sp(20)
-             + txt("Moments from worship, ministry, and community life at First Baptist Church of Manassas.", 21, TGRAY, extra="line-height:1.5;") + sp(28)
-             + button_row(fluid_btn("View Full Portfolio", PORTFOLIO_URL, MAROON, WHITE, new_tab=True),
-                          fluid_btn("Contact Us", "mailto:" + PHOTO_EMAIL, GOLD, DARK)))
+             + txt("Moments from worship, ministry, and community life at First Baptist Church of Manassas.", 21, TGRAY, extra="line-height:1.5;", fb=F("hero.intro", long=True)) + sp(28)
+             + button_row(fluid_btn("View Full Portfolio", PORTFOLIO_URL, MAROON, WHITE, new_tab=True, fbl="hero.portfolio", fbh="hero.portfolio_url"),
+                          fluid_btn("Contact Us", "mailto:" + PHOTO_EMAIL, GOLD, DARK, fbl="hero.contact", fbh="hero.contact_url")))
 g_hero = section(TR(TD(
     fl_col(hero_text, "48%", 320, "0", td_id="fbcHeroText")
     + c("IMAGE: cover photo - replace the src with the CMS media URL")
@@ -389,32 +390,32 @@ g_hero = section(TR(TD(
     + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="16px 0 0")
 
 feat_head = T(TR(TD(f'<h2 style="margin:0;padding:8px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">Featured Album</h2>', valign="middle"),
-                 TD(link("Open full album &rarr;", FEATURED["link"], f"margin:0;padding:0;font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};"),
+                 TD(link("Open full album &rarr;", FEATURED["link"], f"margin:0;padding:0;font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};", FH("featured.link")),
                     valign="middle", align="right", style="text-align:right;")))
 g_feat = sec(c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of the albums section)") + chips([("All", "all"), ("Worship", "worship"), ("Youth", "youth"), ("Events", "events"), ("Missions", "missions"), ("Baptisms", "baptisms")], ident="fbcFilters", scroll=True)
              + feat_head
-             + txt(f'{FEATURED["title"]} &middot; {FEATURED["date"]} &middot; {FEATURED["photos"]} Photos', 17, TGRAY)
-             + c("Lightroom embed: featured album (Lightroom > Share > Embed > copy the share id into the src)") + lr(FEATURED["share"]), pad="0")
+             + txt(SPANS([("featured.title", FEATURED["title"]), ("featured.date", FEATURED["date"]), f'<span{F("featured.photos")}>{FEATURED["photos"]}</span> Photos']), 17, TGRAY)
+             + c("Lightroom embed: featured album (Lightroom > Share > Embed > copy the share id into the src)") + lr(FEATURED["share"], FL("featured.embed")), pad="0")
 
 def album(a):
-    inner = (lr(a["share"]) + sp(16)
-             + title_block(txt(a["title"], 22, MAROON, "600", H, "line-height:1.2;")) + sp(8)
-             + txt(f'{a["date"]} &middot; {a["photos"]} photos', 15, TGRAY) + sp(12)
-             + link("View album &rarr;", a["link"], f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};"))
-    return flow_card(inner, height=347, gap=12, cats=a["cats"])
+    inner = (lr(a["share"], FL("embed")) + sp(16)
+             + title_block(txt(a["title"], 22, MAROON, "600", H, "line-height:1.2;", fb=F("title"))) + sp(8)
+             + txt(SPANS([("date", a["date"]), f'<span{F("photos")}>{a["photos"]}</span> photos']), 15, TGRAY) + sp(12)
+             + link("View album &rarr;", a["link"], f"font-family:{B};font-size:16px;font-weight:bold;color:{MAROON};", FH("link")))
+    return flow_card(inner, height=347, gap=12, cats=a["cats"], item=FITEM("albums"))
 g_albums = sec(T(TR(TD(h("h2", '<a id="albums" name="albums"></a>Browse Recent Albums', 36, MAROON), valign="middle"), TD("&nbsp;", valign="middle", align="right"))) + sp(12)
                + c("Album grid: newest first; cards re-flow automatically") + flow([album(a) for a in ALBUMS], "album")
                + '<div id="fbcNoAlbums"></div>'
                + c("Filter script: needs a CMS that keeps <script> tags (no style block or inline handlers needed)") + FILTER_JS, bg=LGRAY, pad="12px 0 0")
 
 cta_col = fl_col
-cta_text = (h("h2", "Were you at an event?", 40, WHITE) + sp(12)
-            + txt("Share your photos with the church family. Email them to the media team and we&rsquo;ll add them to the albums.", 19, CREAM, extra="line-height:1.5;"))
+cta_text = (h("h2", "Were you at an event?", 40, WHITE, fb=F("cta.heading")) + sp(12)
+            + txt("Share your photos with the church family. Email them to the media team and we&rsquo;ll add them to the albums.", 19, CREAM, extra="line-height:1.5;", fb=F("cta.text", long=True)))
 cta_removal = (f'<div style="margin:0;font-family:{B};font-size:14px;color:{CREAM};line-height:1.5;">Want a photo of you or your child removed? Please '
-               + link("reach out to the media team", "mailto:" + PHOTO_EMAIL + "?subject=Photo%20removal%20request", f"color:{GOLD};font-weight:bold;text-decoration:underline;")
+               + link("reach out to the media team", "mailto:" + PHOTO_EMAIL + "?subject=Photo%20removal%20request", f"color:{GOLD};font-weight:bold;text-decoration:underline;", FH("cta.removal_url"))
                + " and we will take it down right away.</div>")
 g_cta_inner = (cta_col(cta_text, "66%", 240, "0 24px 0 0")
-               + cta_col(btn("Send us your photos", "mailto:" + PHOTO_EMAIL + "?subject=Photos%20for%20the%20FBC%20gallery", GOLD, DARK, 18, "14px 32px"), "34%", 220, "20px 0 0 0")
+               + cta_col(btn("Send us your photos", "mailto:" + PHOTO_EMAIL + "?subject=Photos%20for%20the%20FBC%20gallery", GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url"), "34%", 220, "20px 0 0 0")
                + '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>'
                + sp(16) + cta_removal)
 g_cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones (floating tables with a minimum width)")
@@ -446,5 +447,5 @@ ghdr = f"""<!-- ================================================================
 gallery = page(c("SECTION 1: Header - title, intro, buttons, cover photo (2 columns)") + g_hero
                + c("SECTION 2: Filter chips + featured album (Lightroom slideshow)") + g_feat
                + c("SECTION 3: Browse recent albums - one Lightroom slideshow per card") + g_albums
-               + c("SECTION 4: Call to action - send us your photos") + g_cta, ghdr)
+               + c("SECTION 4: Call to action - send us your photos") + g_cta, ghdr, key="gallery")
 write("photo-gallery", gallery)
