@@ -52,14 +52,16 @@
       empty.style.cssText = shown ? '' : 'padding:24px 12px 36px 12px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#666666;';
     }
   }
-  // One click listener on the whole page, so it works wherever the CMS places this script.
+  // One click listener on the whole page, so it works wherever the CMS places this script. It runs in the capture
+  // phase and stops the event, so a theme script that handles links starting with # cannot jump the page to the top.
   document.addEventListener('click', function (e) {
     var chip = e.target.closest ? e.target.closest('a[data-filter]') : null;
     if (!chip) { return; }
     e.preventDefault();
+    e.stopPropagation();
     apply(chip.getAttribute('data-filter'));
     var target = document.getElementById('albums');
     if (target) { if (target.scrollIntoView) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
-  });
+  }, true);
 })();
 </script></td></tr></table></td></tr><tr><td align="center" bgcolor="#ffffff" style="background-color:#ffffff;padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;max-width:none;table-layout:fixed;"><tr><td style=""><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#4B1026" style="width:100%;border-collapse:separate;background-color:#4B1026;border-radius:20px;" height="100%"><tr><td valign="top" bgcolor="#4B1026" style="background-color:#4B1026;border-radius:20px;padding:28px 24px;"><table role="presentation" align="left" width="66%" cellpadding="0" cellspacing="0" border="0" style="width:66%;min-width:240px;max-width:100%;border-collapse:separate;"><tr><td valign="top" style="padding:0 24px 0 0;"><h2 style="margin:0;padding:0;font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:40px;font-weight:normal;line-height:1.15;color:#ffffff;">Were you at an event?</h2><div style="height:12px;line-height:12px;font-size:0;">&nbsp;</div><div style="margin:0;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:19px;font-weight:normal;color:#F7F3EC;line-height:1.5;">Share your photos with the church family. Email them to the media team and we&rsquo;ll add them to the albums.</div></td></tr></table><table role="presentation" align="left" width="34%" cellpadding="0" cellspacing="0" border="0" style="width:34%;min-width:220px;max-width:100%;border-collapse:separate;"><tr><td valign="top" style="padding:20px 0 0 0;"><table role="presentation" width="auto" cellpadding="0" cellspacing="0" border="0" style="width:auto;border-collapse:separate;border-radius:999px;"><tr><td align="center" bgcolor="#C9A55C" style="background-color:#C9A55C;border-radius:999px;"><a href="mailto:fbcphotodirectory@gmail.com?subject=Photos%20for%20the%20FBC%20gallery" style="text-decoration:none;display:block;white-space:nowrap;padding:14px 32px;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;color:#171717;text-align:center;">Send us your photos</a></td></tr></table></td></tr></table><div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div><div style="height:16px;line-height:16px;font-size:0;">&nbsp;</div><div style="margin:0;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:14px;color:#F7F3EC;line-height:1.5;">Want a photo of you or your child removed? Please <a href="mailto:fbcphotodirectory@gmail.com?subject=Photo%20removal%20request" style="text-decoration:none;color:#C9A55C;font-weight:bold;text-decoration:underline;">reach out to the media team</a> and we will take it down right away.</div></td></tr></table></td></tr></table></td></tr></table>

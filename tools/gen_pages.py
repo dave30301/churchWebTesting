@@ -181,15 +181,17 @@ _FILTER_TEMPLATE = """<script>
       empty.style.cssText = shown ? '' : 'padding:24px 12px 36px 12px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#666666;';
     }
   }
-  // One click listener on the whole page, so it works wherever the CMS places this script.
+  // One click listener on the whole page, so it works wherever the CMS places this script. It runs in the capture
+  // phase and stops the event, so a theme script that handles links starting with # cannot jump the page to the top.
   document.addEventListener('click', function (e) {
     var chip = e.target.closest ? e.target.closest('a[data-filter]') : null;
     if (!chip) { return; }
     e.preventDefault();
+    e.stopPropagation();
     apply(chip.getAttribute('data-filter'));
     var target = document.getElementById('@TARGET@');
     if (target) { if (target.scrollIntoView) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
-  });
+  }, true);
 })();
 </script>"""
 def filter_js(empty_id, target_id, message):
@@ -197,7 +199,7 @@ def filter_js(empty_id, target_id, message):
     (this CMS strips display:none, so it is not hidden in the markup)."""
     return _FILTER_TEMPLATE.replace("@EMPTY@", empty_id).replace("@TARGET@", target_id).replace("@MESSAGE@", message)
 FILTER_JS = filter_js("fbcNoAlbums", "albums", "No albums in this category yet.")
-SERMON_FILTER_JS = filter_js("fbcNoSermons", "recent", "No messages in this category yet.")
+SERMON_FILTER_JS = filter_js("fbcNoSermons", "fbcSermonFilters", "No messages in this category yet.")
 
 def head_row(title, right_html="", pad_top=0):
     hd = (h("h2", title, 36, MAROON) if not pad_top else
@@ -299,8 +301,8 @@ def sermon_cats(tag): return "special" if "special" in tag.lower() else "sunday"
 vids = [vid(tag, title, "[Pastor name] &middot; " + date, player=yt_card_embed(vid_id, title_attr), cats=sermon_cats(tag)) for tag, title, date, vid_id, title_attr in SERMONS]
 
 recent = sec(
-    '<a id="recent" name="recent"></a>' + c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of this section); one row, swipes sideways on narrow screens")
-    + chips([("All", "all"), ("Sunday Worship", "sunday"), ("Special Services", "special")], ident="fbcSermonFilters", scroll=True, target="#recent")
+    c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of this section); one row, swipes sideways on narrow screens")
+    + chips([("All", "all"), ("Sunday Worship", "sunday"), ("Special Services", "special")], ident="fbcSermonFilters", scroll=True, target="#fbcSermonFilters")
     + head_row("Recent messages", link("View all on YouTube &rarr;", YT_STREAMS, f"font-family:{B};font-size:17px;font-weight:bold;color:{MAROON};", ' target="_blank" rel="noopener noreferrer"'), pad_top=2) + sp(8)
     + c("Video grid: one YouTube embed per card, newest first; cards re-flow automatically") + flow(vids, "sermon")
     + '<div id="fbcNoSermons"></div>'
