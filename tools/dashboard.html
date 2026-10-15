@@ -195,6 +195,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
       <textarea id="src" class="big" spellcheck="false" placeholder="Paste the full page HTML here (it starts with <table ...> or <!-- FBC ... -->)"></textarea>
       <div class="row">
         <button id="load" class="btn primary" type="button">Load page</button>
+        <button id="sample" class="btn" type="button">Try a sample page</button>
         <label class="btn" for="file">Open an .html file</label>
         <input id="file" class="sr" type="file" accept=".html,.htm,.txt,text/html">
         <button id="restore" class="btn ghost" type="button" hidden>Restore my last draft</button>
@@ -294,7 +295,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   function lsSet(v) { try { localStorage.setItem(LS, JSON.stringify(v)); } catch (e) { /* storage unavailable: drafts just aren't kept */ } }
 
   /* ---------- names shown in the form ---------- */
-  var PAGES = { sermons: 'Sermons', gallery: 'Photo Gallery', youth: 'Youth Ministry' };
+  var PAGES = { sample: 'Sample page', sermons: 'Sermons', gallery: 'Photo Gallery', youth: 'Youth Ministry' };
   var GROUPS = { hero: 'Header', latest: 'Latest message', recent: 'Recent messages', sermons: 'Recent messages', cta: 'Call-to-action band', featured: 'Featured album', albums: 'Browse albums',
     info: 'Info strip', about: 'About', groups: 'Groups by age', events: 'Coming up', leader: 'Meet the leader', parents: 'For parents', more: 'More for young people' };
   var LISTS = { sermons: { group: 'recent', one: 'Message', many: 'messages', add: 'Add a new message at the top' },
@@ -815,6 +816,25 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     $('#frMsg').textContent = 'Replaced ' + n + ' match' + (n === 1 ? '' : 'es') + '.'; $('#frFind').value = find; $('#frRepl').value = rep;
     toast('Replaced ' + n + ' match' + (n === 1 ? '' : 'es'));
   });
+  var SAMPLE = '<table data-fbc-page="sample" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:960px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;color:#171717"><tr><td style="padding:28px 20px">'
+    + '<div style="font-size:13px;font-weight:bold;letter-spacing:.14em;color:#6B1735">WATCH & LISTEN</div>'
+    + '<h1 data-fbc="hero.title" style="margin:6px 0 8px;font-family:Georgia,serif;font-size:44px;font-weight:normal;color:#6B1735">Sermons</h1>'
+    + '<div data-fbc="hero.intro" data-fbc-long="1" style="font-size:18px;line-height:1.5;color:#666">Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit.</div>'
+    + '<p style="margin:22px 0 8px"><a href="https://www.youtube.com/@fbcmanassas5180/streams" data-fbc="hero.watch" data-fbc-href="hero.watch_url" style="display:inline-block;padding:10px 24px;border-radius:999px;background:#6B1735;color:#fff;font-weight:bold;text-decoration:none">Watch Live</a></p>'
+    + '<div style="margin:18px 0 6px;padding:18px;border:1px solid #C9A55C;border-radius:16px;background:#F7F3EC"><div style="font-size:12px;font-weight:bold;letter-spacing:.14em;color:#6B1735">LATEST MESSAGE</div>'
+    + '<div data-fbc="latest.title" style="font-family:Georgia,serif;font-size:26px;color:#6B1735;margin:6px 0">154th Church Anniversary</div>'
+    + '<div style="color:#666"><span data-fbc="latest.pastor">[Pastor name]</span> &middot; <span data-fbc="latest.date">October 11, 2026</span></div></div>'
+    + '<p style="margin:22px 0 8px;font-family:Georgia,serif;font-size:26px;color:#6B1735">Recent messages</p>'
+    + '<div style="margin:0 0 12px"><a href="#x" data-filter="all" style="margin-right:8px">All</a><a href="#x" data-filter="sunday" style="margin-right:8px">Sunday Worship</a><a href="#x" data-filter="special">Special Services</a></div>'
+    + [['Special Service', "Women's Day", 'October 4, 2026', 'kWJuPjSuThk', 'special'], ['Sunday Worship', '4th Sunday', 'September 27, 2026', 'tU35vDOLQPg', 'sunday']].map(function (c) {
+      return '<table data-fbc-item="sermons" data-cats="' + c[4] + '" role="presentation" align="left" width="48%" style="margin:0 2% 12px 0;border:1px solid #C9A55C;border-radius:14px"><tr><td style="padding:14px">'
+        + '<iframe data-fbc-video="video" src="https://www.youtube.com/embed/' + c[3] + '" title="' + c[1] + '" style="width:100%;aspect-ratio:16/9;border:0"></iframe>'
+        + '<div data-fbc="tag" data-fbc-upper="1" style="margin-top:8px;font-size:12px;font-weight:bold;letter-spacing:.14em;color:#6B1735">' + c[0].toUpperCase() + '</div>'
+        + '<div data-fbc="title" style="font-family:Georgia,serif;font-size:21px;color:#6B1735">' + c[1] + '</div>'
+        + '<div style="color:#666;font-size:14px"><span data-fbc="pastor">[Pastor name]</span> &middot; <span data-fbc="date">' + c[2] + '</span></div></td></tr></table>';
+    }).join('')
+    + '<br clear="all"></td></tr></table>';
+  $('#sample').addEventListener('click', function () { $('#src').value = SAMPLE; load(SAMPLE, false); });
   var d0 = lsGet(); $('#restore').hidden = !(d0 && d0.html);
 })();
 </script>
