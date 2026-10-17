@@ -83,12 +83,12 @@ def flow(cards, what):
             f"<!-- To keep the list short, delete the last card above (the oldest) -->\n"
             '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>\n')
 
-def fl_col(inner, width, min_w, pad="0", td_id=None, tbl_id=None):
+def fl_col(inner, width, min_w, pad="0", td_id=None, tbl_id=None, align="left"):
     """Left-floating table (HTML align attribute). Two of them sit side by side when there is room; the second drops
     underneath when the container is narrower than their min-widths. No media queries (this CMS strips style blocks)."""
     ti = f' id="{td_id}"' if td_id else ""
     bi = f' id="{tbl_id}"' if tbl_id else ""
-    return (f'<table role="presentation" align="left" width="{width}" cellpadding="0" cellspacing="0" border="0"{bi} '
+    return (f'<table role="presentation" align="{align}" width="{width}" cellpadding="0" cellspacing="0" border="0"{bi} '
             f'style="width:{width};min-width:{min_w}px;max-width:100%;border-collapse:separate;"><tr><td valign="top"{ti} style="padding:{pad};">{inner}</td></tr></table>')
 def fluid_btn(label, href, bg, color, new_tab=False, fbl=None, fbh=None):
     """Pill button whose text and padding shrink on narrow screens (first value of each pair = fallback if clamp() is unsupported)."""
@@ -106,16 +106,24 @@ CLEAR = '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:bo
 HERO_JS = """<script>
 (function () {
   // Vertically centers the header text beside the logo when they sit side by side (floats cannot do this on their own).
-  // On narrow screens the logo drops below the text and no extra padding is added.
+  // The logo comes first in the HTML and floats right, so on narrow screens (phones) it stacks ABOVE the text.
+  // When stacked, the logo is stretched to the full width so it sits centered; no extra padding is added.
   function center() {
     var t = document.getElementById('fbcHeroText');
     var l = document.getElementById('fbcHeroLogo');
     if (!t) { return; }
     if (!l) { return; }
     t.style.paddingTop = '0px';
+    l.style.width = '';
+    var c = l.getElementsByTagName('td')[0];
+    if (c) { c.style.paddingLeft = ''; }
     var tr = t.getBoundingClientRect();
     var lr = l.getBoundingClientRect();
-    if (Math.round((lr.top - tr.top) / 5) !== 0) { return; }
+    if (tr.top - lr.top > 5 && lr.top + lr.height - 5 <= tr.top) {
+      l.style.width = '100%';
+      if (c) { c.style.paddingLeft = '0px'; }
+      return;
+    }
     t.style.paddingTop = Math.max(0, Math.round((lr.height - tr.height) / 2)) + 'px';
   }
   center();
@@ -238,9 +246,9 @@ hero_s_text = (eyebrow("Watch & Listen", MAROON, 15, "0.16em") + sp(12) + h("h1"
                + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;", fb=F("hero.intro", long=True)) + sp(20)
                + fluid_btn("Watch Live", YT_STREAMS, MAROON, WHITE, new_tab=True, fbl="hero.watch", fbh="hero.watch_url"))
 hero = section(TR(TD(
-    fl_col(hero_s_text, "42%", 320, "0", td_id="fbcHeroText")
-    + c("IMAGE: Sermons logo - replace the src with the CMS media URL")
-    + fl_col(f'<div style="text-align:center;overflow:hidden;">{sermons_cover}</div>', "58%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
+    c("IMAGE: Sermons logo - first in the HTML and floated right, so it sits above the text on phones")
+    + fl_col(f'<div style="text-align:center;overflow:hidden;">{sermons_cover}</div>', "58%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo", align="right")
+    + fl_col(hero_s_text, "42%", 320, "0", td_id="fbcHeroText")
     + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="0")
 
 # Latest sermon. Edit this block each week. Anything still in [brackets] is a placeholder for you to fill in.
@@ -384,9 +392,9 @@ hero_text = (eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1
              + button_row(fluid_btn("View Full Portfolio", PORTFOLIO_URL, MAROON, WHITE, new_tab=True, fbl="hero.portfolio", fbh="hero.portfolio_url"),
                           fluid_btn("Contact Us", "mailto:" + PHOTO_EMAIL, GOLD, DARK, fbl="hero.contact", fbh="hero.contact_url")))
 g_hero = section(TR(TD(
-    fl_col(hero_text, "48%", 320, "0", td_id="fbcHeroText")
-    + c("IMAGE: cover photo - replace the src with the CMS media URL")
-    + fl_col(f'<div style="text-align:center;">{cover}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
+    c("IMAGE: cover photo - first in the HTML and floated right, so it sits above the text on phones")
+    + fl_col(f'<div style="text-align:center;">{cover}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo", align="right")
+    + fl_col(hero_text, "48%", 320, "0", td_id="fbcHeroText")
     + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="16px 0 0")
 
 feat_head = T(TR(TD(f'<h2 style="margin:0;padding:8px 0 4px 0;font-family:{H};font-size:36px;font-weight:normal;line-height:1.15;color:{MAROON};">Featured Album</h2>', valign="middle"),
