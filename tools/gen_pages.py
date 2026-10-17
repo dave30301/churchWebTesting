@@ -108,21 +108,25 @@ HERO_JS = """<script>
   // Vertically centers the header text beside the logo when they sit side by side (floats cannot do this on their own).
   // The logo comes first in the HTML and floats right, so on narrow screens (phones) it stacks ABOVE the text.
   // When stacked, the logo is stretched to the full width so it sits centered; no extra padding is added.
+  var l0 = document.getElementById('fbcHeroLogo');
+  var c0 = l0 ? l0.getElementsByTagName('td')[0] : null;
+  var w0 = l0 ? l0.style.width : '';
+  var p0 = c0 ? c0.style.paddingLeft : '';
   function center() {
     var t = document.getElementById('fbcHeroText');
-    var l = document.getElementById('fbcHeroLogo');
+    var l = l0;
     if (!t) { return; }
     if (!l) { return; }
     t.style.paddingTop = '0px';
-    l.style.width = '';
-    var c = l.getElementsByTagName('td')[0];
-    if (c) { c.style.paddingLeft = ''; }
+    l.style.width = w0;
+    if (c0) { c0.style.paddingLeft = p0; }
     var tr = t.getBoundingClientRect();
     var lr = l.getBoundingClientRect();
     var gap = tr.top - (lr.top + lr.height - 5);
-    if (Math.max(gap, 0) === gap) {
+    var stacked = (Math.max(lr.height, 50) === lr.height) ? (Math.max(gap, 0) === gap) : false;
+    if (stacked) {
       l.style.width = '100%';
-      if (c) { c.style.paddingLeft = '0px'; }
+      if (c0) { c0.style.paddingLeft = '0px'; }
       return;
     }
     t.style.paddingTop = Math.max(0, Math.round((lr.height - tr.height) / 2)) + 'px';
