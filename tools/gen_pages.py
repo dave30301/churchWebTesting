@@ -106,12 +106,12 @@ CLEAR = '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:bo
 HERO_JS = """<script>
 (function () {
   // Vertically centers the header text beside the logo when they sit side by side (floats cannot do this on their own).
-  // The logo comes first in the HTML and floats right, so on narrow screens (phones) it stacks ABOVE the text.
+  // The logo comes first in the HTML and floats left (the text floats beside it), so on narrow screens (phones) it stacks ABOVE the text.
   // When stacked, the logo is stretched to the full width so it sits centered; no extra padding is added.
   var l0 = document.getElementById('fbcHeroLogo');
   var c0 = l0 ? l0.getElementsByTagName('td')[0] : null;
   var w0 = l0 ? l0.style.width : '';
-  var p0 = c0 ? c0.style.paddingLeft : '';
+  var p0 = c0 ? c0.style.paddingRight : '';
   function center() {
     var t = document.getElementById('fbcHeroText');
     var l = l0;
@@ -119,14 +119,14 @@ HERO_JS = """<script>
     if (!l) { return; }
     t.style.paddingTop = '0px';
     l.style.width = w0;
-    if (c0) { c0.style.paddingLeft = p0; }
+    if (c0) { c0.style.paddingRight = p0; }
     var tr = t.getBoundingClientRect();
     var lr = l.getBoundingClientRect();
     var gap = tr.top - (lr.top + lr.height - 5);
     var stacked = (Math.max(lr.height, 50) === lr.height) ? (Math.max(gap, 0) === gap) : false;
     if (stacked) {
       l.style.width = '100%';
-      if (c0) { c0.style.paddingLeft = '0px'; }
+      if (c0) { c0.style.paddingRight = '0px'; }
       return;
     }
     t.style.paddingTop = Math.max(0, Math.round((lr.height - tr.height) / 2)) + 'px';
@@ -251,8 +251,8 @@ hero_s_text = (eyebrow("Watch & Listen", MAROON, 15, "0.16em") + sp(12) + h("h1"
                + txt("Watch live on Sundays at 9:00 AM, or catch up on any message from our pulpit, anytime and on any device.", 21, TGRAY, extra="line-height:1.5;", fb=F("hero.intro", long=True)) + sp(20)
                + fluid_btn("Watch Live", YT_STREAMS, MAROON, WHITE, new_tab=True, fbl="hero.watch", fbh="hero.watch_url"))
 hero = section(TR(TD(
-    c("IMAGE: Sermons logo - first in the HTML and floated right, so it sits above the text on phones")
-    + fl_col(f'<div style="text-align:center;overflow:hidden;">{sermons_cover}</div>', "58%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo", align="right")
+    c("IMAGE: Sermons logo - first in the HTML and floated left like the text, so it sits above the text on phones")
+    + fl_col(f'<div style="text-align:center;overflow:hidden;">{sermons_cover}</div>', "58%", 260, "0 24px 0 0", tbl_id="fbcHeroLogo")
     + fl_col(hero_s_text, "42%", 320, "0", td_id="fbcHeroText")
     + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="0")
 
@@ -397,8 +397,8 @@ hero_text = (eyebrow("Our Church Family", MAROON, 15, "0.16em") + sp(20) + h("h1
              + button_row(fluid_btn("View Full Portfolio", PORTFOLIO_URL, MAROON, WHITE, new_tab=True, fbl="hero.portfolio", fbh="hero.portfolio_url"),
                           fluid_btn("Contact Us", "mailto:" + PHOTO_EMAIL, GOLD, DARK, fbl="hero.contact", fbh="hero.contact_url")))
 g_hero = section(TR(TD(
-    c("IMAGE: cover photo - first in the HTML and floated right, so it sits above the text on phones")
-    + fl_col(f'<div style="text-align:center;">{cover}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo", align="right")
+    c("IMAGE: cover photo - first in the HTML and floated left like the text, so it sits above the text on phones")
+    + fl_col(f'<div style="text-align:center;">{cover}</div>', "52%", 260, "0 24px 0 0", tbl_id="fbcHeroLogo")
     + fl_col(hero_text, "48%", 320, "0", td_id="fbcHeroText")
     + CLEAR + c("Script: centers the header text beside the logo on wide screens (optional; harmless if blocked)") + HERO_JS)), pad="16px 0 0")
 
