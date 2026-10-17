@@ -14,7 +14,8 @@
     if (c) { c.style.paddingLeft = ''; }
     var tr = t.getBoundingClientRect();
     var lr = l.getBoundingClientRect();
-    if (tr.top - lr.top > 5 && lr.top + lr.height - 5 <= tr.top) {
+    var gap = tr.top - (lr.top + lr.height - 5);
+    if (Math.max(gap, 0) === gap) {
       l.style.width = '100%';
       if (c) { c.style.paddingLeft = '0px'; }
       return;
