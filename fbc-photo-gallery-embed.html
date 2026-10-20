@@ -28,17 +28,37 @@
 <table role="presentation" align="left" width="52%" cellpadding="0" cellspacing="0" border="0" id="fbcHeroLogo" style="width:52%;min-width:260px;max-width:100%;border-collapse:separate;"><tr><td valign="top" style="padding:0 0 0 24px;"><div style="text-align:center;"><img src="https://fbcmanassas.org/files/PhotographyLogo2-1.jpg" data-fbc-img="hero.cover" alt="Photography ministry logo" width="1500" height="1500" style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:510px;border:0;"></div></td></tr></table><div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div><!-- Script: centers the header text beside the logo on wide screens (optional; harmless if blocked) -->
 <script>
 (function () {
-  // Vertically centers the header text beside the logo when they sit side by side (floats cannot do this on their own).
-  // On narrow screens the logo drops below the text and no extra padding is added.
+  // Header layout: text on the left, logo on the right, with the text centered beside the logo (floats cannot do this alone).
+  // When the screen is too narrow for them to sit side by side (phones), the logo is moved ABOVE the text and stretched
+  // to the full width. Both are plain left floats; no right float and no media queries.
+  var l = document.getElementById('fbcHeroLogo');
+  var t = document.getElementById('fbcHeroText');
+  if (!l) { return; }
+  if (!t) { return; }
+  var tt = t;
+  while (tt) {
+    if (tt.tagName === 'TABLE') { break; }
+    tt = tt.parentNode;
+  }
+  if (!tt) { return; }
+  var c = l.getElementsByTagName('td')[0];
+  var w0 = l.style.width;
+  var p0 = c.style.padding;
   function center() {
-    var t = document.getElementById('fbcHeroText');
-    var l = document.getElementById('fbcHeroLogo');
-    if (!t) { return; }
-    if (!l) { return; }
+    var par = tt.parentNode;
+    par.insertBefore(tt, l);
+    l.style.width = w0;
+    c.style.padding = p0;
     t.style.paddingTop = '0px';
-    var tr = t.getBoundingClientRect();
+    var tr = tt.getBoundingClientRect();
     var lr = l.getBoundingClientRect();
-    if (Math.round((lr.top - tr.top) / 5) !== 0) { return; }
+    var gap = lr.top - (tr.top + tr.height - 5);
+    if (Math.max(gap, 0) === gap) {
+      par.insertBefore(l, tt);
+      l.style.width = '100%';
+      c.style.padding = '0px';
+      return;
+    }
     t.style.paddingTop = Math.max(0, Math.round((lr.height - tr.height) / 2)) + 'px';
   }
   center();

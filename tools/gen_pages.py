@@ -83,12 +83,12 @@ def flow(cards, what):
             f"<!-- To keep the list short, delete the last card above (the oldest) -->\n"
             '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>\n')
 
-def fl_col(inner, width, min_w, pad="0", td_id=None, tbl_id=None):
+def fl_col(inner, width, min_w, pad="0", td_id=None, tbl_id=None, align="left"):
     """Left-floating table (HTML align attribute). Two of them sit side by side when there is room; the second drops
     underneath when the container is narrower than their min-widths. No media queries (this CMS strips style blocks)."""
     ti = f' id="{td_id}"' if td_id else ""
     bi = f' id="{tbl_id}"' if tbl_id else ""
-    return (f'<table role="presentation" align="left" width="{width}" cellpadding="0" cellspacing="0" border="0"{bi} '
+    return (f'<table role="presentation" align="{align}" width="{width}" cellpadding="0" cellspacing="0" border="0"{bi} '
             f'style="width:{width};min-width:{min_w}px;max-width:100%;border-collapse:separate;"><tr><td valign="top"{ti} style="padding:{pad};">{inner}</td></tr></table>')
 def fluid_btn(label, href, bg, color, new_tab=False, fbl=None, fbh=None):
     """Pill button whose text and padding shrink on narrow screens (first value of each pair = fallback if clamp() is unsupported)."""
@@ -105,17 +105,37 @@ def float_item(inner, pad="0 16px 12px 0"):
 CLEAR = '<div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>'
 HERO_JS = """<script>
 (function () {
-  // Vertically centers the header text beside the logo when they sit side by side (floats cannot do this on their own).
-  // On narrow screens the logo drops below the text and no extra padding is added.
+  // Header layout: text on the left, logo on the right, with the text centered beside the logo (floats cannot do this alone).
+  // When the screen is too narrow for them to sit side by side (phones), the logo is moved ABOVE the text and stretched
+  // to the full width. Both are plain left floats; no right float and no media queries.
+  var l = document.getElementById('fbcHeroLogo');
+  var t = document.getElementById('fbcHeroText');
+  if (!l) { return; }
+  if (!t) { return; }
+  var tt = t;
+  while (tt) {
+    if (tt.tagName === 'TABLE') { break; }
+    tt = tt.parentNode;
+  }
+  if (!tt) { return; }
+  var c = l.getElementsByTagName('td')[0];
+  var w0 = l.style.width;
+  var p0 = c.style.padding;
   function center() {
-    var t = document.getElementById('fbcHeroText');
-    var l = document.getElementById('fbcHeroLogo');
-    if (!t) { return; }
-    if (!l) { return; }
+    var par = tt.parentNode;
+    par.insertBefore(tt, l);
+    l.style.width = w0;
+    c.style.padding = p0;
     t.style.paddingTop = '0px';
-    var tr = t.getBoundingClientRect();
+    var tr = tt.getBoundingClientRect();
     var lr = l.getBoundingClientRect();
-    if (Math.round((lr.top - tr.top) / 5) !== 0) { return; }
+    var gap = lr.top - (tr.top + tr.height - 5);
+    if (Math.max(gap, 0) === gap) {
+      par.insertBefore(l, tt);
+      l.style.width = '100%';
+      c.style.padding = '0px';
+      return;
+    }
     t.style.paddingTop = Math.max(0, Math.round((lr.height - tr.height) / 2)) + 'px';
   }
   center();
