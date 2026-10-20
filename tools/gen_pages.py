@@ -153,6 +153,58 @@ EQ_JS = """<script>
 })();
 </script>"""
 
+MAIL_JS = """<script>
+(function () {
+  // Email links: instead of opening a mail app, a click copies the address and shows it in place of the link text.
+  // Without this script the links still work as normal mailto links. Written without angle brackets or ampersands.
+  function copy(text, done) {
+    var ok = false;
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '0px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { ok = false; }
+    if (ok) { done(true); return; }
+    try {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+        return;
+      }
+    } catch (e2) { }
+    done(false);
+  }
+  document.addEventListener('click', function (ev) {
+    var a = ev.target;
+    while (a) {
+      if (a.tagName === 'A') { break; }
+      a = a.parentNode;
+    }
+    if (!a) { return; }
+    var href = a.getAttribute('href') || '';
+    if (href.toLowerCase().indexOf('mailto:') !== 0) { return; }
+    ev.preventDefault();
+    ev.stopPropagation();
+    var addr = href.slice(7).split('?')[0];
+    if (a.getAttribute('data-orig') === null) { a.setAttribute('data-orig', a.innerHTML); }
+    var orig = a.getAttribute('data-orig');
+    copy(addr, function (ok) {
+      a.style.whiteSpace = 'normal';
+      if (Math.min(window.innerWidth, 559) === window.innerWidth) { a.style.maxWidth = '150px'; a.style.wordBreak = 'break-all'; a.style.fontSize = '13px'; }
+      a.textContent = (ok ? 'Copied: ' : 'Email us at ') + addr;
+      clearTimeout(a.fbcTimer);
+      a.fbcTimer = setTimeout(function () { a.innerHTML = orig; a.style.whiteSpace = ''; a.style.maxWidth = ''; a.style.wordBreak = ''; a.style.fontSize = ''; }, 8000);
+    });
+  }, true);
+})();
+</script>"""
+
 _FILTER_TEMPLATE = """<script>
 (function () {
   // Written without angle brackets or ampersands so CMS editors cannot HTML-escape them and break the script.
@@ -406,7 +458,8 @@ def album(a):
 g_albums = sec(T(TR(TD(h("h2", '<a id="albums" name="albums"></a>Browse Recent Albums', 36, MAROON), valign="middle"), TD("&nbsp;", valign="middle", align="right"))) + sp(12)
                + c("Album grid: newest first; cards re-flow automatically") + flow([album(a) for a in ALBUMS], "album")
                + '<div id="fbcNoAlbums"></div>'
-               + c("Filter script: needs a CMS that keeps <script> tags (no style block or inline handlers needed)") + FILTER_JS, bg=LGRAY, pad="12px 0 0")
+               + c("Email script: clicking an email link copies the address and shows it (optional; without it the links open the mail app)") + MAIL_JS
+    + c("Filter script: needs a CMS that keeps <script> tags (no style block or inline handlers needed)") + FILTER_JS, bg=LGRAY, pad="12px 0 0")
 
 cta_col = fl_col
 cta_text = (h("h2", "Were you at an event?", 40, WHITE, fb=F("cta.heading")) + sp(12)

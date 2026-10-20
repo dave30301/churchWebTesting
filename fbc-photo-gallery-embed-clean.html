@@ -26,6 +26,56 @@
 <div style="font-size:0;line-height:0;"><br clear="all" style="clear:both;"></div>
 <div id="fbcNoAlbums"></div><script>
 (function () {
+  // Email links: instead of opening a mail app, a click copies the address and shows it in place of the link text.
+  // Without this script the links still work as normal mailto links. Written without angle brackets or ampersands.
+  function copy(text, done) {
+    var ok = false;
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '0px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) { ok = false; }
+    if (ok) { done(true); return; }
+    try {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+        return;
+      }
+    } catch (e2) { }
+    done(false);
+  }
+  document.addEventListener('click', function (ev) {
+    var a = ev.target;
+    while (a) {
+      if (a.tagName === 'A') { break; }
+      a = a.parentNode;
+    }
+    if (!a) { return; }
+    var href = a.getAttribute('href') || '';
+    if (href.toLowerCase().indexOf('mailto:') !== 0) { return; }
+    ev.preventDefault();
+    ev.stopPropagation();
+    var addr = href.slice(7).split('?')[0];
+    if (a.getAttribute('data-orig') === null) { a.setAttribute('data-orig', a.innerHTML); }
+    var orig = a.getAttribute('data-orig');
+    copy(addr, function (ok) {
+      a.style.whiteSpace = 'normal';
+      if (Math.min(window.innerWidth, 559) === window.innerWidth) { a.style.maxWidth = '150px'; a.style.wordBreak = 'break-all'; a.style.fontSize = '13px'; }
+      a.textContent = (ok ? 'Copied: ' : 'Email us at ') + addr;
+      clearTimeout(a.fbcTimer);
+      a.fbcTimer = setTimeout(function () { a.innerHTML = orig; a.style.whiteSpace = ''; a.style.maxWidth = ''; a.style.wordBreak = ''; a.style.fontSize = ''; }, 8000);
+    });
+  }, true);
+})();
+</script><script>
+(function () {
   // Written without angle brackets or ampersands so CMS editors cannot HTML-escape them and break the script.
   function each(list, fn) { Array.prototype.forEach.call(list, fn); }
   function paint(a, on) {
