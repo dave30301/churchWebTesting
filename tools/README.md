@@ -2,7 +2,7 @@
 
 Python scripts that produce the CMS-ready HTML embeds in the repo root. No dependencies.
 
-    python3 tools/gen_pages.py   # Sermons + Photo Gallery (also re-runs the Youth page)
+    python3 tools/gen_pages.py   # Sermons + Photo Gallery + Forms (also re-runs the Youth page)
     python3 tools/gen_youth.py   # Youth Ministry page only
 
 Outputs per page: `fbc-<page>-embed.html` (full instructions in comments) and
@@ -47,3 +47,5 @@ Plain `data-` attributes, invisible on the page:
 
 Helpers for adding labels in the generators: `F()`, `FH()`, `FV()`, `FL()`, `FI()`, `FITEM()`, `SPANS()` in `gen_youth.py`.
 Field names get their friendly labels from the `LABELS` table at the top of the script in `dashboard.html`.
+
+The Forms page is generated from the `FORMS` list at the bottom of `gen_pages.py` (all links are "#" placeholders until you set the real ones).

@@ -522,3 +522,70 @@ gallery = page(c("SECTION 1: Header - title, intro, buttons, cover photo (2 colu
                + c("SECTION 3: Browse recent albums - one Lightroom slideshow per card") + g_albums
                + c("SECTION 4: Call to action - send us your photos") + g_cta, ghdr, key="gallery")
 write("photo-gallery", gallery)
+
+# =====================================================================
+# FORMS
+# Edit the FORMS list below, then run:  python3 tools/gen_pages.py
+# Every form and link here is a PLACEHOLDER: replace the "#" links with the real PDF / online form addresses.
+# =====================================================================
+OFFICE_EMAIL = "[office@fbcmanassas.org]"
+# Newest/most-used first. (category key, category label, title, description, button text, link)
+FORMS = [
+    ("church", "Church Life", "Membership Interest Form", "Let us know you would like to join the church family and a leader will follow up with next steps.", "Fill out online", "#"),
+    ("church", "Church Life", "Baptism Request", "Share your testimony and ask to be baptized. We will contact you to schedule a date.", "Fill out online", "#"),
+    ("church", "Church Life", "Prayer Request", "Our prayer team would be honored to lift up you and your family. Requests are kept confidential.", "Fill out online", "#"),
+    ("youth", "Youth & Families", "Youth Registration", "Register your child or teen for youth ministry programs and events. One form per child.", "Download PDF", "#"),
+    ("youth", "Youth & Families", "Permission Slip", "Required for field trips and off-site events. Please return it to the youth leader before the event.", "Download PDF", "#"),
+    ("youth", "Youth & Families", "Photo Release", "Gives permission for photos of your child to be used on the church website and social media.", "Download PDF", "#"),
+    ("requests", "Requests", "Facility Use Request", "Request the sanctuary, fellowship hall or a classroom for a church-related event.", "Download PDF", "#"),
+    ("requests", "Requests", "Volunteer Application", "Interested in serving? Tell us where you would like to help and we will connect you with a team.", "Fill out online", "#"),
+    ("requests", "Requests", "Benevolence Request", "A confidential request for help from the church&rsquo;s care fund. Reviewed by the pastoral team.", "Download PDF", "#"),
+]
+def form_card(cat, label, title, desc, btext, href):
+    inner = (eyebrow(label, MAROON, 13, fb=F("tag", upper=True)) + sp(8)
+             + title_block(txt(title, 22, MAROON, "600", H, "line-height:1.2;", fb=F("title"))) + sp(6)
+             + T(TR(TD(txt(desc, 16, TGRAY, extra="line-height:1.5;", fb=F("desc", long=True)), valign="top", height="96", style="height:96px;")), width="100%") + sp(8)
+             + fluid_btn(btext, href, MAROON, WHITE, new_tab=True, fbl="button", fbh="button_url"))
+    return flow_card(inner, pad=22, height=290, gap=8, cats=cat, eq=True, item=FITEM("forms"))
+form_cards = [form_card(*f) for f in FORMS]
+
+forms_hero_text = (eyebrow("Resources", MAROON, 15, "0.16em", fb=F("hero.eyebrow", upper=True)) + sp(12) + h("h1", "Forms", 64, MAROON, lh="1.04", fb=F("hero.title")) + sp(12)
+                   + txt("Everything you need to join, serve, register or request, all in one place. Fill out a form online or download it to print.", 21, TGRAY, extra="line-height:1.5;", fb=F("hero.intro", long=True)) + sp(20)
+                   + fluid_btn("Contact the Office", "mailto:" + OFFICE_EMAIL, MAROON, WHITE, fbl="hero.contact", fbh="hero.contact_url"))
+forms_hero = section(TR(TD(rounded(forms_hero_text, CREAM, 20, "40px 32px", f"border:1px solid {GOLD};"))), pad="0 0 8px")
+
+forms_list = sec(
+    c("Filter chips: each has data-filter=KEY; a card shows when its data-cats contains KEY (script at the end of this section); one row, swipes sideways on narrow screens")
+    + chips([("All", "all"), ("Church Life", "church"), ("Youth & Families", "youth"), ("Requests", "requests")], ident="fbcFormFilters", scroll=True, target="#fbcFormFilters")
+    + head_row("All forms", pad_top=2) + sp(8)
+    + c("Forms grid: one card per form; cards re-flow automatically") + flow(form_cards, "form")
+    + '<div id="fbcNoForms"></div>'
+    + c("Script: equalizes the card heights (optional; the fixed heights are the fallback)") + EQ_JS
+    + c("Filter script: needs a CMS that keeps <script> tags (no style block or inline handlers needed)") + filter_js("fbcNoForms", "fbcFormFilters", "No forms in this category yet."), pad="0")
+
+f_cta_text = (h("h2", "Can&rsquo;t find what you need?", 40, WHITE, fb=F("cta.heading")) + sp(8)
+              + txt("Contact the church office and we will point you to the right form or help you fill it out.", 19, CREAM, extra="line-height:1.5;", fb=F("cta.text", long=True)))
+f_cta_inner = (fl_col(f_cta_text, "66%", 240, "0 24px 0 0") + fl_col(btn("Contact Us", "mailto:" + OFFICE_EMAIL, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url"), "34%", 220, "14px 0 0 0") + CLEAR)
+f_cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones")
+                       + rounded(f_cta_inner, DEEP, 20, "22px 24px"))), pad="0")
+
+fhdr = f"""<!-- =====================================================================
+  FBC FORMS PAGE - CMS EMBED MOCKUP
+  HOW TO USE: switch the CMS block to Source/HTML view and paste everything below.
+  Inline CSS + tables only (no <style> tags). Fonts are Fraunces + Source Sans 3 (falls back to
+  Georgia/Arial). Site header, breadcrumb and footer come from your CMS template (not included).
+
+  PLACEHOLDERS: every form below is a sample. Each card's button link is "#" until you set the real PDF or online-form
+  address (use the FBC Page Editor, or edit the href). The office email is {OFFICE_EMAIL} (OFFICE_EMAIL in tools/gen_pages.py).
+  PDF forms: upload the PDF to the CMS media library and paste its address as the button link.
+  ADDING A NEW FORM: copy one whole card (from "FORM CARD START" to "FORM CARD END"), paste it right under the
+  "NEWEST FORM FIRST" comment, then change its category, title, description and link. The other cards re-flow on their own.
+  CATEGORIES: the chips filter by category key (church, youth, requests). A card's data-cats must contain its key.
+
+{PALETTE}
+====================================================================== -->
+"""
+forms = page(c("SECTION 1: Header - title, intro, contact button") + forms_hero
+             + c("SECTION 2: Filter chips + forms grid") + forms_list
+             + c("SECTION 3: Call to action - Can't find what you need?") + f_cta, fhdr, key="forms")
+write("forms", forms)

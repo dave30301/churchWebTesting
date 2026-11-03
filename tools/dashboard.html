@@ -295,10 +295,10 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   function lsSet(v) { try { localStorage.setItem(LS, JSON.stringify(v)); } catch (e) { /* storage unavailable: drafts just aren't kept */ } }
 
   /* ---------- names shown in the form ---------- */
-  var PAGES = { sample: 'Sample page', sermons: 'Sermons', gallery: 'Photo Gallery', youth: 'Youth Ministry' };
-  var GROUPS = { hero: 'Header', latest: 'Latest message', recent: 'Recent messages', sermons: 'Recent messages', cta: 'Call-to-action band', featured: 'Featured album', albums: 'Browse albums',
+  var PAGES = { sample: 'Sample page', sermons: 'Sermons', gallery: 'Photo Gallery', forms: 'Forms', youth: 'Youth Ministry' };
+  var GROUPS = { hero: 'Header', latest: 'Latest message', recent: 'Recent messages', sermons: 'Recent messages', cta: 'Call-to-action band', featured: 'Featured album', forms: 'Forms', albums: 'Browse albums',
     info: 'Info strip', about: 'About', groups: 'Groups by age', events: 'Coming up', leader: 'Meet the leader', parents: 'For parents', more: 'More for young people' };
-  var LISTS = { sermons: { group: 'recent', one: 'Message', many: 'messages', add: 'Add a new message at the top' },
+  var LISTS = { forms: { group: 'forms', one: 'Form', many: 'forms', add: 'Add a new form at the top' }, sermons: { group: 'recent', one: 'Message', many: 'messages', add: 'Add a new message at the top' },
     albums: { group: 'albums', one: 'Album', many: 'albums', add: 'Add a new album at the top' },
     groups: { group: 'groups', one: 'Group', many: 'groups' }, events: { group: 'events', one: 'Event', many: 'events' }, more: { group: 'more', one: 'Card', many: 'cards' } };
   var LABELS = {
@@ -315,7 +315,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     'about.heading': 'Heading', 'about.text': 'Paragraph', 'groups.heading': 'Section heading', 'events.calendar_url': '"Full calendar" link', 'leader.name': 'Name', 'leader.role': 'Role', 'leader.message': 'Button text', 'leader.message_url': 'Button link (an email address works)',
     'parents.slip': 'First link text', 'parents.slip_url': 'First link address', 'parents.schedule': 'Second link text', 'parents.schedule_url': 'Second link address', 'more.heading': 'Section heading',
     /* inside a card */
-    'tag': 'Category label (shown above the title)', 'title': 'Title', 'pastor': 'Preacher', 'date': 'Date', 'video': 'YouTube video', 'photos': 'Number of photos', 'link': 'Album link (adobe.ly)', 'embed': 'Lightroom album',
+    'tag': 'Category label (shown above the title)', 'desc': 'Description', 'button': 'Button text', 'button_url': 'Button link (a PDF or online form address)', 'title': 'Title', 'pastor': 'Preacher', 'date': 'Date', 'video': 'YouTube video', 'photos': 'Number of photos', 'link': 'Album link (adobe.ly)', 'embed': 'Lightroom album',
     'name': 'Name', 'ages': 'Ages', 'when': 'When', 'month': 'Month', 'day': 'Day', 'sub': 'Second line', 'url': 'Link'
   };
   var ORDER = ['eyebrow', 'title', 'name', 'heading', 'pastor', 'date', 'photos', 'series', 'scripture', 'ages', 'when', 'month', 'day', 'sub', 'text', 'summary', 'intro', 'video', 'embed', 'notes', 'notes_url', 'tag', 'button', 'button_url', 'link', 'url'];
