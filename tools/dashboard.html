@@ -301,6 +301,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   var LISTS = { forms: { group: 'forms', one: 'Form', many: 'forms', add: 'Add a new form at the top' }, sermons: { group: 'recent', one: 'Message', many: 'messages', add: 'Add a new message at the top' },
     albums: { group: 'albums', one: 'Album', many: 'albums', add: 'Add a new album at the top' },
     groups: { group: 'groups', one: 'Group', many: 'groups' }, events: { group: 'events', one: 'Event', many: 'events' }, more: { group: 'more', one: 'Card', many: 'cards' } };
+  for (var fsn = 1; fsn <= 8; fsn++) { LISTS['fs' + fsn] = { group: 'fs' + fsn, one: 'Form', many: 'forms', add: 'Add a new form at the top' }; }
   var LABELS = {
     'hero.eyebrow': 'Small heading above the title', 'hero.title': 'Page title', 'hero.intro': 'Intro text', 'hero.watch': 'Button text', 'hero.watch_url': 'Button link',
     'hero.portfolio': 'First button text', 'hero.portfolio_url': 'First button link', 'hero.contact': 'Second button text', 'hero.contact_url': 'Second button link (an email address works)',
@@ -315,6 +316,8 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     'about.heading': 'Heading', 'about.text': 'Paragraph', 'groups.heading': 'Section heading', 'events.calendar_url': '"Full calendar" link', 'leader.name': 'Name', 'leader.role': 'Role', 'leader.message': 'Button text', 'leader.message_url': 'Button link (an email address works)',
     'parents.slip': 'First link text', 'parents.slip_url': 'First link address', 'parents.schedule': 'Second link text', 'parents.schedule_url': 'Second link address', 'more.heading': 'Section heading',
     /* inside a card */
+    'cta.before': 'Text before the phone number', 'cta.phone': 'Phone number', 'cta.after': 'Text after the phone number',
+    'fs1.heading': 'Section heading', 'fs2.heading': 'Section heading', 'fs3.heading': 'Section heading', 'fs4.heading': 'Section heading', 'fs5.heading': 'Section heading', 'fs6.heading': 'Section heading', 'fs7.heading': 'Section heading', 'fs8.heading': 'Section heading',
     'tag': 'Category label (shown above the title)', 'desc': 'Description', 'icon': 'Icon (an emoji)', 'forms.s1': 'First section heading', 'forms.s2': 'Second section heading', 'button': 'Button text', 'button_url': 'Button link (a PDF or online form address)', 'title': 'Title', 'pastor': 'Preacher', 'date': 'Date', 'video': 'YouTube video', 'photos': 'Number of photos', 'link': 'Album link (adobe.ly)', 'embed': 'Lightroom album',
     'name': 'Name', 'ages': 'Ages', 'when': 'When', 'month': 'Month', 'day': 'Day', 'sub': 'Second line', 'url': 'Link'
   };
@@ -544,6 +547,35 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   var itemTitleEls = [];
   function refreshItemTitles() { itemTitleEls.forEach(function (x) { x.el.textContent = itemSummary(x.item); }); }
 
+  function groupTitle(key, s) {
+    // table-based forms page: each section is named after its own (editable) heading
+    if (/^fs\d+$/.test(key)) {
+      for (var i = 0; i < s.fields.length; i++) { if (s.fields[i].name === key + '.heading') { return readField(s.fields[i]) || 'Forms'; } }
+    }
+    return GROUPS[key] || humanize(key);
+  }
+  /* A grid is a table (data-fbc-cards) that lays its cards out three to a row. After any add, remove, move or duplicate,
+     the cards are put back into rows of three in page order, so a new row appears on its own when the last one is full. */
+  function reflowGrids(doc) {
+    var pads = ['0 10px 20px 0', '0 10px 20px 10px', '0 0 20px 10px'];
+    $$('table[data-fbc-cards]', doc.body).forEach(function (tbl) {
+      var items = $$('[data-fbc-item]', tbl);
+      if (!items.length) return;
+      items.forEach(function (it) { if (it.parentNode) it.parentNode.removeChild(it); });
+      var tb = tbl.tBodies[0];
+      if (!tb) { tb = doc.createElement('tbody'); tbl.appendChild(tb); }
+      while (tb.firstChild) tb.removeChild(tb.firstChild);
+      var total = Math.ceil(items.length / 3) * 3, tr = null;
+      for (var i = 0; i < total; i++) {
+        if (i % 3 === 0) { tr = doc.createElement('tr'); tb.appendChild(tr); }
+        var td = doc.createElement('td');
+        td.setAttribute('width', '33%'); td.setAttribute('valign', 'top');
+        td.setAttribute('style', 'padding: ' + pads[i % 3] + ';');
+        if (items[i]) td.appendChild(items[i]);
+        tr.appendChild(td);
+      }
+    });
+  }
   function sectionKeyFor(listName) { return (LISTS[listName] && LISTS[listName].group) || listName; }
   function renderForm() {
     var host = $('#sections'); host.textContent = ''; itemTitleEls = [];
@@ -566,7 +598,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
       var s = secs[key], count = s.fields.length + s.lists.reduce(function (n, l) { return n + l.items.length; }, 0);
       var det = mk('details', { class: 'sec', open: first || count <= 12 });
       first = false;
-      det.appendChild(mk('summary', {}, [mk('h3', { text: GROUPS[key] || humanize(key) }),
+      det.appendChild(mk('summary', {}, [mk('h3', { text: groupTitle(key, s) }),
         mk('span', { class: 'count', text: s.lists.length ? s.lists.reduce(function (n, l) { return n + l.items.length; }, 0) + ' ' + (LISTS[s.lists[0].name] ? LISTS[s.lists[0].name].many : 'items') : s.fields.length + ' fields' }), mk('span', { class: 'caret' })]));
       var body = mk('div', { class: 'sec-body' });
       var pairs = {};
@@ -638,7 +670,13 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     var first = l.items[0]; if (!first) return;
     var c = newItemFrom(first);
     // blank text so nothing from the copied card is left behind by accident
-    $$('[data-fbc]', c).forEach(function (n) { n.textContent = n.hasAttribute('data-fbc-upper') ? 'CATEGORY' : '[' + humanize(n.getAttribute('data-fbc')) + ']'; });
+    $$('[data-fbc]', c).forEach(function (n) {
+      var nm = n.getAttribute('data-fbc');
+      if (nm === 'icon') { n.textContent = '\uD83D\uDCC4'; }
+      else if (nm === 'button') { n.textContent = 'Download PDF'; n.setAttribute('href', '#'); }
+      else { n.textContent = n.hasAttribute('data-fbc-upper') ? 'CATEGORY' : '[' + humanize(nm) + ']'; }
+    });
+    if (c.hasAttribute('data-keywords')) c.setAttribute('data-keywords', '');   // search still finds a new card by its title and description
     if (c.hasAttribute('data-cats')) c.setAttribute('data-cats', '');   // a new card starts with no filter picked, so it is never mis-filed by accident
     first.parentNode.insertBefore(c, first);
     added++; structChanges++;
@@ -661,6 +699,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   }
   function rescanAfter(focusItem, openIt) {
     var scrollY = window.scrollY;
+    reflowGrids(S.doc);
     var carry = S.fields.map(function (f) { return { node: f.node, kind: f.kind, orig: f.orig }; });
     var fresh = scan(S.doc);
     fresh.fields.forEach(function (nf) {

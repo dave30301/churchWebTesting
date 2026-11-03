@@ -49,3 +49,5 @@ Helpers for adding labels in the generators: `F()`, `FH()`, `FV()`, `FL()`, `FI(
 Field names get their friendly labels from the `LABELS` table at the top of the script in `dashboard.html`.
 
 The Forms page is generated from the `FORMS` list at the bottom of `gen_pages.py` (all links are "#" placeholders until you set the real ones).
+
+The table-based Forms page (`fbc-forms-tables-recolored.html`) carries edit labels too: section headings, cards (`data-fbc-item="fs1"`..) and the footer. In the Page Editor, "Add a new form" puts a card first in its section and the cards re-flow into rows of three (a new row appears when the last is full). Search finds new cards by their title and description.
