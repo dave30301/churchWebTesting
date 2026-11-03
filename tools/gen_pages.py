@@ -542,26 +542,32 @@ FORM_SECTIONS = [
         ("&#129309;", "Ministry Support Request", "General administrative or logistical support paperwork for ministry leaders and volunteers.", "support assistance help ministry", "Download Form", "#"),
     ]),
 ]
+FORMS_FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"   # same system font stack as the supplied layout
 def form_card(icon, title, desc, kw, btext, href):
-    tile = (f'<table role="presentation" width="52" cellpadding="0" cellspacing="0" border="0" style="width:52px;border-collapse:separate;border-radius:12px;"><tr>'
-            f'<td align="center" valign="middle" width="52" height="52" bgcolor="{LGRAY}" style="width:52px;height:52px;background-color:{LGRAY};border-radius:12px;font-size:26px;line-height:52px;text-align:center;"{F("icon")}>{icon}</td></tr></table>')
-    inner = (tile + sp(12)
-             + title_block(txt(title, 21, MAROON, "600", H, "line-height:1.2;", fb=F("title"))) + sp(6)
-             + T(TR(TD(txt(desc, 16, TGRAY, extra="line-height:1.5;", fb=F("desc", long=True)), valign="top", height="100", style="height:100px;")), width="100%") + sp(10)
-             + fluid_btn(btext, href, MAROON, WHITE, new_tab=True, fbl="button", fbh="button_url"))
-    return flow_card(inner, pad=22, height=326, gap=8, eq=True, item=FITEM("forms") + f' data-keywords="{kw}"')
+    """Icon tile on the left, text on the right (a two-cell table, since flex is not safe in this CMS). White card, gold border."""
+    tile = (f'<td valign="top" width="60" style="width:60px;padding:0 16px 0 0;"><table role="presentation" width="52" cellpadding="0" cellspacing="0" border="0" style="width:52px;border-collapse:separate;border-radius:8px;"><tr>'
+            f'<td align="center" valign="middle" width="52" height="52" bgcolor="{CREAM}" style="width:52px;height:52px;background-color:{CREAM};border-radius:8px;font-size:28px;line-height:52px;text-align:center;"{F("icon")}>{icon}</td></tr></table></td>')
+    a = (f'<a href="{href}" target="_blank" rel="noopener noreferrer"{F("button")}{FH("button_url")} style="text-decoration:none;display:block;white-space:nowrap;padding:7px 14px;'
+         f'font-family:{FORMS_FONT};font-size:14px;font-weight:600;color:{WHITE};text-align:center;">{btext}</a>')
+    button = T(TR(f'<td align="center" bgcolor="{MAROON}" style="background-color:{MAROON};border-radius:6px;">{a}</td>'), width="auto", style="border-radius:6px;")
+    text = (f'<div style="margin:0 0 6px 0;font-family:{FORMS_FONT};font-size:18px;font-weight:600;line-height:1.25;color:{MAROON};"{F("title")}>{title}</div>'
+            f'<div style="margin:0 0 14px 0;font-family:{FORMS_FONT};font-size:15px;line-height:1.45;color:{TGRAY};"{F("desc", long=True)}>{desc}</div>' + button)
+    box = (f'<table role="presentation" width="100%" height="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{WHITE}" style="width:100%;height:100%;border-collapse:separate;background-color:{WHITE};border:1px solid {GOLD};border-radius:10px;">'
+           f'<tr><td valign="top" height="100%" style="height:100%;padding:20px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr>{tile}<td valign="top">{text}</td></tr></table></td></tr></table>')
+    return (f'<table role="presentation" align="left" width="33%" cellpadding="0" cellspacing="0" border="0" data-eq="1"{FITEM("forms")} data-keywords="{kw}" '
+            f'style="width:33.333%;min-width:320px;max-width:100%;border-collapse:separate;"><tr><td valign="top" height="270" style="height:270px;padding:0 10px 20px 10px;">{box}</td></tr></table>')
 
 def form_section(n, heading, items):
-    head = T(TR(f'<td style="border-bottom:2px solid {GOLD};padding:0 0 8px 0;">' + h("h2", heading, 30, MAROON, fb=F(f"forms.s{n}")) + "</td>"), width="100%")
+    head = T(TR(f'<td style="border-bottom:2px solid {GOLD};padding:0 0 8px 0;"><h2{F(f"forms.s{n}")} style="margin:0;font-family:{FORMS_FONT};font-size:22px;font-weight:700;line-height:1.25;color:{MAROON};">{heading}</h2></td>'), width="100%")
     return (f'<div data-fbc-section="{n}">' + head + sp(20) + c("Forms in this section: copy one whole card to add another; the other cards re-flow on their own")
-            + flow([form_card(*it) for it in items], "form") + sp(16) + "</div>")
+            + flow([form_card(*it) for it in items], "form") + sp(20) + "</div>")
 
-forms_hero_text = (eyebrow("Resources", MAROON, 15, "0.16em", fb=F("hero.eyebrow", upper=True)) + sp(12) + h("h1", "Church Forms &amp; Resources", 56, MAROON, lh="1.08", fb=F("hero.title")) + sp(14)
-                   + txt("Find facility requests, ministry planning tools, administrative documents, and spiritual growth guides below. Click any card to download or view the document.", 20, TGRAY, extra="line-height:1.5;", fb=F("hero.intro", long=True)))
-forms_hero = section(TR(TD(rounded(forms_hero_text, CREAM, 20, "40px 32px", f"border:1px solid {GOLD};"))), pad="0 0 8px")
-
-search_box = (f'<input type="text" id="fbcFormSearch" placeholder="Search forms (e.g., wedding, facility, marketing)..." '
-              f'style="width:100%;box-sizing:border-box;padding:14px 22px;border:1px solid {GOLD};border-radius:999px;background-color:{WHITE};font-family:{B};font-size:17px;color:{DARK};outline:none;">')
+forms_head = (f'<div style="text-align:center;padding:0 0 8px 0;">'
+              f'<h1{F("hero.title")} style="margin:0 0 10px 0;font-family:{FORMS_FONT};font-size:35px;font-weight:700;line-height:1.2;color:{MAROON};">Church Forms &amp; Resources</h1>'
+              f'<p{F("hero.intro", long=True)} style="margin:0 auto;max-width:700px;font-family:{FORMS_FONT};font-size:17px;line-height:1.5;color:{TGRAY};">Find facility requests, ministry planning tools, administrative documents, and spiritual growth guides below. Click any card to download or view the document.</p></div>')
+search_box = T(TR(TD(f'<input type="text" id="fbcFormSearch" placeholder="Search forms (e.g., wedding, facility, marketing)..." '
+                     f'style="width:100%;box-sizing:border-box;padding:12px 16px;border:1px solid {GOLD};border-radius:8px;background-color:{WHITE};font-family:{FORMS_FONT};font-size:16px;color:{DARK};outline:none;">')),
+               width="500", style="max-width:100%;", extra=' align="center"')
 FORM_SEARCH_JS = r"""<script>
 (function () {
   // Search box: a card shows when every word typed appears in its keywords or text. A section with no visible
@@ -588,7 +594,7 @@ FORM_SEARCH_JS = r"""<script>
     var empty = document.getElementById('fbcNoForms');
     if (empty) {
       empty.textContent = shown ? '' : 'No forms match your search.';
-      empty.style.cssText = shown ? '' : 'padding:24px 12px 36px 12px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#666666;';
+      empty.style.cssText = shown ? '' : 'text-align:center;padding:24px 12px 36px 12px;font-family:Arial,Helvetica,sans-serif;font-size:18px;color:#666666;';
     }
   }
   box.addEventListener('input', run);
@@ -596,29 +602,25 @@ FORM_SEARCH_JS = r"""<script>
 })();
 </script>"""
 
-forms_list = sec(
-    c("Search box: filters the cards below as you type (script at the end of this section)")
-    + search_box + sp(28)
+forms_body = sec(
+    c("Page header: centered title and intro")
+    + forms_head + sp(22)
+    + c("Search box: filters the cards below as you type (script at the end of this section)")
+    + search_box + sp(34)
     + "".join(form_section(i + 1, hd, its) for i, (hd, its) in enumerate(FORM_SECTIONS))
     + '<div id="fbcNoForms"></div>'
     + c("Script: equalizes the card heights (optional; the fixed heights are the fallback)") + EQ_JS
-    + c("Search script: needs a CMS that keeps <script> tags (no inline handlers needed)") + FORM_SEARCH_JS, pad="0")
-
-f_cta_text = (h("h2", "Can&rsquo;t find what you need?", 40, WHITE, fb=F("cta.heading")) + sp(8)
-              + txt("Contact the church office and we will point you to the right form or help you fill it out.", 19, CREAM, extra="line-height:1.5;", fb=F("cta.text", long=True)))
-f_cta_inner = (fl_col(f_cta_text, "66%", 240, "0 24px 0 0") + fl_col(btn("Contact Us", "mailto:" + OFFICE_EMAIL, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url"), "34%", 220, "14px 0 0 0") + CLEAR)
-f_cta = section(TR(TD(c("Call to action: text and button sit side by side on wide screens and stack on phones")
-                       + rounded(f_cta_inner, DEEP, 20, "22px 24px"))), pad="0")
+    + c("Search script: needs a CMS that keeps <script> tags (no inline handlers needed)") + FORM_SEARCH_JS, pad="20px 0")
 
 fhdr = f"""<!-- =====================================================================
   FBC FORMS PAGE - CMS EMBED
   HOW TO USE: switch the CMS block to Source/HTML view and paste everything below.
-  Inline CSS + tables only (no <style> tags). Fonts are Fraunces + Source Sans 3 (falls back to Georgia/Arial).
+  Inline CSS + tables only (no <style> tags). Same layout as the supplied forms page (centered header, search box,
+  sections with an underlined heading, icon cards with a small button) in the FBC colors.
   Site header, breadcrumb and footer come from your CMS template (not included).
 
   PLACEHOLDERS: every card's button link is "#" until you set the real PDF or online-form address (use the FBC Page
   Editor, or edit the href). PDF forms: upload the PDF to the CMS media library and paste its address as the link.
-  The office email is {OFFICE_EMAIL} (OFFICE_EMAIL in tools/gen_pages.py).
   ADDING A FORM: copy one whole card (from "FORM CARD START" to "FORM CARD END"), paste it into the section it belongs to,
   then change its icon, title, description, button and link. Put extra words people might search for in its data-keywords.
   The other cards re-flow on their own. To add a section, copy one whole <div data-fbc-section="..."> block.
@@ -626,7 +628,5 @@ fhdr = f"""<!-- ================================================================
 {PALETTE}
 ====================================================================== -->
 """
-forms = page(c("SECTION 1: Header - title and intro") + forms_hero
-             + c("SECTION 2: Search box + forms grouped by section") + forms_list
-             + c("SECTION 3: Call to action - Can't find what you need?") + f_cta, fhdr, key="forms")
+forms = page(c("SECTION 1: Header, search box and forms grouped by section") + forms_body, fhdr, key="forms")
 write("forms", forms)
