@@ -541,9 +541,108 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     return wrap;
   }
   function itemSummary(item) {
+    if (item.getAttribute('data-fbc-item') === 'pens') {
+      var ph = penHeader(item);
+      return ph ? ph.title + '  \u00b7  ' + ph.line1 : 'Pastor\u2019s Pen (no header found)';
+    }
     var t = fieldIn(item, 'title') || fieldIn(item, 'name'), d = fieldIn(item, 'date');
     var title = t ? readField(t) : 'Item';
     return d && readField(d) ? title + '  ·  ' + readField(d) : title;
+  }
+  /* ---------- Pastor's Pen files ---------- */
+  var MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+  function txtOf(n) { return (n.textContent || '').replace(/\s+/g, ' ').trim(); }
+  // A Pen's header is the row with three lines: "1st Sunday · Sunday, November 1, 2026", the sermon title, and the verses.
+  function penHeader(root) {
+    var cells = root.getElementsByTagName('td');
+    for (var i = 0; i < cells.length; i++) {
+      var k = cells[i].children;
+      if (k.length >= 3) {
+        var first = txtOf(k[0]);
+        if (/Sunday/.test(first) && /\d{4}/.test(first)) return { line1: first, title: txtOf(k[1]), verses: txtOf(k[2]) };
+      }
+    }
+    return null;
+  }
+  function penDay(h) {   // a sortable number such as 20261101, or 0 if the header has no readable date
+    var m = h && /([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})/.exec(h.line1);
+    if (!m) return 0;
+    var mo = MONTHS.indexOf(m[1].toLowerCase());
+    return mo < 0 ? 0 : (+m[3]) * 10000 + (mo + 1) * 100 + (+m[2]);
+  }
+  function penWrap(inner) {
+    var tbl = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0;">';
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-pen="1" data-fbc-item="pens" style="width:100%;border-collapse:separate;margin:0;"><tr><td valign="top" style="padding:0;">'
+      + tbl + '<tr><td style="background-color:#ffffff;padding:0;">' + inner + '</td></tr></table></td></tr></table>';
+  }
+  function penBody(html) {   // everything inside <body> of a saved Pen file (or the pasted markup as it is)
+    var m = /<body[^>]*>([\s\S]*)<\/body>/i.exec(html);
+    return (m ? m[1] : html).trim().replace(/width="100%%"/g, 'width="100%"');
+  }
+  // Put each Pen into the page, newest Sunday first, and report what happened.
+  function addPens(l, files) {   // files: [{name, html}]
+    var notes = [], last = null, ok = 0;
+    files.forEach(function (f) {
+      var inner = penBody(f.html);
+      if (!/<table/i.test(inner)) { notes.push(f.name + ': no Pen table found, skipped'); return; }
+      var box = S.doc.createElement('div'); box.innerHTML = penWrap(inner);
+      var card = box.firstChild;
+      var h = penHeader(card), day = penDay(h);
+      if (!h) { notes.push(f.name + ': skipped. No header line like "1st Sunday \u00b7 Sunday, November 1, 2026" was found, so the library could not name its card'); return; }
+      if (!day) notes.push(f.name + ': could not read the date, so it was placed at the top');
+      var items = $$('[data-fbc-item="pens"]', S.doc.body), ref = null, same = false;
+      for (var i = 0; i < items.length; i++) {
+        var d = penDay(penHeader(items[i]));
+        if (d === day) same = true;
+        if (d <= day || !day) { ref = items[i]; break; }
+      }
+      if (same) notes.push((h ? h.title : f.name) + ': another Pen has the same date, so both are kept (remove the old one if this replaces it)');
+      var anchor = ref || items[items.length - 1], par = anchor.parentNode;
+      var start = S.doc.createComment(' PEN CARD START: copy from here '), end = S.doc.createComment(' PEN CARD END ');
+      var before = ref ? ref : anchor.nextSibling;
+      par.insertBefore(S.doc.createTextNode('\n'), before);
+      par.insertBefore(start, before); par.insertBefore(S.doc.createTextNode('\n'), before);
+      par.insertBefore(card, before); par.insertBefore(S.doc.createTextNode('\n'), before);
+      par.insertBefore(end, before);
+      card._new = true; last = card; ok++; added++; structChanges++;
+    });
+    if (ok) rescanAfter(last, false);
+    toast(ok ? 'Added ' + ok + ' Pen' + (ok === 1 ? '' : 's') + (notes.length ? '. Check the notes under the button.' : '. Library cards are named from each Pen header.') : 'Nothing added. ' + (notes[0] || ''));
+    penNotes = notes;
+    showPenNotes();
+  }
+  var penNotes = [];
+  function showPenNotes() { var el = $('#penNotes'); if (el) el.textContent = penNotes.join('  ·  '); }
+  function readFiles(list, done) {
+    var arr = Array.prototype.slice.call(list), out = [], left = arr.length;
+    if (!left) return;
+    arr.forEach(function (file, i) {
+      var r = new FileReader();
+      r.onload = function () { out[i] = { name: file.name, html: String(r.result || '') }; if (--left === 0) done(out); };
+      r.onerror = function () { out[i] = { name: file.name, html: '' }; if (--left === 0) done(out); };
+      r.readAsText(file);
+    });
+  }
+  function penBar(l, bar) {
+    var pick = mk('input', { type: 'file', accept: '.html,.htm,text/html', multiple: true, hidden: true });
+    pick.addEventListener('change', function () {
+      readFiles(pick.files, function (fs) { addPens(l, fs.filter(function (f) { return f.html; })); });
+      pick.value = '';
+    });
+    bar.appendChild(pick);
+    bar.appendChild(mk('button', { class: 'btn primary small', type: 'button', text: '+ Add Pen files', onclick: function () { pick.click(); } }));
+    bar.appendChild(mk('span', { class: 'note', text: 'Pick one or many Pastor’s Pen HTML files. Each one is placed by its date, newest first, and its library card is named from the Pen’s own header.' }));
+    var paste = mk('details', { class: 'item' });
+    paste.appendChild(mk('summary', {}, [mk('span', { class: 'ttl', text: 'Or paste one Pen’s HTML' })]));
+    var ta = mk('textarea', { rows: '5', placeholder: 'Paste the whole Pen HTML here', style: 'width:100%;font-family:monospace;font-size:.85rem' });
+    var go = mk('button', { class: 'btn small', type: 'button', text: 'Add this Pen', onclick: function () {
+      if (!ta.value.trim()) { toast('Paste the Pen HTML first.'); return; }
+      addPens(l, [{ name: 'Pasted Pen', html: ta.value }]); ta.value = '';
+    } });
+    paste.appendChild(mk('div', { class: 'item-body' }, [ta, go]));
+    var wrap = mk('div', { style: 'flex-basis:100%' }, [paste, mk('p', { class: 'hint', id: 'penNotes', 'aria-live': 'polite' })]);
+    bar.appendChild(wrap);
+    showPenNotes();
   }
   var itemTitleEls = [];
   function refreshItemTitles() { itemTitleEls.forEach(function (x) { x.el.textContent = itemSummary(x.item); }); }
@@ -613,7 +712,8 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   function renderList(l) {
     var meta = LISTS[l.name] || { one: 'Item', many: 'items' }, box = mk('div', { class: 'formcol' });
     var bar = mk('div', { class: 'listbar' });
-    if (!l.fixed) {
+    if (!l.fixed && l.name === 'pens') { penBar(l, bar); }
+    else if (!l.fixed) {
       bar.appendChild(mk('button', { class: 'btn primary small', type: 'button', text: '+ ' + (meta.add || 'Add a new ' + meta.one.toLowerCase()), onclick: function () { addItem(l); } }));
       bar.appendChild(mk('span', { class: 'note', text: 'Newest first. The page re-flows the other cards for you.' }));
     }
@@ -646,6 +746,10 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
       body.appendChild(fieldRow(f));
     });
     if (item.hasAttribute('data-cats')) body.appendChild(catsRow(item));
+    if (l.name === 'pens') {
+      var ph = penHeader(item);
+      body.appendChild(mk('div', { class: 'hint', text: ph ? 'Library card: ' + ph.line1 + '  /  ' + ph.title + '  /  ' + ph.verses + '. The card is named from this Pen\u2019s header, so to change it, remove this Sunday and add the corrected Pen file.' : 'No Sunday header was found in this Pen, so its library card will be blank.' }));
+    }
     det.appendChild(body);
     if (item._new) det.open = true;
     return det;

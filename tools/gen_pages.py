@@ -640,29 +640,10 @@ write("forms", forms)
 PEN_IMG_BASE = "https://fbcmanassas.org/wp-content/uploads/"
 PEN_IMG_EXT = ".jpg"
 PENS = [
-    # A full Pen: the week's actual Pastor's Pen HTML, embedded as is. Save the file in pens_html/ and name it here.
-    dict(embed="pens_html/Pastors_Pen_2026-11-01_READY.html", date="Sunday, November 1, 2026", title="The 3 A.M. Bench!", preacher="Rev. Dr. Keith Savage, Senior Servant"),
-    # Older Sundays: summary cards until each week's Pen HTML is added (replace the dict with an embed= entry like the one above).
-    dict(date="Sunday, October 25, 2026", occ="4th Sunday &middot; New Disciples and Baptism", title="The Danger of Homemade Gods!", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="Judges 17:1-6; Judges 18:18-19, 27 (GW)",
-         summary="Micah built his own shrine and hired his own priest, then watched it all carried away. A god you can build, someone else can steal. Build by the Master Architect&rsquo;s blueprint.", img="Pen_2026-10-25_img", img2="Pen_2026-10-25_img2"),
-    dict(date="Sunday, October 18, 2026", occ="3rd Sunday &middot; Breast Cancer Awareness Sunday", title="The Left-Handed Deliverer", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="Judges 3:15-23, 30 (NLT)",
-         summary="Three movements through the story of Ehud: the public tribute, the private message, and the peace regained.", img="Pen_2026-10-18_img", img2="Pen_2026-10-18_img2"),
-    dict(date="Sunday, October 11, 2026", occ="154th Church Anniversary", title="Faith That Endures; Faith That Overcomes!", preacher="Rev. Dr. Tom Alexander, Jr., Youth Pastor", scripture="James 1:2-4; Matthew 16:18",
-         summary="Since 1872 this church has carried its people through Reconstruction, Jim Crow, the Great Depression and COVID. Trials produce a faith that endures, and the church is the people.", img="Pen_2026-10-11_img", img2="Pen_2026-10-11_img2"),
-    dict(date="Sunday, October 4, 2026", occ="Women&rsquo;s Day", title="Bottom Line Living!", preacher="Rev. Dr. Charlotte McSwine", scripture="Daniel 3:16-28 (NRSV)",
-         summary="Three young men in the fiery furnace, and the bottom line of a faith that will not bow whether or not deliverance comes.", img="Pen_2026-10-04_img", img2="Pen_2026-10-04_img2"),
-    dict(date="Sunday, September 27, 2026", occ="Music and Arts Sunday &middot; Communion", title="The Rhythm of the Redeemed", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="Exodus 15:20-21; Psalm 150 (NKJV)",
-         summary="Praise is a command, not a suggestion. When a redeemed people find their rhythm, everything that has breath praises the Lord.", img="Pen_2026-09-27_img", img2="Pen_2026-09-27_img2"),
-    dict(date="Sunday, September 20, 2026", occ="Christian Education Sunday", title="Watch God Work", preacher="Rev. Ralston Mitchell", scripture="Isaiah 61:1-4 (NIV)",
-         summary="Whatever needs restoring in your life, turn it over and watch God work. You do not need a pulpit to testify.", img="Pen_2026-09-20_img", img2="Pen_2026-09-20_img2"),
-    dict(date="Sunday, September 13, 2026", occ="Grandparents Day", title="Glory After This!", preacher="Rev. Kara Franklin-Taylor", scripture="2 Corinthians 4:15, 18 (NIV)",
-         summary="What do you do when you pray and nothing changes? Trust God when you cannot trace Him, because there will be glory after this.", img="Pen_2026-09-13_img", img2="Pen_2026-09-13_img2"),
-    dict(date="Sunday, September 6, 2026", occ="1st Sunday", title="When Dead Things Live Again", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="2 Kings 13:20-21 (NLT)",
-         summary="A dream, a relationship, a hope you quietly buried. God raises us up to stand, and He stands us up to serve.", img="Pen_2026-09-06_img", img2="Pen_2026-09-06_img2"),
-    dict(date="Sunday, August 30, 2026", occ="5th Sunday &middot; CREW Sunday", title="When God Gives You Grapes", preacher="Rev. Rachel K. Baltimore", scripture="Numbers 13:23, 33; Numbers 14:24",
-         summary="When God gives you grapes, will you see the grapes or the giants? A word for a young adult Sunday led by CREW.", img="Pen_2026-08-30_img", img2=""),
-    dict(date="Sunday, August 23, 2026", occ="Guest Minister", title="It Is Well: The Settled Soul", preacher="Rev. Dr. Richard T. Davis, Sr.", scripture="Philippians 4:11-13; Psalm 62:1-2 (NIV)",
-         summary="Learning the contentment Paul learned, and a soul that waits quietly on God alone.", img="", img2=""),
+    # Each entry is one week's actual Pastor's Pen HTML (saved in pens_html/). For now the library is five copies of the
+    # November 1 Pen, so the library can be tried out. Real weeks are added with the FBC Page Editor (Pastor's Pen files),
+    # which names each library card from the Pen's own header.
+    dict(embed="pens_html/Pastors_Pen_2026-11-01_READY.html") for _ in range(5)
 ]
 PEN_NOTE = "The full Pen continues here: Sunday Recap, Life Applicable Gems, and Sit With This This Week."
 
@@ -673,9 +654,7 @@ def pen_embed_html(path):
     return (m.group(1) if m else raw).strip().replace('width="100%%"', 'width="100%"')
 
 def pen_embed_card(p):
-    a = lambda t: t.replace('"', "&quot;")
-    return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-pen="1" data-pen-date="{a(p["date"])}" '
-            f'data-pen-title="{a(p["title"])}" data-pen-by="{a(p["preacher"])}" style="width:100%;border-collapse:separate;">'
+    return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-pen="1"{FITEM("pens")} style="width:100%;border-collapse:separate;">'
             f'<tr><td valign="top" style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;">'
             f'<tr><td style="background-color:{WHITE};padding:0;">{pen_embed_html(p["embed"])}</td></tr></table></td></tr></table>')
 
@@ -745,11 +724,22 @@ PEN_JS = r"""<script>
   var entries = [];
   var box = document.getElementById('fbcPenBox');
   function each(list, fn) { Array.prototype.forEach.call(list, fn); }
-  function field(card, name, attr) {
-    var a = card.getAttribute(attr);
-    if (a) { return a; }
-    var n = card.querySelector('[data-fbc="' + name + '"]');
-    return n ? (n.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') : '';
+  // The Pen's header is the row with three lines: "1st Sunday . Sunday, November 1, 2026", the title, and the verses.
+  function words(n) { return (n.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, ''); }
+  function header(card) {
+    var cells = card.getElementsByTagName('td');
+    for (var k = 0; k !== cells.length; k++) {
+      var kids = cells[k].children;
+      if (kids.length !== 0) {
+        if (Math.max(kids.length, 3) === kids.length) {
+          var first = words(kids[0]);
+          if (/Sunday/.test(first)) {
+            if (/[0-9][0-9][0-9][0-9]/.test(first)) { return [first, words(kids[1]), words(kids[2])]; }
+          }
+        }
+      }
+    }
+    return ['', '', ''];
   }
   function paint(e, on) {
     e.a.style.backgroundColor = on ? '#6B1735' : '#ffffff';
@@ -774,9 +764,10 @@ PEN_JS = r"""<script>
     a.setAttribute('href', '#');
     a.setAttribute('data-pen-idx', String(j));
     a.style.cssText = 'display:block;text-decoration:none;margin:0 0 10px 0;padding:12px 14px;border:1px solid #C9A55C;border-radius:12px;background-color:#ffffff;';
-    var d = line(field(card, 'date', 'data-pen-date').replace(/^[A-Za-z]+, /, ''), 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
-    var t = line(field(card, 'title', 'data-pen-title'), 'font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;line-height:1.3;');
-    var p = line(field(card, 'preacher', 'data-pen-by'), 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
+    var h3 = header(card);
+    var d = line(h3[0], 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
+    var t = line(h3[1], 'font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;line-height:1.3;');
+    var p = line(h3[2], 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
     a.appendChild(d); a.appendChild(t); a.appendChild(p);
     lib.appendChild(a);
     entries.push({ a: a, d: d, t: t, p: p });
@@ -828,11 +819,12 @@ phdr = f"""<!-- ================================================================
   Inline CSS + tables only (no <style> tags). Pictures are loaded from the CMS media library.
   LOGO: the header logo is PEN_LOGO in tools/gen_pages.py; upload it to the CMS and set that address.
 
-  EACH SUNDAY: the left column shows that Sunday's actual Pastor's Pen. In the Pen file, copy everything inside <body> ... </body>
-  (the one big table) and paste it inside a new "PEN CARD START" ... "PEN CARD END" wrapper (copy the wrapper from the
-  November 1 entry). Fill in the wrapper's data-pen-date, data-pen-title and data-pen-by: the library list on the right is built from them.
+  EACH SUNDAY: the left column shows that Sunday's actual Pastor's Pen. Easiest: open tools/dashboard.html (FBC Page Editor),
+  load this page, and use "Add Pen files" to pick one or many Pen HTML files. By hand: copy everything inside <body> ... </body>
+  of the Pen file (the one big table) and paste it inside a new "PEN CARD START" ... "PEN CARD END" wrapper (copy a wrapper from below).
+  The library list on the right names each card from the Pen's own maroon header: line 1 "1st Sunday . Sunday, November 1, 2026",
+  line 2 the sermon title, line 3 the verses. Nothing else to fill in.
   Put the newest Sunday first, and delete the oldest at the bottom to keep a rolling 12 months.
-  Older Sundays that are still summary cards can be replaced the same way when their Pen HTML is available.
   The Pen's own pictures keep loading from their addresses in the Pen file (the CMS media library).
 
 {PALETTE}
