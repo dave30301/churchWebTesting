@@ -640,6 +640,9 @@ write("forms", forms)
 PEN_IMG_BASE = "https://fbcmanassas.org/wp-content/uploads/"
 PEN_IMG_EXT = ".jpg"
 PENS = [
+    # A full Pen: the week's actual Pastor's Pen HTML, embedded as is. Save the file in pens_html/ and name it here.
+    dict(embed="pens_html/Pastors_Pen_2026-11-01_READY.html", date="Sunday, November 1, 2026", title="The 3 A.M. Bench!", preacher="Rev. Dr. Keith Savage, Senior Servant"),
+    # Older Sundays: summary cards until each week's Pen HTML is added (replace the dict with an embed= entry like the one above).
     dict(date="Sunday, October 25, 2026", occ="4th Sunday &middot; New Disciples and Baptism", title="The Danger of Homemade Gods!", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="Judges 17:1-6; Judges 18:18-19, 27 (GW)",
          summary="Micah built his own shrine and hired his own priest, then watched it all carried away. A god you can build, someone else can steal. Build by the Master Architect&rsquo;s blueprint.", img="Pen_2026-10-25_img", img2="Pen_2026-10-25_img2"),
     dict(date="Sunday, October 18, 2026", occ="3rd Sunday &middot; Breast Cancer Awareness Sunday", title="The Left-Handed Deliverer", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="Judges 3:15-23, 30 (NLT)",
@@ -663,7 +666,22 @@ PENS = [
 ]
 PEN_NOTE = "The full Pen continues here: Sunday Recap, Life Applicable Gems, and Sit With This This Week."
 
+def pen_embed_html(path):
+    """The body of a saved Pen file: its top-level table. (Fixes a stray width="100%%" some exports contain.)"""
+    raw = open(R + path, encoding="utf-8").read()
+    m = re.search(r"<body[^>]*>(.*)</body>", raw, re.S | re.I)
+    return (m.group(1) if m else raw).strip().replace('width="100%%"', 'width="100%"')
+
+def pen_embed_card(p):
+    a = lambda t: t.replace('"', "&quot;")
+    return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-pen="1" data-pen-date="{a(p["date"])}" '
+            f'data-pen-title="{a(p["title"])}" data-pen-by="{a(p["preacher"])}" style="width:100%;border-collapse:separate;">'
+            f'<tr><td valign="top" style="padding:0 0 20px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border:1px solid {GOLD};">'
+            f'<tr><td style="background-color:{WHITE};padding:0;">{pen_embed_html(p["embed"])}</td></tr></table></td></tr></table>')
+
 def pen_card(p):
+    if p.get("embed"):
+        return pen_embed_card(p)
     def pic(name, field, alt):
         return (f'<img src="{PEN_IMG_BASE}{name}{PEN_IMG_EXT}"{FI(field)} alt="{alt}" width="1280" height="720" '
                 'style="display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border:0;border-radius:12px;">')
@@ -682,7 +700,7 @@ def pen_card(p):
         inner += sp(16) + pic(p["img2"], "img2", "")
     inner += sp(14) + txt(PEN_NOTE, 14, TGRAY, extra="line-height:1.5;", fb=F("note", long=True))
     card_html = rounded(inner, CREAM, 16, 20, f"border:1px solid {GOLD};")
-    return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"{FITEM("pens")} style="width:100%;border-collapse:separate;">'
+    return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-pen="1"{FITEM("pens")} style="width:100%;border-collapse:separate;">'
             f'<tr><td valign="top" style="padding:0 0 20px 0;">{card_html}</td></tr></table>')
 
 pen_cards = "".join(f"<!-- PEN CARD START: copy from here -->\n{pen_card(p)}\n<!-- PEN CARD END -->\n" for p in PENS)
@@ -703,13 +721,15 @@ PEN_JS = r"""<script>
   // Pastor's Pen library. Each Sunday is one card in the left column; the list on the right is built from those cards,
   // and clicking a Sunday shows only that card. With scripts blocked every card simply stays stacked, newest first.
   // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.
-  var pens = document.querySelectorAll('table[data-fbc-item="pens"]');
+  var pens = document.querySelectorAll('table[data-pen]');
   var lib = document.getElementById('fbcPenLib');
   if (!lib) { return; }
   if (!pens.length) { return; }
   var entries = [];
   function each(list, fn) { Array.prototype.forEach.call(list, fn); }
-  function field(card, name) {
+  function field(card, name, attr) {
+    var a = card.getAttribute(attr);
+    if (a) { return a; }
     var n = card.querySelector('[data-fbc="' + name + '"]');
     return n ? (n.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') : '';
   }
@@ -736,9 +756,9 @@ PEN_JS = r"""<script>
     a.setAttribute('href', '#');
     a.setAttribute('data-pen-idx', String(j));
     a.style.cssText = 'display:block;text-decoration:none;margin:0 0 10px 0;padding:12px 14px;border:1px solid #C9A55C;border-radius:12px;background-color:#ffffff;';
-    var d = line(field(card, 'date').replace(/^[A-Za-z]+, /, ''), 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
-    var t = line(field(card, 'title'), 'font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;line-height:1.3;');
-    var p = line(field(card, 'preacher'), 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
+    var d = line(field(card, 'date', 'data-pen-date').replace(/^[A-Za-z]+, /, ''), 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
+    var t = line(field(card, 'title', 'data-pen-title'), 'font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;line-height:1.3;');
+    var p = line(field(card, 'preacher', 'data-pen-by'), 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
     a.appendChild(d); a.appendChild(t); a.appendChild(p);
     lib.appendChild(a);
     entries.push({ a: a, d: d, t: t, p: p });
@@ -767,12 +787,12 @@ phdr = f"""<!-- ================================================================
   HOW TO USE: switch the CMS block to Source/HTML view and paste everything below.
   Inline CSS + tables only (no <style> tags). Pictures are loaded from the CMS media library.
 
-  EACH SUNDAY: upload the week's picture(s) with date stamped names (Pen_2026-11-01_img.jpg, Pen_2026-11-01_img2.jpg) so no week
-  overwrites another. The page expects them at {PEN_IMG_BASE}NAME{PEN_IMG_EXT} (PEN_IMG_BASE in tools/gen_pages.py).
-  ADDING A SUNDAY: copy one whole card (from "PEN CARD START" to "PEN CARD END"), paste it right under the "NEWEST SUNDAY FIRST"
-  comment, then change its date, occasion, title, preacher, scripture, summary and picture names. The library list on the right
-  builds itself from the cards. To keep a rolling 12 months, delete the oldest card at the bottom.
-  A week with no picture: replace the <img> with a maroon title banner (copy the banner from the August 23 card).
+  EACH SUNDAY: the left column shows that Sunday's actual Pastor's Pen. In the Pen file, copy everything inside <body> ... </body>
+  (the one big table) and paste it inside a new "PEN CARD START" ... "PEN CARD END" wrapper (copy the wrapper from the
+  November 1 entry). Fill in the wrapper's data-pen-date, data-pen-title and data-pen-by: the library list on the right is built from them.
+  Put the newest Sunday first, and delete the oldest at the bottom to keep a rolling 12 months.
+  Older Sundays that are still summary cards can be replaced the same way when their Pen HTML is available.
+  The Pen's own pictures keep loading from their addresses in the Pen file (the CMS media library).
 
 {PALETTE}
 ====================================================================== -->
