@@ -707,10 +707,24 @@ pen_cards = "".join(f"<!-- PEN CARD START: copy from here -->\n{pen_card(p)}\n<!
 pens_block = ("<!-- NEWEST SUNDAY FIRST: paste the new Pen card on the line below this one. The library list on the right builds itself from these cards. -->\n"
               + pen_cards + "<!-- To keep a rolling 12 months, delete the last card above (the oldest) -->\n")
 
-pen_hero_inner = (f'<div style="text-align:center;">' + txt("The Pastor&rsquo;s Pen", 14, GOLD, "bold", extra="letter-spacing:0.18em;text-transform:uppercase;line-height:1.3;text-align:center;", fb=F("hero.eyebrow")) + sp(10)
-                  + h("h1", "A Weekly Word From Your Pastor", 44, WHITE, lh="1.12", fb=F("hero.title")) + sp(10)
-                  + txt("Every Sunday, written down, so the Word goes home with you.", 20, CREAM, extra="line-height:1.5;text-align:center;", fb=F("hero.intro", long=True)) + "</div>")
-pen_hero = sec(rounded(pen_hero_inner, MAROON, 20, "36px 24px"), pad="0 0 24px")
+# Header: page name and purpose on the left, logo on the right (same layout and script as Photo Gallery and Forms)
+PEN_LOGO = "https://fbcmanassas.org/wp-content/uploads/PastorsPenLogo.png"
+pen_logo_img = (f'<img src="{PEN_LOGO}"{FI("hero.logo")} alt="The Pastor&rsquo;s Pen" width="1000" height="1000" '
+                'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:340px;border:0;">')
+pen_head_text = (eyebrow("Weekly Word", MAROON, 15, "0.16em", fb=F("hero.eyebrow", upper=True)) + sp(20)
+                 + h("h1", "The Pastor&rsquo;s Pen", 64, MAROON, lh="1.04", fb=F("hero.title")) + sp(20)
+                 + txt("A weekly word from your pastor. Every Sunday, written down, so the Word goes home with you.", 21, TGRAY, extra="line-height:1.5;", fb=F("hero.intro", long=True)))
+pen_hero = section(TR(TD(
+    fl_col(pen_head_text, "48%", 320, "0", td_id="fbcHeroText")
+    + c("IMAGE: Pastor's Pen logo - replace the src with the CMS media URL")
+    + fl_col(f'<div style="text-align:center;font-size:0;line-height:0;">{pen_logo_img}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
+    + CLEAR + c("Script: centers the text beside the logo on wide screens and puts the logo above the text on phones") + HERO_JS)), pad="16px 0 24px")
+
+# Footer band (this used to be the page header)
+pen_foot_inner = (f'<div style="text-align:center;">' + txt("The Pastor&rsquo;s Pen", 14, GOLD, "bold", extra="letter-spacing:0.18em;text-transform:uppercase;line-height:1.3;text-align:center;", fb=F("cta.eyebrow")) + sp(10)
+                  + h("h2", "A Weekly Word From Your Pastor", 40, WHITE, lh="1.12", fb=F("cta.heading")) + sp(10)
+                  + txt("Every Sunday, written down, so the Word goes home with you.", 20, CREAM, extra="line-height:1.5;text-align:center;", fb=F("cta.text", long=True)) + "</div>")
+pen_foot = sec(sp(8) + rounded(pen_foot_inner, MAROON, 20, "36px 24px"), pad="24px 0 0")
 
 PEN_LIB_FALLBACK = "Scroll down to read earlier Sundays."
 pen_lib_col = (txt("The Library &nbsp;&middot;&nbsp; Rolling 12 Months", 13, GOLD, "bold", extra="letter-spacing:0.14em;text-transform:uppercase;", fb=F("lib.label")) + sp(10)
@@ -803,6 +817,7 @@ phdr = f"""<!-- ================================================================
   FBC PASTOR'S PEN PAGE - CMS EMBED
   HOW TO USE: switch the CMS block to Source/HTML view and paste everything below.
   Inline CSS + tables only (no <style> tags). Pictures are loaded from the CMS media library.
+  LOGO: the header logo is PEN_LOGO in tools/gen_pages.py; upload it to the CMS and set that address.
 
   EACH SUNDAY: the left column shows that Sunday's actual Pastor's Pen. In the Pen file, copy everything inside <body> ... </body>
   (the one big table) and paste it inside a new "PEN CARD START" ... "PEN CARD END" wrapper (copy the wrapper from the
@@ -814,5 +829,5 @@ phdr = f"""<!-- ================================================================
 {PALETTE}
 ====================================================================== -->
 """
-pen_page = page(c("SECTION 1: Header band") + pen_hero + c("SECTION 2: This Sunday's Pen + the library") + pen_body, phdr, key="pen")
+pen_page = page(c("SECTION 1: Header - page name and purpose on the left, logo on the right") + pen_hero + c("SECTION 2: This Sunday's Pen + the library") + pen_body + c("SECTION 3: Footer band") + pen_foot, phdr, key="pen")
 write("pastors-pen", pen_page)
