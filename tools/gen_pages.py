@@ -630,3 +630,152 @@ fhdr = f"""<!-- ================================================================
 """
 forms = page(c("SECTION 1: Header, search box and forms grouped by section") + forms_body, fhdr, key="forms")
 write("forms", forms)
+
+# =====================================================================
+# PASTOR'S PEN  (library page, built from the roadmap's live sample site)
+# Edit PENS below, then run:  python3 tools/gen_pages.py
+# Newest first. Picture names are date stamped (Pen_YYYY-MM-DD_img) so no week overwrites another;
+# upload each picture to the CMS media library and the page finds it at PEN_IMG_BASE + name + ".jpg".
+# =====================================================================
+PEN_IMG_BASE = "https://fbcmanassas.org/wp-content/uploads/"
+PEN_IMG_EXT = ".jpg"
+PENS = [
+    dict(date="Sunday, October 25, 2026", occ="4th Sunday &middot; New Disciples and Baptism", title="The Danger of Homemade Gods!", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="Judges 17:1-6; Judges 18:18-19, 27 (GW)",
+         summary="Micah built his own shrine and hired his own priest, then watched it all carried away. A god you can build, someone else can steal. Build by the Master Architect&rsquo;s blueprint.", img="Pen_2026-10-25_img", img2="Pen_2026-10-25_img2"),
+    dict(date="Sunday, October 18, 2026", occ="3rd Sunday &middot; Breast Cancer Awareness Sunday", title="The Left-Handed Deliverer", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="Judges 3:15-23, 30 (NLT)",
+         summary="Three movements through the story of Ehud: the public tribute, the private message, and the peace regained.", img="Pen_2026-10-18_img", img2="Pen_2026-10-18_img2"),
+    dict(date="Sunday, October 11, 2026", occ="154th Church Anniversary", title="Faith That Endures; Faith That Overcomes!", preacher="Rev. Dr. Tom Alexander, Jr., Youth Pastor", scripture="James 1:2-4; Matthew 16:18",
+         summary="Since 1872 this church has carried its people through Reconstruction, Jim Crow, the Great Depression and COVID. Trials produce a faith that endures, and the church is the people.", img="Pen_2026-10-11_img", img2="Pen_2026-10-11_img2"),
+    dict(date="Sunday, October 4, 2026", occ="Women&rsquo;s Day", title="Bottom Line Living!", preacher="Rev. Dr. Charlotte McSwine", scripture="Daniel 3:16-28 (NRSV)",
+         summary="Three young men in the fiery furnace, and the bottom line of a faith that will not bow whether or not deliverance comes.", img="Pen_2026-10-04_img", img2="Pen_2026-10-04_img2"),
+    dict(date="Sunday, September 27, 2026", occ="Music and Arts Sunday &middot; Communion", title="The Rhythm of the Redeemed", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="Exodus 15:20-21; Psalm 150 (NKJV)",
+         summary="Praise is a command, not a suggestion. When a redeemed people find their rhythm, everything that has breath praises the Lord.", img="Pen_2026-09-27_img", img2="Pen_2026-09-27_img2"),
+    dict(date="Sunday, September 20, 2026", occ="Christian Education Sunday", title="Watch God Work", preacher="Rev. Ralston Mitchell", scripture="Isaiah 61:1-4 (NIV)",
+         summary="Whatever needs restoring in your life, turn it over and watch God work. You do not need a pulpit to testify.", img="Pen_2026-09-20_img", img2="Pen_2026-09-20_img2"),
+    dict(date="Sunday, September 13, 2026", occ="Grandparents Day", title="Glory After This!", preacher="Rev. Kara Franklin-Taylor", scripture="2 Corinthians 4:15, 18 (NIV)",
+         summary="What do you do when you pray and nothing changes? Trust God when you cannot trace Him, because there will be glory after this.", img="Pen_2026-09-13_img", img2="Pen_2026-09-13_img2"),
+    dict(date="Sunday, September 6, 2026", occ="1st Sunday", title="When Dead Things Live Again", preacher="Rev. Dr. Keith Savage, Senior Servant", scripture="2 Kings 13:20-21 (NLT)",
+         summary="A dream, a relationship, a hope you quietly buried. God raises us up to stand, and He stands us up to serve.", img="Pen_2026-09-06_img", img2="Pen_2026-09-06_img2"),
+    dict(date="Sunday, August 30, 2026", occ="5th Sunday &middot; CREW Sunday", title="When God Gives You Grapes", preacher="Rev. Rachel K. Baltimore", scripture="Numbers 13:23, 33; Numbers 14:24",
+         summary="When God gives you grapes, will you see the grapes or the giants? A word for a young adult Sunday led by CREW.", img="Pen_2026-08-30_img", img2=""),
+    dict(date="Sunday, August 23, 2026", occ="Guest Minister", title="It Is Well: The Settled Soul", preacher="Rev. Dr. Richard T. Davis, Sr.", scripture="Philippians 4:11-13; Psalm 62:1-2 (NIV)",
+         summary="Learning the contentment Paul learned, and a soul that waits quietly on God alone.", img="", img2=""),
+]
+PEN_NOTE = "The full Pen continues here: Sunday Recap, Life Applicable Gems, and Sit With This This Week."
+
+def pen_card(p):
+    def pic(name, field, alt):
+        return (f'<img src="{PEN_IMG_BASE}{name}{PEN_IMG_EXT}"{FI(field)} alt="{alt}" width="1280" height="720" '
+                'style="display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border:0;border-radius:12px;">')
+    if p["img"]:
+        top = pic(p["img"], "img1", p["title"].replace('"', "&quot;"))
+    else:   # no picture that week: a maroon title banner stands in
+        top = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-radius:12px;"><tr>'
+               f'<td align="center" valign="middle" height="150" bgcolor="{MAROON}" style="height:150px;background-color:{MAROON};border-radius:12px;padding:16px 20px;font-family:{H};font-size:28px;line-height:1.2;color:{WHITE};text-align:center;"{F("banner")}>{p["title"]}</td></tr></table>')
+    inner = (top + sp(16)
+             + txt(SPANS([("date", p["date"]), ("occ", p["occ"])]), 13, MAROON, "bold", extra="letter-spacing:0.1em;text-transform:uppercase;line-height:1.35;") + sp(8)
+             + h("h3", p["title"], 30, MAROON, "600", "1.15", fb=F("title")) + sp(8)
+             + txt(SPANS([("preacher", p["preacher"])], sep="") , 16, TGRAY, "600", extra="line-height:1.4;") 
+             + txt(f'<span{F("scripture")}>{p["scripture"]}</span>', 16, TGRAY, extra="line-height:1.4;") + sp(12)
+             + txt(p["summary"], 18, DARK, extra="line-height:1.55;", fb=F("summary", long=True)))
+    if p["img2"]:
+        inner += sp(16) + pic(p["img2"], "img2", "")
+    inner += sp(14) + txt(PEN_NOTE, 14, TGRAY, extra="line-height:1.5;", fb=F("note", long=True))
+    card_html = rounded(inner, CREAM, 16, 20, f"border:1px solid {GOLD};")
+    return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"{FITEM("pens")} style="width:100%;border-collapse:separate;">'
+            f'<tr><td valign="top" style="padding:0 0 20px 0;">{card_html}</td></tr></table>')
+
+pen_cards = "".join(f"<!-- PEN CARD START: copy from here -->\n{pen_card(p)}\n<!-- PEN CARD END -->\n" for p in PENS)
+pens_block = ("<!-- NEWEST SUNDAY FIRST: paste the new Pen card on the line below this one. The library list on the right builds itself from these cards. -->\n"
+              + pen_cards + "<!-- To keep a rolling 12 months, delete the last card above (the oldest) -->\n")
+
+pen_hero_inner = (f'<div style="text-align:center;">' + txt("The Pastor&rsquo;s Pen", 14, GOLD, "bold", extra="letter-spacing:0.18em;text-transform:uppercase;line-height:1.3;text-align:center;", fb=F("hero.eyebrow")) + sp(10)
+                  + h("h1", "A Weekly Word From Your Pastor", 44, WHITE, lh="1.12", fb=F("hero.title")) + sp(10)
+                  + txt("Every Sunday, written down, so the Word goes home with you.", 20, CREAM, extra="line-height:1.5;text-align:center;", fb=F("hero.intro", long=True)) + "</div>")
+pen_hero = sec(rounded(pen_hero_inner, MAROON, 20, "36px 24px"), pad="0 0 24px")
+
+PEN_LIB_FALLBACK = "Scroll down to read earlier Sundays."
+pen_lib_col = (txt("The Library &nbsp;&middot;&nbsp; Rolling 12 Months", 13, GOLD, "bold", extra="letter-spacing:0.14em;text-transform:uppercase;", fb=F("lib.label")) + sp(10)
+               + f'<div id="fbcPenLib" style="max-height:640px;overflow-y:auto;font-family:{B};font-size:15px;color:{TGRAY};">{PEN_LIB_FALLBACK}</div>' + sp(10)
+               + txt("Archive: 2026 &nbsp;&middot;&nbsp; Older years move here each year.", 14, TGRAY, extra="line-height:1.5;", fb=F("lib.archive")))
+PEN_JS = r"""<script>
+(function () {
+  // Pastor's Pen library. Each Sunday is one card in the left column; the list on the right is built from those cards,
+  // and clicking a Sunday shows only that card. With scripts blocked every card simply stays stacked, newest first.
+  // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.
+  var pens = document.querySelectorAll('table[data-fbc-item="pens"]');
+  var lib = document.getElementById('fbcPenLib');
+  if (!lib) { return; }
+  if (!pens.length) { return; }
+  var entries = [];
+  function each(list, fn) { Array.prototype.forEach.call(list, fn); }
+  function field(card, name) {
+    var n = card.querySelector('[data-fbc="' + name + '"]');
+    return n ? (n.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') : '';
+  }
+  function paint(e, on) {
+    e.a.style.backgroundColor = on ? '#6B1735' : '#ffffff';
+    e.a.style.borderColor = on ? '#6B1735' : '#C9A55C';
+    e.d.style.color = on ? '#E3C78F' : '#666666';
+    e.t.style.color = on ? '#ffffff' : '#6B1735';
+    e.p.style.color = on ? '#F7F3EC' : '#666666';
+  }
+  function show(i) {
+    each(pens, function (p, j) { p.style.display = (j === i) ? '' : 'none'; });
+    each(entries, function (e, j) { paint(e, j === i); });
+  }
+  function line(text, css) {
+    var d = document.createElement('div');
+    d.style.cssText = css;
+    d.textContent = text;
+    return d;
+  }
+  lib.textContent = '';
+  each(pens, function (card, j) {
+    var a = document.createElement('a');
+    a.setAttribute('href', '#');
+    a.setAttribute('data-pen-idx', String(j));
+    a.style.cssText = 'display:block;text-decoration:none;margin:0 0 10px 0;padding:12px 14px;border:1px solid #C9A55C;border-radius:12px;background-color:#ffffff;';
+    var d = line(field(card, 'date').replace(/^[A-Za-z]+, /, ''), 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
+    var t = line(field(card, 'title'), 'font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;line-height:1.3;');
+    var p = line(field(card, 'preacher'), 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
+    a.appendChild(d); a.appendChild(t); a.appendChild(p);
+    lib.appendChild(a);
+    entries.push({ a: a, d: d, t: t, p: p });
+  });
+  document.addEventListener('click', function (ev) {
+    var a = ev.target.closest ? ev.target.closest('a[data-pen-idx]') : null;
+    if (!a) { return; }
+    ev.preventDefault();
+    ev.stopPropagation();
+    var i = parseInt(a.getAttribute('data-pen-idx'), 10);
+    show(i);
+    var r = pens[i].getBoundingClientRect();
+    if (Math.max(r.top, 0) !== r.top) { pens[i].scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }, true);
+  show(0);
+})();
+</script>"""
+pen_body = sec(
+    c("Two columns: the Pen cards on the left (the selected Sunday shows), the library list on the right (built by the script below). They stack on phones.")
+    + fl_col(pens_block, "62%", 340, "0 12px 0 0")
+    + fl_col(pen_lib_col, "38%", 280, "0 0 0 12px")
+    + CLEAR + c("Library script: builds the list from the cards and shows the Sunday you click (optional; without it every card stays stacked)") + PEN_JS, pad="0")
+
+phdr = f"""<!-- =====================================================================
+  FBC PASTOR'S PEN PAGE - CMS EMBED
+  HOW TO USE: switch the CMS block to Source/HTML view and paste everything below.
+  Inline CSS + tables only (no <style> tags). Pictures are loaded from the CMS media library.
+
+  EACH SUNDAY: upload the week's picture(s) with date stamped names (Pen_2026-11-01_img.jpg, Pen_2026-11-01_img2.jpg) so no week
+  overwrites another. The page expects them at {PEN_IMG_BASE}NAME{PEN_IMG_EXT} (PEN_IMG_BASE in tools/gen_pages.py).
+  ADDING A SUNDAY: copy one whole card (from "PEN CARD START" to "PEN CARD END"), paste it right under the "NEWEST SUNDAY FIRST"
+  comment, then change its date, occasion, title, preacher, scripture, summary and picture names. The library list on the right
+  builds itself from the cards. To keep a rolling 12 months, delete the oldest card at the bottom.
+  A week with no picture: replace the <img> with a maroon title banner (copy the banner from the August 23 card).
+
+{PALETTE}
+====================================================================== -->
+"""
+pen_page = page(c("SECTION 1: Header band") + pen_hero + c("SECTION 2: This Sunday's Pen + the library") + pen_body, phdr, key="pen")
+write("pastors-pen", pen_page)
