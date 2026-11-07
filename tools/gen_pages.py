@@ -718,7 +718,7 @@ pen_hero = section(TR(TD(
     fl_col(pen_head_text, "48%", 320, "0", td_id="fbcHeroText")
     + c("IMAGE: Pastor's Pen logo - replace the src with the CMS media URL")
     + fl_col(f'<div style="text-align:center;font-size:0;line-height:0;">{pen_logo_img}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
-    + CLEAR + c("Script: centers the text beside the logo on wide screens and puts the logo above the text on phones") + HERO_JS)), pad="16px 0 24px")
+    + CLEAR + c("Script: centers the text beside the logo on wide screens and puts the logo above the text on phones") + HERO_JS)), pad="0 0 24px")
 
 # Footer: call to action (text left, buttons right; stacks on phones like the other pages' bands)
 pen_foot_text = (txt("Worship With Us", 14, GOLD, "bold", extra="letter-spacing:0.18em;text-transform:uppercase;line-height:1.3;", fb=F("cta.eyebrow")) + sp(10)
@@ -839,4 +839,6 @@ phdr = f"""<!-- ================================================================
 ====================================================================== -->
 """
 pen_page = page(c("SECTION 1: Header - page name and purpose on the left, logo on the right") + pen_hero + c("SECTION 2: This Sunday's Pen + the library") + pen_body + c("SECTION 3: Call to action") + pen_foot, phdr, key="pen")
+# No theme padding or margin at the top of the page or under the footer: every bare cell and table gets explicit zeros
+pen_page = pen_page.replace('<td style="">', '<td style="padding:0;margin:0;">').replace("border-collapse:separate;", "border-collapse:separate;margin:0;")
 write("pastors-pen", pen_page)
