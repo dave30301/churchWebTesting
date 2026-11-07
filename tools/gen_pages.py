@@ -794,6 +794,12 @@ PEN_JS = r"""<script>
     if (Math.max(r.top, 0) !== r.top) { holder.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   }, true);
   function fit() {
+    // The library list scrolls on its own. This is set here (not only in the markup) because some CMS editors drop
+    // overflow from inline styles but keep what a script sets.
+    lib.style.maxHeight = '640px';
+    lib.style.overflowY = 'auto';
+    lib.style.overflow = 'auto';
+    lib.style.webkitOverflowScrolling = 'touch';
     if (!box) { return; }
     box.style.maxHeight = '';
     box.style.overflowY = '';
