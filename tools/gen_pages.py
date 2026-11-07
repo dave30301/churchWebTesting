@@ -676,7 +676,7 @@ def pen_embed_card(p):
     a = lambda t: t.replace('"', "&quot;")
     return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-pen="1" data-pen-date="{a(p["date"])}" '
             f'data-pen-title="{a(p["title"])}" data-pen-by="{a(p["preacher"])}" style="width:100%;border-collapse:separate;">'
-            f'<tr><td valign="top" style="padding:0 0 20px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border:1px solid {GOLD};">'
+            f'<tr><td valign="top" style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;">'
             f'<tr><td style="background-color:{WHITE};padding:0;">{pen_embed_html(p["embed"])}</td></tr></table></td></tr></table>')
 
 def pen_card(p):
@@ -795,7 +795,7 @@ PEN_JS = r"""<script>
 </script>"""
 pen_body = sec(
     c("Two columns: the Pen on the left (the selected Sunday shows), the library list on the right (built by the script below). Side by side, each column scrolls on its own; on phones they stack and the page scrolls normally.")
-    + fl_col(f'<div id="fbcPenBox">{pens_block}</div>', "62%", 340, "0 12px 0 0")
+    + fl_col(f'<div id="fbcPenBox" style="border:1px solid {GOLD};background-color:{WHITE};">{pens_block}</div>', "62%", 340, "0 12px 0 0")
     + fl_col(pen_lib_col, "38%", 280, "0 0 0 12px")
     + CLEAR + c("Library script: builds the list from the cards and shows the Sunday you click (optional; without it every card stays stacked)") + PEN_JS, pad="0")
 
