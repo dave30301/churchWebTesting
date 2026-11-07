@@ -726,6 +726,7 @@ PEN_JS = r"""<script>
   if (!lib) { return; }
   if (!pens.length) { return; }
   var entries = [];
+  var box = document.getElementById('fbcPenBox');
   function each(list, fn) { Array.prototype.forEach.call(list, fn); }
   function field(card, name, attr) {
     var a = card.getAttribute(attr);
@@ -770,15 +771,31 @@ PEN_JS = r"""<script>
     ev.stopPropagation();
     var i = parseInt(a.getAttribute('data-pen-idx'), 10);
     show(i);
-    var r = pens[i].getBoundingClientRect();
-    if (Math.max(r.top, 0) !== r.top) { pens[i].scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    var holder = box ? box : pens[i];
+    if (box) { box.scrollTop = 0; }
+    var r = holder.getBoundingClientRect();
+    if (Math.max(r.top, 0) !== r.top) { holder.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   }, true);
+  function fit() {
+    if (!box) { return; }
+    box.style.maxHeight = '';
+    box.style.overflowY = '';
+    var pr = box.getBoundingClientRect();
+    var lr = lib.getBoundingClientRect();
+    if (Math.max(pr.right - lr.left - 2, 0) === 0) {
+      box.style.maxHeight = '700px';
+      box.style.overflowY = 'auto';
+    }
+  }
   show(0);
+  fit();
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
 })();
 </script>"""
 pen_body = sec(
-    c("Two columns: the Pen cards on the left (the selected Sunday shows), the library list on the right (built by the script below). They stack on phones.")
-    + fl_col(pens_block, "62%", 340, "0 12px 0 0")
+    c("Two columns: the Pen on the left (the selected Sunday shows), the library list on the right (built by the script below). Side by side, each column scrolls on its own; on phones they stack and the page scrolls normally.")
+    + fl_col(f'<div id="fbcPenBox">{pens_block}</div>', "62%", 340, "0 12px 0 0")
     + fl_col(pen_lib_col, "38%", 280, "0 0 0 12px")
     + CLEAR + c("Library script: builds the list from the cards and shows the Sunday you click (optional; without it every card stays stacked)") + PEN_JS, pad="0")
 
