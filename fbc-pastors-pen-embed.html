@@ -8,7 +8,8 @@
   load this page, and use "Add Pen files" to pick one or many Pen HTML files. By hand: copy everything inside <body> ... </body>
   of the Pen file (the one big table) and paste it inside a new "PEN CARD START" ... "PEN CARD END" wrapper (copy a wrapper from below).
   The library list on the right names each card from the Pen's own maroon header: line 1 "1st Sunday . Sunday, November 1, 2026",
-  line 2 the sermon title, line 3 the verses. Nothing else to fill in.
+  line 2 the sermon title, line 3 the verses. Nothing else to fill in. If a Pen has no such header, give its wrapper the
+  attributes data-pen-line1, data-pen-title and data-pen-verses (the FBC Page Editor fills them in for you); they win over the header.
   Put the newest Sunday first, and delete the oldest at the bottom to keep a rolling 12 months.
   The Pen's own pictures keep loading from their addresses in the Pen file (the CMS media library).
 
@@ -132,6 +133,8 @@
     a.setAttribute('data-pen-idx', String(j));
     a.style.cssText = 'display:block;text-decoration:none;margin:0 0 10px 0;padding:12px 14px;border:1px solid #C9A55C;border-radius:12px;background-color:#ffffff;';
     var h3 = header(card);
+    var keep = ['data-pen-line1', 'data-pen-title', 'data-pen-verses'];
+    for (var q = 0; q !== 3; q++) { if (card.hasAttribute(keep[q])) { h3[q] = card.getAttribute(keep[q]); } }
     var d = line(h3[0], 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');
     var t = line(h3[1], 'font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;line-height:1.3;');
     var p = line(h3[2], 'font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;');

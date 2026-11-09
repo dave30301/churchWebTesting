@@ -320,6 +320,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     'cta.eyebrow': 'Small heading above the title', 'cta.button2': 'Second button text', 'cta.button2_url': 'Second button link', 'cta.before': 'Text before the phone number', 'cta.phone': 'Phone number', 'cta.after': 'Text after the phone number',
     'fs1.heading': 'Section heading', 'fs2.heading': 'Section heading', 'fs3.heading': 'Section heading', 'fs4.heading': 'Section heading', 'fs5.heading': 'Section heading', 'fs6.heading': 'Section heading', 'fs7.heading': 'Section heading', 'fs8.heading': 'Section heading',
     'tag': 'Category label (shown above the title)', 'desc': 'Description', 'icon': 'Icon (an emoji)', 'forms.s1': 'First section heading', 'forms.s2': 'Second section heading', 'button': 'Button text', 'button_url': 'Button link (a PDF or online form address)', 'title': 'Title', 'pastor': 'Preacher', 'date': 'Date', 'video': 'YouTube video', 'photos': 'Number of photos', 'link': 'Album link (adobe.ly)', 'embed': 'Lightroom album',
+    'pen_line1': 'Library card, line 1 (Sunday and date)', 'pen_title': 'Library card, line 2 (sermon title)', 'pen_verses': 'Library card, line 3 (verses)',
     'name': 'Name', 'ages': 'Ages', 'when': 'When', 'month': 'Month', 'day': 'Day', 'sub': 'Second line', 'url': 'Link'
   };
   var ORDER = ['eyebrow', 'title', 'preacher', 'name', 'heading', 'pastor', 'date', 'occ', 'photos', 'series', 'scripture', 'ages', 'when', 'month', 'day', 'sub', 'text', 'summary', 'intro', 'video', 'embed', 'notes', 'notes_url', 'img1', 'img2', 'banner', 'note', 'tag', 'button', 'button_url', 'link', 'url'];
@@ -401,6 +402,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     if (f.kind === 'lr') { var m = parseLR(n.getAttribute('src')); return m ? m.id : ''; }
     if (f.kind === 'img-src') return n.getAttribute('src') || '';
     if (f.kind === 'img-alt') return n.getAttribute('alt') || '';
+    if (f.kind === 'attr') return penCard(n)[PEN_ATTRS[f.name][1]];
     return '';
   }
   function scan(doc) {
@@ -420,6 +422,9 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
       if (n.hasAttribute('data-fbc-lr')) add('lr', n.getAttribute('data-fbc-lr'));
       if (n.hasAttribute('data-fbc-img')) { add('img-src', n.getAttribute('data-fbc-img')); add('img-alt', n.getAttribute('data-fbc-img')); }
     });
+    (lists.pens ? lists.pens.items : []).forEach(function (it) {   // the three lines of each Pen's library card are editable
+      Object.keys(PEN_ATTRS).forEach(function (k) { fields.push({ kind: 'attr', node: it, name: k, owner: it, upper: false, long: false, id: 'f' + (++uid) }); });
+    });
     fields.forEach(function (f, i) { f.orig = readField(f); f.seq = i; });
     return { fields: fields, lists: lists, listOrder: order };
   }
@@ -430,6 +435,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     else if (f.kind === 'href') { n.setAttribute('href', normHref(raw)); }
     else if (f.kind === 'img-src') { n.setAttribute('src', raw.trim()); }
     else if (f.kind === 'img-alt') { n.setAttribute('alt', raw); }
+    else if (f.kind === 'attr') { n.setAttribute(PEN_ATTRS[f.name][0], raw); }
     else if (f.kind === 'video') {
       var v = parseYouTube(raw);
       if (!raw.trim()) { r = { ok: false, msg: 'Paste a YouTube link, the embed code, or the 11-character video ID.' }; }
@@ -542,8 +548,8 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   }
   function itemSummary(item) {
     if (item.getAttribute('data-fbc-item') === 'pens') {
-      var ph = penHeader(item);
-      return ph ? ph.title + '  \u00b7  ' + ph.line1 : 'Pastor\u2019s Pen (no header found)';
+      var pc = penCard(item);
+      return pc.title || pc.line1 ? (pc.title || 'Untitled Pen') + '  \u00b7  ' + pc.line1 : 'Pastor\u2019s Pen (fill in its card lines)';
     }
     var t = fieldIn(item, 'title') || fieldIn(item, 'name'), d = fieldIn(item, 'date');
     var title = t ? readField(t) : 'Item';
@@ -563,6 +569,15 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
       }
     }
     return null;
+  }
+  var PEN_ATTRS = { pen_line1: ['data-pen-line1', 'line1'], pen_title: ['data-pen-title', 'title'], pen_verses: ['data-pen-verses', 'verses'] };
+  function penCard(item) {   // what the library card shows: edited text if there is any, else the Pen's own header
+    var h = penHeader(item) || { line1: '', title: '', verses: '' };
+    return {
+      line1: item.hasAttribute('data-pen-line1') ? item.getAttribute('data-pen-line1') : h.line1,
+      title: item.hasAttribute('data-pen-title') ? item.getAttribute('data-pen-title') : h.title,
+      verses: item.hasAttribute('data-pen-verses') ? item.getAttribute('data-pen-verses') : h.verses
+    };
   }
   function penDay(h) {   // a sortable number such as 20261101, or 0 if the header has no readable date
     var m = h && /([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})/.exec(h.line1);
@@ -587,16 +602,27 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
       if (!/<table/i.test(inner)) { notes.push(f.name + ': no Pen table found, skipped'); return; }
       var box = S.doc.createElement('div'); box.innerHTML = penWrap(inner);
       var card = box.firstChild;
-      var h = penHeader(card), day = penDay(h);
-      if (!h) { notes.push(f.name + ': skipped. No header line like "1st Sunday \u00b7 Sunday, November 1, 2026" was found, so the library could not name its card'); return; }
+      var h = penHeader(card);
+      if (!h) {   // no usable header: guess the date from the file's <title> or name, and leave the rest to fill in
+        var tm = /<title[^>]*>([^<]*)<\/title>/i.exec(f.html), gd = /(\d{4})-(\d{2})-(\d{2})/.exec((tm ? tm[1] : '') + ' ' + f.name);
+        var guess = '';
+        if (gd) {
+          var dd = new Date(+gd[1], +gd[2] - 1, +gd[3]), nth = ['1st', '2nd', '3rd', '4th', '5th'][Math.ceil(dd.getDate() / 7) - 1];
+          guess = nth + ' Sunday \u00b7 ' + dd.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        }
+        card.setAttribute('data-pen-line1', guess); card.setAttribute('data-pen-title', '[Sermon title]'); card.setAttribute('data-pen-verses', '[Verses]');
+        notes.push(f.name + ': no header found, so fill in its three library-card lines' + (guess ? '' : ' (including the date)'));
+        h = penCard(card);
+      }
+      var day = penDay(penCard(card));
       if (!day) notes.push(f.name + ': could not read the date, so it was placed at the top');
       var items = $$('[data-fbc-item="pens"]', S.doc.body), ref = null, same = false;
       for (var i = 0; i < items.length; i++) {
-        var d = penDay(penHeader(items[i]));
+        var d = penDay(penCard(items[i]));
         if (d === day) same = true;
         if (d <= day || !day) { ref = items[i]; break; }
       }
-      if (same) notes.push((h ? h.title : f.name) + ': another Pen has the same date, so both are kept (remove the old one if this replaces it)');
+      if (same) notes.push((h.title || f.name) + ': another Pen has the same date, so both are kept (remove the old one if this replaces it)');
       var anchor = ref || items[items.length - 1], par = anchor.parentNode;
       var start = S.doc.createComment(' PEN CARD START: copy from here '), end = S.doc.createComment(' PEN CARD END ');
       var before = ref ? ref : anchor.nextSibling;
@@ -747,8 +773,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     });
     if (item.hasAttribute('data-cats')) body.appendChild(catsRow(item));
     if (l.name === 'pens') {
-      var ph = penHeader(item);
-      body.appendChild(mk('div', { class: 'hint', text: ph ? 'Library card: ' + ph.line1 + '  /  ' + ph.title + '  /  ' + ph.verses + '. The card is named from this Pen\u2019s header, so to change it, remove this Sunday and add the corrected Pen file.' : 'No Sunday header was found in this Pen, so its library card will be blank.' }));
+      body.insertBefore(mk('div', { class: 'hint', text: 'These three lines name this Sunday\u2019s card in the library list. They start from the Pen\u2019s own header; change them here if the header was missing or wrong. They do not change the Pen itself.' }), body.firstChild);
     }
     det.appendChild(body);
     if (item._new) det.open = true;
