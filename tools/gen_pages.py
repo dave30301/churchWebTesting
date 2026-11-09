@@ -997,7 +997,7 @@ cal_foot_text = (txt("Join Us", 14, GOLD, "bold", extra="letter-spacing:0.18em;t
 cal_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
                  + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
 cal_foot_inner = fl_col(cal_foot_text, "66%", 240, "0 24px 0 0") + fl_col(cal_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
-cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "28px 24px"), pad="48px 0 24px")
+cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "48px 24px"), pad="64px 0 48px")
 
 CAL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 CAL_EMPTY = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr><td style="padding:20px;">'
