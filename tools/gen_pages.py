@@ -975,9 +975,156 @@ hl_page = page(c("SECTION 1: Header - page name and purpose on the left, logo on
 hl_page = hl_page.replace('<td style="">', '<td style="padding:0;margin:0;">').replace("border-collapse:separate;", "border-collapse:separate;margin:0;")
 write("pastors-highlights", hl_page)
 
+# =====================================================================================================
+# CHURCH CALENDAR: same two-sided header and call-to-action footer; twelve small folder-style tabs (January to December,
+# left-justified) instead of the Highlights tabs. Each tab shows one month's calendar HTML.
+# =====================================================================================================
+CAL_LOGO = "https://fbcmanassas.org/wp-content/uploads/CalendarLogo.png"
+cal_logo_img = (f'<img src="{CAL_LOGO}"{FI("hero.logo")} alt="Church Calendar" width="1000" height="1000" '
+                'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:340px;border:0;">')
+cal_head_text = (eyebrow("What&rsquo;s Happening", MAROON, 15, "0.16em", fb=F("hero.eyebrow", upper=True)) + sp(20)
+                 + h("h1", "Church Calendar", 64, MAROON, lh="1.04", fb=F("hero.title")) + sp(20)
+                 + txt("Every service, study, ministry meeting and special event at First Baptist, month by month. Pick a month to see what is ahead.", 21, TGRAY, extra="line-height:1.5;", fb=F("hero.intro", long=True)))
+cal_hero = section(TR(TD(
+    fl_col(cal_head_text, "48%", 320, "0", td_id="fbcHeroText")
+    + c("IMAGE: Church Calendar logo - replace the src with the CMS media URL")
+    + fl_col(f'<div style="text-align:center;font-size:0;line-height:0;">{cal_logo_img}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
+    + CLEAR + c("Script: centers the text beside the logo on wide screens and puts the logo above the text on phones") + HERO_JS)), pad="0 0 24px")
+
+cal_foot_text = (txt("Join Us", 14, GOLD, "bold", extra="letter-spacing:0.18em;text-transform:uppercase;line-height:1.3;", fb=F("cta.eyebrow")) + sp(10)
+                 + h("h2", "Mark your calendar and come as you are", 40, WHITE, lh="1.12", fb=F("cta.heading")) + sp(10)
+                 + txt("Worship is Sundays at 9:00 AM at 9258 Center Street, Manassas, with Sunday School at 11:00 AM, Bible Study on Wednesdays at 7:00 PM and IGNITE on Thursdays at 7:30 PM. Can&rsquo;t be here? Worship with us live online.", 19, CREAM, extra="line-height:1.5;", fb=F("cta.text", long=True)))
+cal_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
+                 + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
+cal_foot_inner = fl_col(cal_foot_text, "66%", 240, "0 24px 0 0") + fl_col(cal_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
+cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "28px 24px"), pad="24px 0 0")
+
+CAL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+CAL_EMPTY = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr><td style="padding:20px;">'
+             f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr>'
+             f'<td align="center" valign="middle" bgcolor="{LGRAY}" style="background-color:{LGRAY};border:2px dashed {GOLD};border-radius:12px;padding:48px 24px;font-family:{B};font-size:17px;line-height:1.5;color:{TGRAY};text-align:center;">'
+             f'[CHURCH CALENDAR: add this month&rsquo;s calendar here. In the Page Editor, open this month and paste or pick the calendar HTML.]</td></tr></table></td></tr></table>')
+def cal_month(label):
+    return ('<!-- MONTH START: copy from here -->\n'
+            f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-cal="1" data-cal-label="{label}"{FITEM("cal")} style="width:100%;border-collapse:separate;">'
+            f'<tr data-cal-title="1"><td style="padding:16px 20px 0 20px;">{txt(label, 22, MAROON, "bold", fb=F("label"))}</td></tr>'
+            f'<tr><td data-cal-body="1" data-cal-empty="1" style="padding:0;">{CAL_EMPTY}</td></tr></table>\n'
+            '<!-- MONTH END -->\n')
+cal_months_block = ("<!-- JANUARY FIRST (leftmost tab), DECEMBER LAST: put each month's calendar HTML in the cell marked data-cal-body -->\n"
+                    + "".join(cal_month(m) for m in CAL_MONTHS))
+CAL_JS = r"""<script>
+(function () {
+  // Church Calendar tabs: one small folder-style tab per month, January on the left. Each month is one block in the box below;
+  // the tab row is built from those blocks, and the current month opens first. With scripts blocked every month simply stays stacked.
+  // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.
+  var bar = document.getElementById('fbcCalTabs');
+  var box = document.getElementById('fbcCalBox');
+  if (!bar) { return; }
+  var FULL = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+  var tabs = [];
+  function each(list, fn) { Array.prototype.forEach.call(list, fn); }
+  function words(n) { return (n.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, ''); }
+  // The months are the blocks marked data-cal. If a CMS dropped that mark, they are the tables directly inside the box.
+  var panels = [];
+  each(document.querySelectorAll('table[data-cal]'), function (n) { panels.push(n); });
+  if (panels.length === 0) {
+    if (box) { each(box.children, function (n) { if (n.tagName === 'TABLE') { panels.push(n); } }); }
+  }
+  if (panels.length === 0) { return; }
+  // A month's tab name is its title line. Looked up three ways, so it survives a CMS that drops some of the invisible marks:
+  // the marked line, the first short cell of the block, then the block's data-cal-label.
+  function titleCell(p) {
+    var td = p.querySelector('td');
+    if (!td) { return null; }
+    if (td.hasAttribute('data-cal-body')) { return null; }
+    if (Math.max(words(td).length, 40) !== 40) { return null; }
+    return td;
+  }
+  function labelOf(p, i) {
+    var el = p.querySelector('[data-fbc="label"]');
+    var t = el ? words(el) : '';
+    if (t === '') { var td = titleCell(p); if (td) { t = words(td); } }
+    if (t === '') { t = p.getAttribute('data-cal-label') || ''; }
+    if (t === '') { return FULL[i % 12].charAt(0).toUpperCase() + FULL[i % 12].slice(1); }
+    return t;
+  }
+  function shortOf(t) {
+    if (FULL.indexOf(t.toLowerCase()) !== -1) { return t.slice(0, 3); }
+    return t;
+  }
+  function paint(a, on) {
+    a.style.backgroundColor = on ? '#6B1735' : '#F2F2F2';
+    a.style.color = on ? '#ffffff' : '#6B1735';
+    a.style.zIndex = on ? '3' : '1';
+  }
+  function show(i) {
+    each(panels, function (p, j) { p.style.display = (j === i) ? '' : 'none'; });
+    each(tabs, function (a, j) { paint(a, j === i); });
+  }
+  var now = new Date().getMonth();
+  var start = 0;
+  bar.textContent = '';
+  each(panels, function (p, i) {
+    var row = p.querySelector('[data-cal-title]');
+    if (!row) { var tc = titleCell(p); if (tc) { row = tc.parentNode; } }
+    if (row) { row.style.display = 'none'; }
+    var label = labelOf(p, i);
+    if (label.toLowerCase().indexOf(FULL[now].slice(0, 3)) === 0) { start = i; }
+    var a = document.createElement('a');
+    var slant = 'polygon(0 100%, 14px 0, calc(100% - 14px) 0, 100% 100%)';
+    a.setAttribute('href', '#');
+    a.setAttribute('data-cal-idx', String(i));
+    a.style.cssText = 'display:block;float:left;position:relative;z-index:1;box-sizing:border-box;min-width:66px;margin:0 -9px 0 0;padding:9px 24px 8px 24px;text-align:center;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;line-height:1.2;background-color:#F2F2F2;color:#6B1735;';
+    a.style.clipPath = slant;
+    a.style.webkitClipPath = slant;
+    a.textContent = shortOf(label);
+    a.setAttribute('title', label);
+    bar.appendChild(a);
+    tabs.push(a);
+  });
+  var clr = document.createElement('div');
+  clr.style.cssText = 'clear:both;height:0;font-size:0;line-height:0;';
+  bar.appendChild(clr);
+  document.addEventListener('click', function (ev) {
+    var a = ev.target.closest ? ev.target.closest('a[data-cal-idx]') : null;
+    if (!a) { return; }
+    ev.preventDefault();
+    ev.stopPropagation();
+    show(parseInt(a.getAttribute('data-cal-idx'), 10));
+  }, true);
+  show(start);
+})();
+</script>"""
+cal_body = sec(
+    c("Twelve small folder tabs, January on the left (built by the script below from the monthly blocks)")
+    + f'<div id="fbcCalTabs" style="font-family:{B};font-size:15px;color:{TGRAY};">Scroll down to read every month.</div>'
+    + c("Monthly calendars: one block per month")
+    + f'<div id="fbcCalBox" style="border:1px solid {GOLD};border-top:3px solid {MAROON};background-color:{WHITE};">{cal_months_block}</div>'
+    + c("Tabs script (optional; without it every month stays stacked)") + CAL_JS, pad="0")
+
+cal_hdr = f"""<!-- =====================================================================
+  FBC CHURCH CALENDAR PAGE - CMS EMBED
+  HOW TO USE: switch the CMS block to Source/HTML view and paste everything below.
+  Inline CSS + tables only (no <style> tags). Pictures are loaded from the CMS media library.
+  LOGO: the header logo is CAL_LOGO in tools/gen_pages.py; upload it to the CMS and set that address.
+
+  EACH MONTH: twelve small folder tabs, January to December. Easiest: open tools/dashboard.html (FBC Page Editor), load this page,
+  and use "Add calendar files" to pick one HTML file per month (each goes to the month it names), or open a month and paste its
+  calendar HTML. By hand: put the month's HTML inside the cell marked data-cal-body (delete data-cal-empty and the grey placeholder).
+  The current month opens first.
+
+{PALETTE}
+====================================================================== -->
+"""
+cal_page = page(c("SECTION 1: Header - page name and purpose on the left, logo on the right") + cal_hero + c("SECTION 2: Twelve monthly tabs") + cal_body + c("SECTION 3: Call to action") + cal_foot, cal_hdr, key="cal")
+cal_page = cal_page.replace('<td style="">', '<td style="padding:0;margin:0;">').replace("border-collapse:separate;", "border-collapse:separate;margin:0;")
+write("calendar", cal_page)
+
 # keep the Page Editor's copy of the Highlights tabs script identical to the page's (it replaces older copies on load)
 import json
 _d = open(R + "tools/dashboard.html").read()
 _body = HL_JS[len("<script>"):-len("</script>")].strip("\n")
 _d = re.sub(r"/\*HL_JS_START\*/.*?/\*HL_JS_END\*/", lambda m: "/*HL_JS_START*/var HL_SCRIPT = " + json.dumps(_body) + ";/*HL_JS_END*/", _d, count=1, flags=re.S)
+_cb = CAL_JS[len("<script>"):-len("</script>")].strip("\n")
+_d = re.sub(r"/\*CAL_JS_START\*/.*?/\*CAL_JS_END\*/", lambda m: "/*CAL_JS_START*/var CAL_SCRIPT = " + json.dumps(_cb) + ";/*CAL_JS_END*/", _d, count=1, flags=re.S)
 open(R + "tools/dashboard.html", "w").write(_d)
