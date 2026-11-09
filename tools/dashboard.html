@@ -295,10 +295,10 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   function lsSet(v) { try { localStorage.setItem(LS, JSON.stringify(v)); } catch (e) { /* storage unavailable: drafts just aren't kept */ } }
 
   /* ---------- names shown in the form ---------- */
-  var PAGES = { sample: 'Sample page', sermons: 'Sermons', gallery: 'Photo Gallery', forms: 'Forms', pen: 'Pastor\'s Pen', youth: 'Youth Ministry' };
-  var GROUPS = { hero: 'Header', latest: 'Latest message', recent: 'Recent messages', sermons: 'Recent messages', cta: 'Call-to-action band', featured: 'Featured album', pens: 'Sundays, newest first', lib: 'The library list', forms: 'Forms', albums: 'Browse albums',
+  var PAGES = { sample: 'Sample page', sermons: 'Sermons', gallery: 'Photo Gallery', forms: 'Forms', pen: 'Pastor\'s Pen', hl: 'Pastor\'s Highlights', youth: 'Youth Ministry' };
+  var GROUPS = { hero: 'Header', latest: 'Latest message', recent: 'Recent messages', sermons: 'Recent messages', cta: 'Call-to-action band', featured: 'Featured album', pens: 'Sundays, newest first', hl: 'Weeks, newest on the left', lib: 'The library list', forms: 'Forms', albums: 'Browse albums',
     info: 'Info strip', about: 'About', groups: 'Groups by age', events: 'Coming up', leader: 'Meet the leader', parents: 'For parents', more: 'More for young people' };
-  var LISTS = { pens: { group: 'pens', one: 'Sunday', many: 'Sundays', add: 'Add a new Sunday at the top' }, forms: { group: 'forms', one: 'Form', many: 'forms', add: 'Add a new form at the top' }, sermons: { group: 'recent', one: 'Message', many: 'messages', add: 'Add a new message at the top' },
+  var LISTS = { hl: { group: 'hl', one: 'Week', many: 'weeks', add: 'Add a new week at the left' }, pens: { group: 'pens', one: 'Sunday', many: 'Sundays', add: 'Add a new Sunday at the top' }, forms: { group: 'forms', one: 'Form', many: 'forms', add: 'Add a new form at the top' }, sermons: { group: 'recent', one: 'Message', many: 'messages', add: 'Add a new message at the top' },
     albums: { group: 'albums', one: 'Album', many: 'albums', add: 'Add a new album at the top' },
     groups: { group: 'groups', one: 'Group', many: 'groups' }, events: { group: 'events', one: 'Event', many: 'events' }, more: { group: 'more', one: 'Card', many: 'cards' } };
   for (var fsn = 1; fsn <= 8; fsn++) { LISTS['fs' + fsn] = { group: 'fs' + fsn, one: 'Form', many: 'forms', add: 'Add a new form at the top' }; }
@@ -321,6 +321,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     'fs1.heading': 'Section heading', 'fs2.heading': 'Section heading', 'fs3.heading': 'Section heading', 'fs4.heading': 'Section heading', 'fs5.heading': 'Section heading', 'fs6.heading': 'Section heading', 'fs7.heading': 'Section heading', 'fs8.heading': 'Section heading',
     'tag': 'Category label (shown above the title)', 'desc': 'Description', 'icon': 'Icon (an emoji)', 'forms.s1': 'First section heading', 'forms.s2': 'Second section heading', 'button': 'Button text', 'button_url': 'Button link (a PDF or online form address)', 'title': 'Title', 'pastor': 'Preacher', 'date': 'Date', 'video': 'YouTube video', 'photos': 'Number of photos', 'link': 'Album link (adobe.ly)', 'embed': 'Lightroom album',
     'pen_line1': 'Library card, line 1 (Sunday and date)', 'pen_title': 'Library card, line 2 (sermon title)', 'pen_verses': 'Library card, line 3 (verses)',
+    'label': 'Tab name (shown on the tab)',
     'name': 'Name', 'ages': 'Ages', 'when': 'When', 'month': 'Month', 'day': 'Day', 'sub': 'Second line', 'url': 'Link'
   };
   var ORDER = ['eyebrow', 'title', 'preacher', 'name', 'heading', 'pastor', 'date', 'occ', 'photos', 'series', 'scripture', 'ages', 'when', 'month', 'day', 'sub', 'text', 'summary', 'intro', 'video', 'embed', 'notes', 'notes_url', 'img1', 'img2', 'banner', 'note', 'tag', 'button', 'button_url', 'link', 'url'];
@@ -551,9 +552,109 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
       var pc = penCard(item);
       return pc.title || pc.line1 ? (pc.title || 'Untitled Pen') + '  \u00b7  ' + pc.line1 : 'Pastor\u2019s Pen (fill in its card lines)';
     }
-    var t = fieldIn(item, 'title') || fieldIn(item, 'name'), d = fieldIn(item, 'date');
+    var t = fieldIn(item, 'title') || fieldIn(item, 'name') || fieldIn(item, 'label'), d = fieldIn(item, 'date');
     var title = t ? readField(t) : 'Item';
     return d && readField(d) ? title + '  ·  ' + readField(d) : title;
+  }
+  /* ---------- Pastor's Highlights weeks ---------- */
+  var HL_EMPTY = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0;"><tr><td style="padding:20px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0;"><tr><td align="center" valign="middle" bgcolor="#F2F2F2" style="background-color:#F2F2F2;border:2px dashed #C9A55C;border-radius:12px;padding:48px 24px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.5;color:#666666;text-align:center;">[PASTOR’S HIGHLIGHTS: add this week’s highlights here. In the Page Editor, open this week and paste or pick the highlights HTML.]</td></tr></table></td></tr></table>';
+  var MON3 = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  var MON_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function hlDate(text) {   // first "Month D" (year optional) in some text -> {mo, day, year}
+    var m = /(?:^|[^A-Za-z])(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?/i.exec(text || '');
+    if (m) return { mo: MON3.indexOf(m[1].toLowerCase()), day: +m[2], year: m[3] ? +m[3] : 0 };
+    var iso = /(\d{4})-(\d{2})-(\d{2})/.exec(text || '');
+    return iso ? { mo: +iso[2] - 1, day: +iso[3], year: +iso[1] } : null;
+  }
+  function hlNum(dt) { return dt ? (dt.year || new Date().getFullYear()) * 10000 + (dt.mo + 1) * 100 + dt.day : 0; }
+  function plainText(html) { return decode(String(html).replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' '); }
+  function hlLabelOf(item) { var e = item.querySelector('[data-fbc="label"]'); return e ? txtOf(e) : ''; }
+  function hlBody(item) { return item.querySelector('[data-hl-body]'); }
+  function hlIsEmpty(item) { var b = hlBody(item); return !!b && b.hasAttribute('data-hl-empty'); }
+  function hlFill(item, inner, label) {
+    var b = hlBody(item);
+    b.innerHTML = inner; b.removeAttribute('data-hl-empty');
+    var lf = item.querySelector('[data-fbc="label"]');
+    if (lf && label) lf.textContent = label;
+  }
+  function hlClear(item) { var b = hlBody(item); b.innerHTML = HL_EMPTY; b.setAttribute('data-hl-empty', '1'); }
+  function hlNewShell(l) {   // a copy of an existing week with empty contents
+    var src = l.items[0], c = src.cloneNode(true); c._new = true;
+    hlClear(c);
+    var lf = c.querySelector('[data-fbc="label"]'); if (lf) lf.textContent = '[Tab name]';
+    return c;
+  }
+  function hlInsert(c, ref, l) {
+    var par = ref ? ref.parentNode : l.items[l.items.length - 1].parentNode, before = ref || l.items[l.items.length - 1].nextSibling;
+    par.insertBefore(S.doc.createTextNode('\n'), before);
+    par.insertBefore(S.doc.createComment(' WEEK START: copy from here '), before); par.insertBefore(S.doc.createTextNode('\n'), before);
+    par.insertBefore(c, before); par.insertBefore(S.doc.createTextNode('\n'), before);
+    par.insertBefore(S.doc.createComment(' WEEK END '), before);
+  }
+  function hlTrim(l) {   // keep five weeks: drop spare empty placeholders from the oldest end, never real content
+    var items = $$('[data-fbc-item="hl"]', S.doc.body), dropped = 0;
+    for (var i = items.length - 1; i >= 0 && items.length - dropped > 5; i--) {
+      if (hlIsEmpty(items[i])) { stripCardComments(items[i]); items[i].parentNode.removeChild(items[i]); dropped++; removed++; }
+    }
+    return $$('[data-fbc-item="hl"]', S.doc.body).length;
+  }
+  function addHighlights(l, files) {   // files: [{name, html}], each one a week
+    var notes = [], last = null, ok = 0;
+    files.forEach(function (f) {
+      var inner = penBody(f.html);
+      if (!/<(table|div|p|h1|h2)\b/i.test(inner)) { notes.push(f.name + ': skipped, it does not look like HTML'); return; }
+      var tm = /<title[^>]*>([^<]*)<\/title>/i.exec(f.html);
+      var dt = hlDate(plainText(inner)) || hlDate((tm ? tm[1] : '') + ' ' + f.name);
+      var label = dt ? MON_NAMES[dt.mo] + ' ' + dt.day : '', day = hlNum(dt);
+      if (!dt) notes.push(f.name + ': no date found, so it was added at the left; set its tab name and move it if needed');
+      var items = $$('[data-fbc-item="hl"]', S.doc.body), ref = null, same = false;
+      for (var i = 0; i < items.length; i++) {
+        var d = hlNum(hlDate(hlLabelOf(items[i])));
+        if (day && d === day && !hlIsEmpty(items[i])) same = true;
+        if (!day || d <= day || hlIsEmpty(items[i])) { ref = items[i]; break; }
+      }
+      if (same) notes.push((label || f.name) + ': another week has the same date, so both are kept');
+      var c = hlNewShell(l); hlFill(c, inner, label || '[Tab name]');
+      hlInsert(c, ref, l);
+      c._new = true; last = c; ok++; added++; structChanges++;
+      l.items = $$('[data-fbc-item="hl"]', S.doc.body);
+    });
+    var n = hlTrim(l);
+    if (n > 5) notes.push('There are now ' + n + ' weeks. The page is meant to show five, so remove the oldest.');
+    if (ok) rescanAfter(last && last.parentNode ? last : null, false);
+    toast(ok ? 'Added ' + ok + ' week' + (ok === 1 ? '' : 's') + (notes.length ? '. Check the notes under the button.' : '.') : 'Nothing added. ' + (notes[0] || ''));
+    hlNotes = notes; showHlNotes();
+  }
+  var hlNotes = [];
+  function showHlNotes() { var el = $('#hlNotes'); if (el) el.textContent = hlNotes.join('  ·  '); }
+  function hlBar(l, bar) {
+    var pick = mk('input', { type: 'file', accept: '.html,.htm,text/html', multiple: true, hidden: true });
+    pick.addEventListener('change', function () {
+      readFiles(pick.files, function (fs) { addHighlights(l, fs.filter(function (f) { return f.html; })); });
+      pick.value = '';
+    });
+    bar.appendChild(pick);
+    bar.appendChild(mk('button', { class: 'btn primary small', type: 'button', text: '+ Add highlight files', onclick: function () { pick.click(); } }));
+    bar.appendChild(mk('button', { class: 'btn small', type: 'button', text: '+ Add an empty week at the left', onclick: function () {
+      var c = hlNewShell(l); hlInsert(c, l.items[0], l); added++; structChanges++;
+      l.items = $$('[data-fbc-item="hl"]', S.doc.body); var n = hlTrim(l); rescanAfter(c, true);
+      if (n > 5) toast('There are now ' + n + ' weeks. The page is meant to show five, so remove the oldest.');
+    } }));
+    bar.appendChild(mk('span', { class: 'note', text: 'Pick one HTML file per week. Each becomes a tab, placed by the date found in it (newest on the left), and replaces an empty week so there are always five.' }));
+    bar.appendChild(mk('p', { class: 'hint', id: 'hlNotes', style: 'flex-basis:100%', 'aria-live': 'polite' }));
+    showHlNotes();
+  }
+  function hlItemUi(l, item) {   // inside an open week: paste its highlights HTML, or clear it
+    var ta = mk('textarea', { rows: '5', placeholder: 'Paste this week’s highlights HTML here', style: 'width:100%;font-family:monospace;font-size:.85rem' });
+    var go = mk('button', { class: 'btn small', type: 'button', text: 'Use this HTML for this week', onclick: function () {
+      if (!ta.value.trim()) { toast('Paste the highlights HTML first.'); return; }
+      var inner = penBody(ta.value), dt = hlDate(plainText(inner)), cur = hlLabelOf(item);
+      hlFill(item, inner, (!cur || /^\[/.test(cur) || hlIsEmpty(item)) && dt ? MON_NAMES[dt.mo] + ' ' + dt.day : '');
+      structChanges++; rescanAfter(item, true); toast('This week’s highlights were replaced.');
+    } });
+    var clr = mk('button', { class: 'btn small ghost danger', type: 'button', text: 'Clear this week', onclick: function () { hlClear(item); structChanges++; rescanAfter(item, true); } });
+    var state = mk('div', { class: 'hint', text: hlIsEmpty(item) ? 'This week is still empty (a grey placeholder shows). Paste its highlights HTML below.' : 'This week has its highlights. Paste new HTML below to replace them.' });
+    return mk('div', { class: 'field' }, [mk('label', {}, [mk('span', { text: 'This week’s highlights HTML' })]), state, ta, mk('div', { class: 'listbar' }, [go, clr])]);
   }
   /* ---------- Pastor's Pen files ---------- */
   var MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
@@ -738,7 +839,8 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   function renderList(l) {
     var meta = LISTS[l.name] || { one: 'Item', many: 'items' }, box = mk('div', { class: 'formcol' });
     var bar = mk('div', { class: 'listbar' });
-    if (!l.fixed && l.name === 'pens') { penBar(l, bar); }
+    if (!l.fixed && l.name === 'hl') { hlBar(l, bar); }
+    else if (!l.fixed && l.name === 'pens') { penBar(l, bar); }
     else if (!l.fixed) {
       bar.appendChild(mk('button', { class: 'btn primary small', type: 'button', text: '+ ' + (meta.add || 'Add a new ' + meta.one.toLowerCase()), onclick: function () { addItem(l); } }));
       bar.appendChild(mk('span', { class: 'note', text: 'Newest first. The page re-flows the other cards for you.' }));
@@ -772,6 +874,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
       body.appendChild(fieldRow(f));
     });
     if (item.hasAttribute('data-cats')) body.appendChild(catsRow(item));
+    if (l.name === 'hl') body.appendChild(hlItemUi(l, item));
     if (l.name === 'pens') {
       body.insertBefore(mk('div', { class: 'hint', text: 'These three lines name this Sunday\u2019s card in the library list. They start from the Pen\u2019s own header; change them here if the header was missing or wrong. They do not change the Pen itself.' }), body.firstChild);
     }
@@ -793,7 +896,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     ['previousSibling', 'nextSibling'].forEach(function (dir) {
       var n = item[dir];
       while (n && (n.nodeType === 3 && !n.textContent.trim())) n = n[dir];
-      if (n && n.nodeType === 8 && /CARD (START|END)/.test(n.textContent)) n.parentNode.removeChild(n);
+      if (n && n.nodeType === 8 && /(CARD|WEEK) (START|END)/.test(n.textContent)) n.parentNode.removeChild(n);
     });
   }
   function addItem(l) {

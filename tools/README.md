@@ -55,3 +55,18 @@ The table-based Forms page (`fbc-forms-tables-recolored.html`) carries edit labe
 The Pastor's Pen page (`fbc-pastors-pen-embed-clean.html`) is generated from the `PENS` list in `gen_pages.py`. Each entry is one week's real Pen HTML saved in `pens_html/` (for now the library is five copies of the November 1 "3 A.M. Bench" Pen so the library can be tried out). The library list on the right builds itself from the Pens: each card is named from the Pen's own header, which has three lines: "1st Sunday · Sunday, November 1, 2026", the sermon title, and the verses. `images/pen/` holds the 400px preview pictures from the roadmap file.
 
 Adding weeks: open `tools/dashboard.html` (FBC Page Editor), load the Pen page, and under "Sundays, newest first" use **+ Add Pen files** to pick one or many Pen HTML files (or paste one). Each Pen is placed by the date in its header, newest first, and its library card is named automatically. A Pen with no readable header is still added, with its three card lines left to fill in (the date is guessed from the file name or title). Move / Duplicate / Remove work on every Sunday. Open any Sunday to edit the three lines of its library card (they override the header; the Pen itself is not changed).
+
+## Pastor's Highlights page (`fbc-pastors-highlights-embed-clean.html`)
+
+Same two-sided header (page name left, logo right) and call-to-action footer as the Pastor's Pen, with five tabs in place of the
+library: this week on the left, the oldest on the right. Each tab shows one week's highlights HTML, which sits in a block marked
+`data-hl` (its HTML goes in the cell marked `data-hl-body`; the tab name is the block's `label` field). The tab row is built by a
+script; without scripts the five weeks simply stack. The header logo is `HL_LOGO` in `gen_pages.py` (placeholder address until the
+logo is uploaded). The page starts with five empty weeks (grey placeholder, "Week 1" to "Week 5").
+
+In the Page Editor (`tools/dashboard.html`) load the page, then under "Weeks, newest on the left":
+- **+ Add highlight files**: pick one HTML file per week. Each becomes a tab, named from the first date found in it ("Nov 8") and
+  placed newest-first; it replaces an empty week so there are five. A file with no date is added at the left for you to name.
+- Or open a week and paste its HTML ("Use this HTML for this week"), edit its **Tab name**, move it, clear it or remove it.
+- If you end up with more than five weeks, the editor says so; remove the oldest.
+
