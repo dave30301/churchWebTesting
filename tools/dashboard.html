@@ -322,6 +322,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     'tag': 'Category label (shown above the title)', 'desc': 'Description', 'icon': 'Icon (an emoji)', 'forms.s1': 'First section heading', 'forms.s2': 'Second section heading', 'button': 'Button text', 'button_url': 'Button link (a PDF or online form address)', 'title': 'Title', 'pastor': 'Preacher', 'date': 'Date', 'video': 'YouTube video', 'photos': 'Number of photos', 'link': 'Album link (adobe.ly)', 'embed': 'Lightroom album',
     'pen_line1': 'Library card, line 1 (Sunday and date)', 'pen_title': 'Library card, line 2 (sermon title)', 'pen_verses': 'Library card, line 3 (verses)',
     'label': 'Tab name (shown on the tab)',
+    'cta.above': 'Space above the call to action (px)', 'cta.below': 'Space below the call to action (px)', 'cta.inside': 'Space inside the call to action, top and bottom (px)',
     'name': 'Name', 'ages': 'Ages', 'when': 'When', 'month': 'Month', 'day': 'Day', 'sub': 'Second line', 'url': 'Link'
   };
   var ORDER = ['eyebrow', 'title', 'preacher', 'name', 'heading', 'pastor', 'date', 'occ', 'photos', 'series', 'scripture', 'ages', 'when', 'month', 'day', 'sub', 'text', 'summary', 'intro', 'video', 'embed', 'notes', 'notes_url', 'img1', 'img2', 'banner', 'note', 'tag', 'button', 'button_url', 'link', 'url'];
@@ -404,6 +405,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     if (f.kind === 'img-src') return n.getAttribute('src') || '';
     if (f.kind === 'img-alt') return n.getAttribute('alt') || '';
     if (f.kind === 'attr') return penCard(n)[PEN_ATTRS[f.name][1]];
+    if (f.kind === 'space') return String(parseInt(f.name === 'cta.below' ? n.style.paddingBottom : n.style.paddingTop, 10) || 0);
     return '';
   }
   function scan(doc) {
@@ -422,6 +424,12 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
       if (n.hasAttribute('data-fbc-video')) add('video', n.getAttribute('data-fbc-video'));
       if (n.hasAttribute('data-fbc-lr')) add('lr', n.getAttribute('data-fbc-lr'));
       if (n.hasAttribute('data-fbc-img')) { add('img-src', n.getAttribute('data-fbc-img')); add('img-alt', n.getAttribute('data-fbc-img')); }
+    });
+    $$('[data-fbc-space]', doc.body).forEach(function (n) {   // spacing around and inside the call to action
+      var sn = n.getAttribute('data-fbc-space');
+      (sn === 'cta.edge' ? ['cta.above', 'cta.below'] : [sn]).forEach(function (nm) {
+        fields.push({ kind: 'space', node: n, name: nm, owner: null, upper: false, long: false, id: 'f' + (++uid) });
+      });
     });
     (lists.pens ? lists.pens.items : []).forEach(function (it) {   // the three lines of each Pen's library card are editable
       Object.keys(PEN_ATTRS).forEach(function (k) { fields.push({ kind: 'attr', node: it, name: k, owner: it, upper: false, long: false, id: 'f' + (++uid) }); });
@@ -447,6 +455,16 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     else if (f.kind === 'img-src') { n.setAttribute('src', raw.trim()); }
     else if (f.kind === 'img-alt') { n.setAttribute('alt', raw); }
     else if (f.kind === 'attr') { n.setAttribute(PEN_ATTRS[f.name][0], raw); }
+    else if (f.kind === 'space') {
+      var px = parseInt(String(raw).replace(/px/i, '').trim(), 10);
+      if (isNaN(px) || px < 0 || px > 300) { r = { ok: false, msg: 'Type a number of pixels between 0 and 300.' }; }
+      else {
+        if (f.name === 'cta.inside') { n.style.paddingTop = px + 'px'; n.style.paddingBottom = px + 'px'; }
+        else if (f.name === 'cta.below') { n.style.paddingBottom = px + 'px'; }
+        else { n.style.paddingTop = px + 'px'; }
+        r = { ok: true, msg: px + 'px' };
+      }
+    }
     else if (f.kind === 'video') {
       var v = parseYouTube(raw);
       if (!raw.trim()) { r = { ok: false, msg: 'Paste a YouTube link, the embed code, or the 11-character video ID.' }; }
@@ -509,7 +527,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     }
     input = inputFor(f, function (v, final) {
       var res = writeField(f, v);
-      if (f.kind === 'video' || f.kind === 'lr') { setHint(res.ok ? 'ok' : 'bad', res.msg); }
+      if (f.kind === 'video' || f.kind === 'lr' || f.kind === 'space') { setHint(res.ok ? 'ok' : 'bad', res.msg); }
       if (final && res.ok && (f.kind === 'video')) { input.value = readField(f); }
       if (final && f.kind === 'lr' && res.ok) { input.value = readField(f); }
       sync(); touched();
@@ -592,6 +610,18 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   function hlNum(dt) { return dt ? (dt.year || new Date().getFullYear()) * 10000 + (dt.mo + 1) * 100 + dt.day : 0; }
   function plainText(html) { return decode(String(html).replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' '); }
   // A CMS can drop the invisible marks (the tab-name label, the week marker). Put them back from what is still there.
+  // Spacing of the call-to-action band on the Pen, Highlights and Calendar pages: mark the cell around the band (space above and
+  // below) and the band's own cell (space inside) so the spacing becomes editable fields.
+  function markSpace(doc) {
+    var root = doc.body.querySelector('[data-fbc-page]'), key = root ? root.getAttribute('data-fbc-page') : '';
+    if (key !== 'pen' && key !== 'hl' && key !== 'cal') return 0;
+    var h = doc.body.querySelector('[data-fbc="cta.heading"]'), n = 0;
+    if (!h) return 0;
+    var band = h.closest('td[bgcolor]'), outer = band && band.parentNode ? band.parentNode.closest('td[align="center"][bgcolor]') : null;
+    if (band && !band.hasAttribute('data-fbc-space')) { band.setAttribute('data-fbc-space', 'cta.inside'); n++; }
+    if (outer && !outer.hasAttribute('data-fbc-space')) { outer.setAttribute('data-fbc-space', 'cta.edge'); n++; }   // one cell: above and below
+    return n;
+  }
   var TAB_PAGES = [
     { box: 'fbcHlBox', panel: 'data-hl', body: 'data-hl-body', empty: 'data-hl-empty', title: 'data-hl-title', label: 'data-hl-label', item: 'hl', emptyRe: /PASTOR.S HIGHLIGHTS: add this week/, fallback: function (i) { return 'Week ' + (i + 1); } },
     { box: 'fbcCalBox', panel: 'data-cal', body: 'data-cal-body', empty: 'data-cal-empty', title: 'data-cal-title', label: 'data-cal-label', item: 'cal', emptyRe: /CHURCH CALENDAR: add this month/, fallback: function (i) { return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][i % 12]; } }
@@ -1263,7 +1293,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     var doc = parseHtml(html);
     var root = doc.body.querySelector('[data-fbc-page]');
     S = { doc: doc, pageKey: root ? root.getAttribute('data-fbc-page') : '', fields: [], lists: {}, listOrder: [] };
-    var penScript = upgradePenScript(doc), hlFixed = repairHl(doc), hlScript = upgradeHlScript(doc) || upgradeCalScript(doc);
+    var penScript = upgradePenScript(doc), hlFixed = repairHl(doc), spaceMarked = markSpace(doc), hlScript = upgradeHlScript(doc) || upgradeCalScript(doc);
     var sc = scan(doc); S.fields = sc.fields; S.lists = sc.lists; S.listOrder = sc.listOrder;
     S.counts = counts(html); structChanges = 0; added = 0; removed = 0;
     $('#pageName').textContent = PAGES[S.pageKey] || 'Your page';

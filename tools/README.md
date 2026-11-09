@@ -88,3 +88,11 @@ In the Page Editor load the page, then under "Months, January to December":
 
 Like the Highlights page, if a CMS removes the invisible marks the page still finds each tab name from the visible title line, and
 the editor puts the marks back and updates an older tabs script when you load the page.
+
+## Call-to-action spacing (Pen, Highlights and Calendar pages)
+
+The Page Editor shows three number fields (pixels) for the call-to-action band: space above, space below, and space inside (top and
+bottom). They appear in the "Call-to-action band" section of any of those three pages, even one generated before the fields
+existed. Use these to tune the spacing on a page you keep editing in the dashboard. Changing `pad=` in `gen_pages.py` only affects
+pages you re-generate and paste in fresh; HTML you load from the CMS into the dashboard keeps whatever spacing it already has.
+
