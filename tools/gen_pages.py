@@ -997,7 +997,7 @@ cal_foot_text = (txt("Join Us", 14, GOLD, "bold", extra="letter-spacing:0.18em;t
 cal_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
                  + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
 cal_foot_inner = fl_col(cal_foot_text, "66%", 240, "0 24px 0 0") + fl_col(cal_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
-cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "28px 24px"), pad="24px 0 0")
+cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "28px 24px"), pad="48px 0 24px")
 
 CAL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 CAL_EMPTY = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr><td style="padding:20px;">'
@@ -1010,9 +1010,7 @@ def cal_month(label):
             f'<tr data-cal-title="1"><td style="padding:16px 20px 0 20px;">{txt(label, 22, MAROON, "bold", fb=F("label"))}</td></tr>'
             f'<tr><td data-cal-body="1" data-cal-empty="1" style="padding:0;">{CAL_EMPTY}</td></tr></table>\n'
             '<!-- MONTH END -->\n')
-CAL_NOTE = (f'<div data-cal-note="1" style="padding:40px 24px;font-family:{B};font-size:17px;line-height:1.5;color:{TGRAY};text-align:center;">'
-            '[CHURCH CALENDAR: no months yet. In the Page Editor, use &ldquo;Add calendar files&rdquo;; every calendar you add gets its own tab, most recent first.]</div>')
-cal_months_block = ("<!-- No months yet. Each calendar you add (Page Editor: Add calendar files) becomes one block below with its own tab, most recent first. -->\n" + CAL_NOTE + "\n")
+cal_months_block = ("<!-- No months yet. Each calendar you add (Page Editor: Add calendar files) becomes one block below with its own tab, most recent first. -->\n" + "\n")
 CAL_JS = r"""<script>
 (function () {
   // Church Calendar tabs: one small folder-style tab per calendar you have added, most recent first (on the left). Each calendar
@@ -1032,9 +1030,11 @@ CAL_JS = r"""<script>
   if (panels.length === 0) {
     if (box) { each(box.children, function (n) { if (n.tagName === 'TABLE') { panels.push(n); } }); }
   }
-  if (panels.length === 0) { bar.textContent = ''; return; }
-  var note = box ? box.querySelector('[data-cal-note]') : null;
-  if (note) { note.style.display = 'none'; }
+  if (panels.length === 0) {
+    bar.textContent = '';
+    if (box) { box.style.display = 'none'; }
+    return;
+  }
   // A tab's name is its title line. Looked up three ways, so it survives a CMS that drops some of the invisible marks:
   // the marked line, the first short cell of the block, then the block's data-cal-label.
   function titleCell(p) {
@@ -1123,7 +1123,7 @@ CAL_JS = r"""<script>
 </script>"""
 cal_body = sec(
     c("Small folder tabs, one per calendar you add, most recent on the left (built by the script below from the blocks in the box)")
-    + f'<div id="fbcCalTabs" style="font-family:{B};font-size:15px;color:{TGRAY};">Scroll down to read every calendar.</div>'
+    + f'<div id="fbcCalTabs" style="font-family:{B};font-size:15px;color:{TGRAY};"></div>'
     + c("The calendars: one block per month, most recent first")
     + f'<div id="fbcCalBox" style="border:1px solid {GOLD};border-top:3px solid {MAROON};background-color:{WHITE};">{cal_months_block}</div>'
     + c("Tabs script (optional; without it every month stays stacked)") + CAL_JS, pad="0")
