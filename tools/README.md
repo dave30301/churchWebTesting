@@ -72,17 +72,18 @@ In the Page Editor (`tools/dashboard.html`) load the page, then under "Weeks, ne
 
 ## Church Calendar page (`fbc-calendar-embed-clean.html`)
 
-Same header and footer as the Pastor's Pen and Highlights pages, with twelve small trapezoid (folder-style) tabs, January on the
-left, December on the right, left-justified, built by a script from twelve monthly blocks (`data-cal`). The current month opens
-first. Each month's calendar HTML goes in the cell marked `data-cal-body`; tab names show as "Jan" to "Dec" (the title line keeps the
-full month name for when scripts are blocked). The header logo is `CAL_LOGO` in `gen_pages.py` (placeholder address).
+Same header and footer as the Pastor's Pen and Highlights pages, with small trapezoid (folder-style) tabs, left-justified. The page
+starts with **no tabs**: every calendar you add becomes its own tab, most recent month on the left. Each calendar sits in a block
+marked `data-cal`, its HTML in the cell marked `data-cal-body`. Tabs read "Nov" (or "Nov 2026" when the tabs cover more than one
+year); the current month opens first. The header logo is `CAL_LOGO` in `gen_pages.py` (placeholder address).
 
 In the Page Editor load the page, then under "Months, January to December":
-- **+ Add calendar files**: pick one HTML file per month. Each goes to the month named in its file name, title, picture names or
-  text (so `Church_Calendar_2026-11.html` or a file that is all about April both land correctly) and replaces what that month had.
-  A file with no month in it is skipped with a note.
-- Or open a month and paste its HTML, edit its **Tab name**, or clear it.
+- **+ Add calendar files**: pick one HTML file per month. The month comes from the file name, title, picture names or text
+  (`Church_Calendar_2026-11.html`, `november.html`, a file that is all about April), the year from the same places (else this
+  year). Each becomes a tab such as "November 2026", placed most recent first. Adding a month again replaces it. A file with no
+  month in it is skipped with a note.
+- **Or paste one month's HTML**: pick the month and year, paste, add. Open any month to replace its HTML, edit its **Tab name**,
+  clear it, or remove it.
 
 Like the Highlights page, if a CMS removes the invisible marks the page still finds each tab name from the visible title line, and
 the editor puts the marks back and updates an older tabs script when you load the page.
-

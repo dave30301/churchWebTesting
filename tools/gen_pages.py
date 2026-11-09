@@ -982,7 +982,7 @@ write("pastors-highlights", hl_page)
 CAL_LOGO = "https://fbcmanassas.org/wp-content/uploads/CalendarLogo.png"
 cal_logo_img = (f'<img src="{CAL_LOGO}"{FI("hero.logo")} alt="Church Calendar" width="1000" height="1000" '
                 'style="display:block;margin:0 auto;width:auto;height:auto;max-width:100%;max-height:340px;border:0;">')
-cal_head_text = (eyebrow("What&rsquo;s Happening", MAROON, 15, "0.16em", fb=F("hero.eyebrow", upper=True)) + sp(20)
+cal_head_text = (txt("What&rsquo;s Happening", 15, MAROON, "bold", extra="letter-spacing:0.16em;text-transform:uppercase;line-height:1.3;", fb=F("hero.eyebrow", upper=True)) + sp(20)
                  + h("h1", "Church Calendar", 64, MAROON, lh="1.04", fb=F("hero.title")) + sp(20)
                  + txt("Every service, study, ministry meeting and special event at First Baptist, month by month. Pick a month to see what is ahead.", 21, TGRAY, extra="line-height:1.5;", fb=F("hero.intro", long=True)))
 cal_hero = section(TR(TD(
@@ -1010,13 +1010,15 @@ def cal_month(label):
             f'<tr data-cal-title="1"><td style="padding:16px 20px 0 20px;">{txt(label, 22, MAROON, "bold", fb=F("label"))}</td></tr>'
             f'<tr><td data-cal-body="1" data-cal-empty="1" style="padding:0;">{CAL_EMPTY}</td></tr></table>\n'
             '<!-- MONTH END -->\n')
-cal_months_block = ("<!-- JANUARY FIRST (leftmost tab), DECEMBER LAST: put each month's calendar HTML in the cell marked data-cal-body -->\n"
-                    + "".join(cal_month(m) for m in CAL_MONTHS))
+CAL_NOTE = (f'<div data-cal-note="1" style="padding:40px 24px;font-family:{B};font-size:17px;line-height:1.5;color:{TGRAY};text-align:center;">'
+            '[CHURCH CALENDAR: no months yet. In the Page Editor, use &ldquo;Add calendar files&rdquo;; every calendar you add gets its own tab, most recent first.]</div>')
+cal_months_block = ("<!-- No months yet. Each calendar you add (Page Editor: Add calendar files) becomes one block below with its own tab, most recent first. -->\n" + CAL_NOTE + "\n")
 CAL_JS = r"""<script>
 (function () {
-  // Church Calendar tabs: one small folder-style tab per month, January on the left. Each month is one block in the box below;
-  // the tab row is built from those blocks, and the current month opens first. With scripts blocked every month simply stays stacked.
-  // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.
+  // Church Calendar tabs: one small folder-style tab per calendar you have added, most recent first (on the left). Each calendar
+  // is one block in the box below; the tab row is built from those blocks, and the current month opens first.
+  // With scripts blocked every calendar simply stays stacked. Written without angle brackets or ampersands so CMS editors
+  // cannot HTML-escape it and break the script.
   var bar = document.getElementById('fbcCalTabs');
   var box = document.getElementById('fbcCalBox');
   if (!bar) { return; }
@@ -1030,8 +1032,10 @@ CAL_JS = r"""<script>
   if (panels.length === 0) {
     if (box) { each(box.children, function (n) { if (n.tagName === 'TABLE') { panels.push(n); } }); }
   }
-  if (panels.length === 0) { return; }
-  // A month's tab name is its title line. Looked up three ways, so it survives a CMS that drops some of the invisible marks:
+  if (panels.length === 0) { bar.textContent = ''; return; }
+  var note = box ? box.querySelector('[data-cal-note]') : null;
+  if (note) { note.style.display = 'none'; }
+  // A tab's name is its title line. Looked up three ways, so it survives a CMS that drops some of the invisible marks:
   // the marked line, the first short cell of the block, then the block's data-cal-label.
   function titleCell(p) {
     var td = p.querySelector('td');
@@ -1045,12 +1049,36 @@ CAL_JS = r"""<script>
     var t = el ? words(el) : '';
     if (t === '') { var td = titleCell(p); if (td) { t = words(td); } }
     if (t === '') { t = p.getAttribute('data-cal-label') || ''; }
-    if (t === '') { return FULL[i % 12].charAt(0).toUpperCase() + FULL[i % 12].slice(1); }
+    if (t === '') { return 'Calendar ' + (i + 1); }
     return t;
   }
+  // "November 2026" gives month 10 and year 2026 (month -1 if the name is not a month)
+  function parse(t) {
+    var r = /^([A-Za-z]+)[.]?\s*([0-9][0-9][0-9][0-9])?$/.exec(t);
+    if (!r) { return { m: -1, y: 0 }; }
+    var w = r[1].toLowerCase();
+    for (var k = 0; k !== 12; k++) {
+      if (FULL[k] === w) { return { m: k, y: r[2] ? parseInt(r[2], 10) : 0 }; }
+      if (FULL[k].slice(0, 3) === w) { return { m: k, y: r[2] ? parseInt(r[2], 10) : 0 }; }
+    }
+    return { m: -1, y: 0 };
+  }
+  var labels = [];
+  var years = {};
+  var yearCount = 0;
+  each(panels, function (p, i) {
+    var l = labelOf(p, i);
+    labels.push(l);
+    var y = parse(l).y;
+    if (y !== 0) { if (!years[y]) { years[y] = 1; yearCount++; } }
+  });
+  // Month names show as "Nov"; when the tabs cover more than one year they show as "Nov 2026".
   function shortOf(t) {
-    if (FULL.indexOf(t.toLowerCase()) !== -1) { return t.slice(0, 3); }
-    return t;
+    var p = parse(t);
+    if (p.m === -1) { return t; }
+    var s = FULL[p.m].charAt(0).toUpperCase() + FULL[p.m].slice(1, 3);
+    if (Math.max(yearCount, 2) === yearCount) { if (p.y !== 0) { s = s + ' ' + p.y; } }
+    return s;
   }
   function paint(a, on) {
     a.style.backgroundColor = on ? '#6B1735' : '#F2F2F2';
@@ -1061,15 +1089,20 @@ CAL_JS = r"""<script>
     each(panels, function (p, j) { p.style.display = (j === i) ? '' : 'none'; });
     each(tabs, function (a, j) { paint(a, j === i); });
   }
-  var now = new Date().getMonth();
+  var nowD = new Date();
   var start = 0;
+  var found = false;
   bar.textContent = '';
   each(panels, function (p, i) {
     var row = p.querySelector('[data-cal-title]');
     if (!row) { var tc = titleCell(p); if (tc) { row = tc.parentNode; } }
     if (row) { row.style.display = 'none'; }
-    var label = labelOf(p, i);
-    if (label.toLowerCase().indexOf(FULL[now].slice(0, 3)) === 0) { start = i; }
+    var pr = parse(labels[i]);
+    if (!found) {
+      if (pr.m === nowD.getMonth()) {
+        if (pr.y === 0 || pr.y === nowD.getFullYear()) { start = i; found = true; }
+      }
+    }
     var a = document.createElement('a');
     var slant = 'polygon(0 100%, 14px 0, calc(100% - 14px) 0, 100% 100%)';
     a.setAttribute('href', '#');
@@ -1077,8 +1110,8 @@ CAL_JS = r"""<script>
     a.style.cssText = 'display:block;float:left;position:relative;z-index:1;box-sizing:border-box;min-width:66px;margin:0 -9px 0 0;padding:9px 24px 8px 24px;text-align:center;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;line-height:1.2;background-color:#F2F2F2;color:#6B1735;';
     a.style.clipPath = slant;
     a.style.webkitClipPath = slant;
-    a.textContent = shortOf(label);
-    a.setAttribute('title', label);
+    a.textContent = shortOf(labels[i]);
+    a.setAttribute('title', labels[i]);
     bar.appendChild(a);
     tabs.push(a);
   });
@@ -1096,9 +1129,9 @@ CAL_JS = r"""<script>
 })();
 </script>"""
 cal_body = sec(
-    c("Twelve small folder tabs, January on the left (built by the script below from the monthly blocks)")
-    + f'<div id="fbcCalTabs" style="font-family:{B};font-size:15px;color:{TGRAY};">Scroll down to read every month.</div>'
-    + c("Monthly calendars: one block per month")
+    c("Small folder tabs, one per calendar you add, most recent on the left (built by the script below from the blocks in the box)")
+    + f'<div id="fbcCalTabs" style="font-family:{B};font-size:15px;color:{TGRAY};">Scroll down to read every calendar.</div>'
+    + c("The calendars: one block per month, most recent first")
     + f'<div id="fbcCalBox" style="border:1px solid {GOLD};border-top:3px solid {MAROON};background-color:{WHITE};">{cal_months_block}</div>'
     + c("Tabs script (optional; without it every month stays stacked)") + CAL_JS, pad="0")
 
@@ -1108,15 +1141,16 @@ cal_hdr = f"""<!-- =============================================================
   Inline CSS + tables only (no <style> tags). Pictures are loaded from the CMS media library.
   LOGO: the header logo is CAL_LOGO in tools/gen_pages.py; upload it to the CMS and set that address.
 
-  EACH MONTH: twelve small folder tabs, January to December. Easiest: open tools/dashboard.html (FBC Page Editor), load this page,
-  and use "Add calendar files" to pick one HTML file per month (each goes to the month it names), or open a month and paste its
-  calendar HTML. By hand: put the month's HTML inside the cell marked data-cal-body (delete data-cal-empty and the grey placeholder).
+  EACH MONTH: the page starts with no tabs. Easiest: open tools/dashboard.html (FBC Page Editor), load this page, and use
+  "Add calendar files" to pick one HTML file per month. Each file becomes a tab named from its month ("November 2026"), placed
+  most recent first (leftmost); or paste one month's HTML under "Or paste one month". By hand: add a block like the ones the editor
+  makes (a table marked data-cal with data-cal-label, a title row, and a cell marked data-cal-body holding the month's HTML).
   The current month opens first.
 
 {PALETTE}
 ====================================================================== -->
 """
-cal_page = page(c("SECTION 1: Header - page name and purpose on the left, logo on the right") + cal_hero + c("SECTION 2: Twelve monthly tabs") + cal_body + c("SECTION 3: Call to action") + cal_foot, cal_hdr, key="cal")
+cal_page = page(c("SECTION 1: Header - page name and purpose on the left, logo on the right") + cal_hero + c("SECTION 2: Month tabs") + cal_body + c("SECTION 3: Call to action") + cal_foot, cal_hdr, key="cal")
 cal_page = cal_page.replace('<td style="">', '<td style="padding:0;margin:0;">').replace("border-collapse:separate;", "border-collapse:separate;margin:0;")
 write("calendar", cal_page)
 

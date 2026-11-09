@@ -426,6 +426,10 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     (lists.pens ? lists.pens.items : []).forEach(function (it) {   // the three lines of each Pen's library card are editable
       Object.keys(PEN_ATTRS).forEach(function (k) { fields.push({ kind: 'attr', node: it, name: k, owner: it, upper: false, long: false, id: 'f' + (++uid) }); });
     });
+    if (!lists.cal) {   // a calendar page with no months yet still shows its "add" controls
+      var cbox = doc.getElementById('fbcCalBox');
+      if (cbox) { lists.cal = { name: 'cal', fixed: false, parent: null, items: [], pos: cbox }; order.push('cal'); }
+    }
     fields.forEach(function (f, i) { f.orig = readField(f); f.seq = i; });
     return { fields: fields, lists: lists, listOrder: order };
   }
@@ -749,20 +753,55 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
   function calClear(item) { var b = calBodyOf(item); b.innerHTML = CAL_EMPTY; b.setAttribute('data-cal-empty', '1'); }
   var calNotes = [];
   function showCalNotes() { var el = $('#calNotes'); if (el) el.textContent = calNotes.join('  ·  '); }
-  function addCalendars(l, files) {   // each file goes to the month it names
+  var CAL_FULLNAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function calYear(name, html, inner) {   // a four-digit year: file name, page title, picture names, then the text; else this year
+    var tm = /<title[^>]*>([^<]*)<\/title>/i.exec(html || ''), srcs = (inner.match(/(?:src|href)="[^"]*"/gi) || []).join(' ');
+    var srcsList = [name, tm ? tm[1] : '', srcs, plainText(inner)];
+    for (var i = 0; i < srcsList.length; i++) { var m = /(?:^|[^\d])(20\d{2})(?!\d)/.exec(srcsList[i]); if (m) return +m[1]; }
+    return new Date().getFullYear();
+  }
+  function calKey(label) {   // "November 2026" -> 202610 (year * 100 + month index), or -1 if it is not a month
+    var mo = monthWord(label), ym = /(20\d{2})/.exec(label || '');
+    return mo < 0 ? -1 : (ym ? +ym[1] : new Date().getFullYear()) * 100 + mo;
+  }
+  function calWrap(label, inner) {   // the markup of one month (same as the generator's)
+    var tbl = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-cal="1" data-cal-label="' + label + '" data-fbc-item="cal" style="width:100%;border-collapse:separate;margin:0;">';
+    return tbl + '<tr data-cal-title="1"><td style="padding:16px 20px 0 20px;"><div data-fbc="label" style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;color:#6B1735;">' + label + '</div></td></tr>'
+      + '<tr><td data-cal-body="1" style="padding:0;">' + inner + '</td></tr></table>';
+  }
+  function calPlace(label, inner) {   // add or replace one month; most recent first. Returns the item and whether it replaced one
+    var key = calKey(label), items = calItems(), box = S.doc.getElementById('fbcCalBox');
+    var same = items.filter(function (it) { return calKey(calLabelOf(it)) === key; })[0];
+    if (same) { calFill(same, inner); return { item: same, replaced: true }; }
+    var holder = S.doc.createElement('div'); holder.innerHTML = calWrap(label, inner);
+    var card = holder.firstChild; card._new = true;
+    var ref = items.filter(function (it) { return calKey(calLabelOf(it)) < key; })[0], note = box.querySelector('[data-cal-note]');
+    var par = ref ? ref.parentNode : box, before = ref || (note ? note : null);
+    if (ref) {   // go in front of that month's own START comment, so each month keeps its comments together
+      var pv = ref.previousSibling;
+      while (pv && pv.nodeType === 3 && !pv.textContent.trim()) pv = pv.previousSibling;
+      if (pv && pv.nodeType === 8 && /MONTH START/.test(pv.textContent)) before = pv;
+    }
+    par.insertBefore(S.doc.createTextNode('\n'), before);
+    par.insertBefore(S.doc.createComment(' MONTH START: copy from here '), before); par.insertBefore(S.doc.createTextNode('\n'), before);
+    par.insertBefore(card, before); par.insertBefore(S.doc.createTextNode('\n'), before);
+    par.insertBefore(S.doc.createComment(' MONTH END '), before);
+    added++;
+    return { item: card, replaced: false };
+  }
+  function addCalendars(l, files) {   // each file becomes (or replaces) the tab for the month it names
     var notes = [], ok = 0, last = null;
     files.forEach(function (f) {
       var inner = penBody(f.html);
       if (!/<(table|div|p|h1|h2)\b/i.test(inner)) { notes.push(f.name + ': skipped, it does not look like HTML'); return; }
       var mo = calMonth(f.name, f.html, inner);
-      if (mo < 0) { notes.push(f.name + ': could not tell which month it is for (no month in its name, title, pictures or text). Open the month and paste it there instead'); return; }
-      var target = calItems().filter(function (it) { return monthWord(calLabelOf(it)) === mo; })[0];
-      if (!target) { notes.push(f.name + ': there is no ' + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][mo] + ' tab on this page'); return; }
-      if (!calIsEmpty(target)) notes.push(calLabelOf(target) + ' already had a calendar; it was replaced by ' + f.name);
-      calFill(target, inner); last = target; ok++; structChanges++;
+      if (mo < 0) { notes.push(f.name + ': could not tell which month it is for (no month in its name, title, pictures or text). Use "Or paste one month" below and pick the month'); return; }
+      var label = CAL_FULLNAMES[mo] + ' ' + calYear(f.name, f.html, inner), r = calPlace(label, inner);
+      if (r.replaced) notes.push(label + ' already had a calendar; it was replaced by ' + f.name);
+      last = r.item; ok++; structChanges++;
     });
     if (ok) rescanAfter(last, false);
-    toast(ok ? 'Placed ' + ok + ' calendar' + (ok === 1 ? '' : 's') + (notes.length ? '. Check the notes under the button.' : ' in their months.') : 'Nothing placed. ' + (notes[0] || ''));
+    toast(ok ? 'Added ' + ok + ' calendar' + (ok === 1 ? '' : 's') + (notes.length ? '. Check the notes under the button.' : ', each with its own tab.') : 'Nothing added. ' + (notes[0] || ''));
     calNotes = notes; showCalNotes();
   }
   function calBar(l, bar) {
@@ -773,8 +812,20 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     });
     bar.appendChild(pick);
     bar.appendChild(mk('button', { class: 'btn primary small', type: 'button', text: '+ Add calendar files', onclick: function () { pick.click(); } }));
-    bar.appendChild(mk('span', { class: 'note', text: 'Pick one HTML file per month. Each goes to the month named in its file name, title, pictures or text, and replaces what that month had.' }));
-    bar.appendChild(mk('p', { class: 'hint', id: 'calNotes', style: 'flex-basis:100%', 'aria-live': 'polite' }));
+    bar.appendChild(mk('span', { class: 'note', text: 'Pick one HTML file per month. Each becomes a tab named from its month ("November 2026"), most recent on the left. A month you add again replaces the old one.' }));
+    var paste = mk('details', { class: 'item' });
+    paste.appendChild(mk('summary', {}, [mk('span', { class: 'ttl', text: 'Or paste one month’s HTML' })]));
+    var sel = mk('select', {}, CAL_FULLNAMES.map(function (n, i) { return mk('option', { value: String(i), text: n }); }));
+    sel.value = String(new Date().getMonth());
+    var yr = mk('input', { type: 'number', value: String(new Date().getFullYear()), style: 'width:100px' });
+    var ta = mk('textarea', { rows: '5', placeholder: 'Paste the calendar HTML here', style: 'width:100%;font-family:monospace;font-size:.85rem' });
+    var go = mk('button', { class: 'btn small', type: 'button', text: 'Add this month', onclick: function () {
+      if (!ta.value.trim()) { toast('Paste the calendar HTML first.'); return; }
+      var label = CAL_FULLNAMES[+sel.value] + ' ' + (+yr.value || new Date().getFullYear()), r = calPlace(label, penBody(ta.value));
+      structChanges++; rescanAfter(r.item, false); toast(r.replaced ? label + ' was replaced.' : label + ' was added.'); ta.value = '';
+    } });
+    paste.appendChild(mk('div', { class: 'item-body' }, [mk('div', { class: 'listbar' }, [sel, yr]), ta, go]));
+    bar.appendChild(mk('div', { style: 'flex-basis:100%' }, [paste, mk('p', { class: 'hint', id: 'calNotes', 'aria-live': 'polite' })]));
     showCalNotes();
   }
   function calItemUi(l, item) {   // inside an open month: paste its calendar HTML, or clear it
@@ -945,7 +996,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     function pos(node) { return node; }
     globals().forEach(function (f) { var s = sec(f.name.split('.')[0]); s.fields.push(f); if (!s.pos) s.pos = f.node; });
     Object.keys(secs).forEach(function (k) { secs[k].fields.sort(byOrder); });
-    S.listOrder.forEach(function (n) { var s = sec(sectionKeyFor(n)); s.lists.push(S.lists[n]); if (!s.pos) s.pos = S.lists[n].items[0]; });
+    S.listOrder.forEach(function (n) { var s = sec(sectionKeyFor(n)); s.lists.push(S.lists[n]); if (!s.pos) s.pos = S.lists[n].pos || S.lists[n].items[0]; });
     order.sort(function (a, b) {
       var pa = secs[a].pos, pb = secs[b].pos;
       if (!pa || !pb) return 0;
@@ -1167,7 +1218,7 @@ details.sec[open] > summary .caret { transform: rotate(225deg); }
     var d = lsGet(); $('#restore').hidden = !(d && d.html);
   }
   // Pastor's Pen pages saved before the card lines were editable have a library script that ignores them: add that to the script.
-  /*CAL_JS_START*/var CAL_SCRIPT = "(function () {\n  // Church Calendar tabs: one small folder-style tab per month, January on the left. Each month is one block in the box below;\n  // the tab row is built from those blocks, and the current month opens first. With scripts blocked every month simply stays stacked.\n  // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.\n  var bar = document.getElementById('fbcCalTabs');\n  var box = document.getElementById('fbcCalBox');\n  if (!bar) { return; }\n  var FULL = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];\n  var tabs = [];\n  function each(list, fn) { Array.prototype.forEach.call(list, fn); }\n  function words(n) { return (n.textContent || '').replace(/\\s+/g, ' ').replace(/^\\s+|\\s+$/g, ''); }\n  // The months are the blocks marked data-cal. If a CMS dropped that mark, they are the tables directly inside the box.\n  var panels = [];\n  each(document.querySelectorAll('table[data-cal]'), function (n) { panels.push(n); });\n  if (panels.length === 0) {\n    if (box) { each(box.children, function (n) { if (n.tagName === 'TABLE') { panels.push(n); } }); }\n  }\n  if (panels.length === 0) { return; }\n  // A month's tab name is its title line. Looked up three ways, so it survives a CMS that drops some of the invisible marks:\n  // the marked line, the first short cell of the block, then the block's data-cal-label.\n  function titleCell(p) {\n    var td = p.querySelector('td');\n    if (!td) { return null; }\n    if (td.hasAttribute('data-cal-body')) { return null; }\n    if (Math.max(words(td).length, 40) !== 40) { return null; }\n    return td;\n  }\n  function labelOf(p, i) {\n    var el = p.querySelector('[data-fbc=\"label\"]');\n    var t = el ? words(el) : '';\n    if (t === '') { var td = titleCell(p); if (td) { t = words(td); } }\n    if (t === '') { t = p.getAttribute('data-cal-label') || ''; }\n    if (t === '') { return FULL[i % 12].charAt(0).toUpperCase() + FULL[i % 12].slice(1); }\n    return t;\n  }\n  function shortOf(t) {\n    if (FULL.indexOf(t.toLowerCase()) !== -1) { return t.slice(0, 3); }\n    return t;\n  }\n  function paint(a, on) {\n    a.style.backgroundColor = on ? '#6B1735' : '#F2F2F2';\n    a.style.color = on ? '#ffffff' : '#6B1735';\n    a.style.zIndex = on ? '3' : '1';\n  }\n  function show(i) {\n    each(panels, function (p, j) { p.style.display = (j === i) ? '' : 'none'; });\n    each(tabs, function (a, j) { paint(a, j === i); });\n  }\n  var now = new Date().getMonth();\n  var start = 0;\n  bar.textContent = '';\n  each(panels, function (p, i) {\n    var row = p.querySelector('[data-cal-title]');\n    if (!row) { var tc = titleCell(p); if (tc) { row = tc.parentNode; } }\n    if (row) { row.style.display = 'none'; }\n    var label = labelOf(p, i);\n    if (label.toLowerCase().indexOf(FULL[now].slice(0, 3)) === 0) { start = i; }\n    var a = document.createElement('a');\n    var slant = 'polygon(0 100%, 14px 0, calc(100% - 14px) 0, 100% 100%)';\n    a.setAttribute('href', '#');\n    a.setAttribute('data-cal-idx', String(i));\n    a.style.cssText = 'display:block;float:left;position:relative;z-index:1;box-sizing:border-box;min-width:66px;margin:0 -9px 0 0;padding:9px 24px 8px 24px;text-align:center;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;line-height:1.2;background-color:#F2F2F2;color:#6B1735;';\n    a.style.clipPath = slant;\n    a.style.webkitClipPath = slant;\n    a.textContent = shortOf(label);\n    a.setAttribute('title', label);\n    bar.appendChild(a);\n    tabs.push(a);\n  });\n  var clr = document.createElement('div');\n  clr.style.cssText = 'clear:both;height:0;font-size:0;line-height:0;';\n  bar.appendChild(clr);\n  document.addEventListener('click', function (ev) {\n    var a = ev.target.closest ? ev.target.closest('a[data-cal-idx]') : null;\n    if (!a) { return; }\n    ev.preventDefault();\n    ev.stopPropagation();\n    show(parseInt(a.getAttribute('data-cal-idx'), 10));\n  }, true);\n  show(start);\n})();";/*CAL_JS_END*/
+  /*CAL_JS_START*/var CAL_SCRIPT = "(function () {\n  // Church Calendar tabs: one small folder-style tab per calendar you have added, most recent first (on the left). Each calendar\n  // is one block in the box below; the tab row is built from those blocks, and the current month opens first.\n  // With scripts blocked every calendar simply stays stacked. Written without angle brackets or ampersands so CMS editors\n  // cannot HTML-escape it and break the script.\n  var bar = document.getElementById('fbcCalTabs');\n  var box = document.getElementById('fbcCalBox');\n  if (!bar) { return; }\n  var FULL = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];\n  var tabs = [];\n  function each(list, fn) { Array.prototype.forEach.call(list, fn); }\n  function words(n) { return (n.textContent || '').replace(/\\s+/g, ' ').replace(/^\\s+|\\s+$/g, ''); }\n  // The months are the blocks marked data-cal. If a CMS dropped that mark, they are the tables directly inside the box.\n  var panels = [];\n  each(document.querySelectorAll('table[data-cal]'), function (n) { panels.push(n); });\n  if (panels.length === 0) {\n    if (box) { each(box.children, function (n) { if (n.tagName === 'TABLE') { panels.push(n); } }); }\n  }\n  if (panels.length === 0) { bar.textContent = ''; return; }\n  var note = box ? box.querySelector('[data-cal-note]') : null;\n  if (note) { note.style.display = 'none'; }\n  // A tab's name is its title line. Looked up three ways, so it survives a CMS that drops some of the invisible marks:\n  // the marked line, the first short cell of the block, then the block's data-cal-label.\n  function titleCell(p) {\n    var td = p.querySelector('td');\n    if (!td) { return null; }\n    if (td.hasAttribute('data-cal-body')) { return null; }\n    if (Math.max(words(td).length, 40) !== 40) { return null; }\n    return td;\n  }\n  function labelOf(p, i) {\n    var el = p.querySelector('[data-fbc=\"label\"]');\n    var t = el ? words(el) : '';\n    if (t === '') { var td = titleCell(p); if (td) { t = words(td); } }\n    if (t === '') { t = p.getAttribute('data-cal-label') || ''; }\n    if (t === '') { return 'Calendar ' + (i + 1); }\n    return t;\n  }\n  // \"November 2026\" gives month 10 and year 2026 (month -1 if the name is not a month)\n  function parse(t) {\n    var r = /^([A-Za-z]+)[.]?\\s*([0-9][0-9][0-9][0-9])?$/.exec(t);\n    if (!r) { return { m: -1, y: 0 }; }\n    var w = r[1].toLowerCase();\n    for (var k = 0; k !== 12; k++) {\n      if (FULL[k] === w) { return { m: k, y: r[2] ? parseInt(r[2], 10) : 0 }; }\n      if (FULL[k].slice(0, 3) === w) { return { m: k, y: r[2] ? parseInt(r[2], 10) : 0 }; }\n    }\n    return { m: -1, y: 0 };\n  }\n  var labels = [];\n  var years = {};\n  var yearCount = 0;\n  each(panels, function (p, i) {\n    var l = labelOf(p, i);\n    labels.push(l);\n    var y = parse(l).y;\n    if (y !== 0) { if (!years[y]) { years[y] = 1; yearCount++; } }\n  });\n  // Month names show as \"Nov\"; when the tabs cover more than one year they show as \"Nov 2026\".\n  function shortOf(t) {\n    var p = parse(t);\n    if (p.m === -1) { return t; }\n    var s = FULL[p.m].charAt(0).toUpperCase() + FULL[p.m].slice(1, 3);\n    if (Math.max(yearCount, 2) === yearCount) { if (p.y !== 0) { s = s + ' ' + p.y; } }\n    return s;\n  }\n  function paint(a, on) {\n    a.style.backgroundColor = on ? '#6B1735' : '#F2F2F2';\n    a.style.color = on ? '#ffffff' : '#6B1735';\n    a.style.zIndex = on ? '3' : '1';\n  }\n  function show(i) {\n    each(panels, function (p, j) { p.style.display = (j === i) ? '' : 'none'; });\n    each(tabs, function (a, j) { paint(a, j === i); });\n  }\n  var nowD = new Date();\n  var start = 0;\n  var found = false;\n  bar.textContent = '';\n  each(panels, function (p, i) {\n    var row = p.querySelector('[data-cal-title]');\n    if (!row) { var tc = titleCell(p); if (tc) { row = tc.parentNode; } }\n    if (row) { row.style.display = 'none'; }\n    var pr = parse(labels[i]);\n    if (!found) {\n      if (pr.m === nowD.getMonth()) {\n        if (pr.y === 0 || pr.y === nowD.getFullYear()) { start = i; found = true; }\n      }\n    }\n    var a = document.createElement('a');\n    var slant = 'polygon(0 100%, 14px 0, calc(100% - 14px) 0, 100% 100%)';\n    a.setAttribute('href', '#');\n    a.setAttribute('data-cal-idx', String(i));\n    a.style.cssText = 'display:block;float:left;position:relative;z-index:1;box-sizing:border-box;min-width:66px;margin:0 -9px 0 0;padding:9px 24px 8px 24px;text-align:center;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;line-height:1.2;background-color:#F2F2F2;color:#6B1735;';\n    a.style.clipPath = slant;\n    a.style.webkitClipPath = slant;\n    a.textContent = shortOf(labels[i]);\n    a.setAttribute('title', labels[i]);\n    bar.appendChild(a);\n    tabs.push(a);\n  });\n  var clr = document.createElement('div');\n  clr.style.cssText = 'clear:both;height:0;font-size:0;line-height:0;';\n  bar.appendChild(clr);\n  document.addEventListener('click', function (ev) {\n    var a = ev.target.closest ? ev.target.closest('a[data-cal-idx]') : null;\n    if (!a) { return; }\n    ev.preventDefault();\n    ev.stopPropagation();\n    show(parseInt(a.getAttribute('data-cal-idx'), 10));\n  }, true);\n  show(start);\n})();";/*CAL_JS_END*/
   /*HL_JS_START*/var HL_SCRIPT = "(function () {\n  // Pastor's Highlights tabs. Each week is one block in the box below; the tab row is built from those blocks\n  // (newest on the left). With scripts blocked every week simply stays stacked, newest first.\n  // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.\n  var bar = document.getElementById('fbcHlTabs');\n  var box = document.getElementById('fbcHlBox');\n  if (!bar) { return; }\n  var tabs = [];\n  function each(list, fn) { Array.prototype.forEach.call(list, fn); }\n  function words(n) { return (n.textContent || '').replace(/\\s+/g, ' ').replace(/^\\s+|\\s+$/g, ''); }\n  // The weeks are the blocks marked data-hl. If a CMS dropped that mark, the weeks are the tables directly inside the box.\n  var panels = [];\n  each(document.querySelectorAll('table[data-hl]'), function (n) { panels.push(n); });\n  if (panels.length === 0) {\n    if (box) { each(box.children, function (n) { if (n.tagName === 'TABLE') { panels.push(n); } }); }\n  }\n  if (panels.length === 0) { return; }\n  // A week's tab name is its title line. Looked up three ways, so it survives a CMS that drops some of the invisible marks:\n  // the marked line, the first short cell of the block, then the block's data-hl-label.\n  function titleCell(p) {\n    var td = p.querySelector('td');\n    if (!td) { return null; }\n    if (td.hasAttribute('data-hl-body')) { return null; }\n    if (Math.max(words(td).length, 40) !== 40) { return null; }\n    return td;\n  }\n  function labelOf(p, i) {\n    var el = p.querySelector('[data-fbc=\"label\"]');\n    var t = el ? words(el) : '';\n    if (t === '') { var td = titleCell(p); if (td) { t = words(td); } }\n    if (t === '') { t = p.getAttribute('data-hl-label') || ''; }\n    if (t === '') { return 'Week ' + (i + 1); }\n    return t;\n  }\n  function paint(a, on) {\n    a.style.backgroundColor = on ? '#6B1735' : '#ffffff';\n    a.style.borderColor = on ? '#6B1735' : '#C9A55C';\n    a.style.color = on ? '#ffffff' : '#6B1735';\n  }\n  function show(i) {\n    each(panels, function (p, j) { p.style.display = (j === i) ? '' : 'none'; });\n    each(tabs, function (a, j) { paint(a, j === i); });\n  }\n  bar.textContent = '';\n  each(panels, function (p, i) {\n    var row = p.querySelector('[data-hl-title]');\n    if (!row) { var tc = titleCell(p); if (tc) { row = tc.parentNode; } }\n    if (row) { row.style.display = 'none'; }\n    var a = document.createElement('a');\n    a.setAttribute('href', '#');\n    a.setAttribute('data-hl-idx', String(i));\n    a.style.cssText = 'display:block;float:left;box-sizing:border-box;width:19%;min-width:110px;margin:0 1% 10px 0;padding:14px 8px;text-align:center;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;line-height:1.25;border:1px solid #C9A55C;border-radius:12px;background-color:#ffffff;color:#6B1735;';\n    a.textContent = labelOf(p, i);\n    bar.appendChild(a);\n    tabs.push(a);\n  });\n  var clr = document.createElement('div');\n  clr.style.cssText = 'clear:both;height:0;font-size:0;line-height:0;';\n  bar.appendChild(clr);\n  document.addEventListener('click', function (ev) {\n    var a = ev.target.closest ? ev.target.closest('a[data-hl-idx]') : null;\n    if (!a) { return; }\n    ev.preventDefault();\n    ev.stopPropagation();\n    show(parseInt(a.getAttribute('data-hl-idx'), 10));\n  }, true);\n  show(0);\n})();";/*HL_JS_END*/
   // The Highlights tabs script: always replaced by the newest version (kept in step with gen_pages.py).
   function upgradeCalScript(doc) {
