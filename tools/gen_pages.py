@@ -699,6 +699,34 @@ pen_hero = section(TR(TD(
     + fl_col(f'<div style="text-align:center;font-size:0;line-height:0;">{pen_logo_img}</div>', "52%", 260, "0 0 0 24px", tbl_id="fbcHeroLogo")
     + CLEAR + c("Script: centers the text beside the logo on wide screens and puts the logo above the text on phones") + HERO_JS)), pad="0 0 24px")
 
+CTA_JS = r"""<script>
+(function () {
+  // fbcCtaCenter: vertically centers the call-to-action buttons beside the text when the two sit side by side
+  // (on phones, where they stack, the buttons keep their normal small gap under the text).
+  // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.
+  var h = document.querySelector('[data-fbc="cta.heading"]');
+  var b = document.querySelector('[data-fbc="cta.button"]');
+  if (!h) { return; }
+  if (!b) { return; }
+  var textTbl = h.closest('table[align="left"]');
+  var btnTbl = b.closest('table[align="left"]');
+  if (!textTbl) { return; }
+  if (!btnTbl) { return; }
+  var btnTd = btnTbl.rows[0].cells[0];
+  var orig = btnTd.style.paddingTop || '14px';
+  function center() {
+    btnTd.style.paddingTop = '0px';
+    var tt = textTbl.getBoundingClientRect();
+    var bt = btnTbl.getBoundingClientRect();
+    if (Math.max(bt.top, tt.bottom - 1) === bt.top) { btnTd.style.paddingTop = orig; return; }
+    var pad = Math.round((tt.height - bt.height) / 2);
+    btnTd.style.paddingTop = Math.max(pad, 0) + 'px';
+  }
+  center();
+  window.addEventListener('load', center);
+  window.addEventListener('resize', center);
+})();
+</script>"""
 # Footer: call to action (text left, buttons right; stacks on phones like the other pages' bands)
 pen_foot_text = (txt("Worship With Us", 14, GOLD, "bold", extra="letter-spacing:0.18em;text-transform:uppercase;line-height:1.3;", fb=F("cta.eyebrow")) + sp(10)
                  + h("h2", "Hear the Word in person this Sunday", 40, WHITE, lh="1.12", fb=F("cta.heading")) + sp(10)
@@ -706,7 +734,7 @@ pen_foot_text = (txt("Worship With Us", 14, GOLD, "bold", extra="letter-spacing:
 pen_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
                  + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
 pen_foot_inner = fl_col(pen_foot_text, "66%", 240, "0 24px 0 0") + fl_col(pen_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
-pen_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(pen_foot_inner, MAROON, 20, "28px 24px"), pad="24px 0 0")
+pen_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(pen_foot_inner, MAROON, 20, "28px 24px") + CTA_JS, pad="24px 0 0")
 
 PEN_LIB_FALLBACK = "Scroll down to read earlier Sundays."
 pen_lib_col = (txt("The Library &nbsp;&middot;&nbsp; Rolling 12 Months", 13, GOLD, "bold", extra="letter-spacing:0.14em;text-transform:uppercase;", fb=F("lib.label")) + sp(10)
@@ -862,7 +890,7 @@ hl_foot_text = (txt("Be Part of It", 14, GOLD, "bold", extra="letter-spacing:0.1
 hl_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
                 + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
 hl_foot_inner = fl_col(hl_foot_text, "66%", 240, "0 24px 0 0") + fl_col(hl_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
-hl_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(hl_foot_inner, MAROON, 20, "28px 24px"), pad="24px 0 0")
+hl_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(hl_foot_inner, MAROON, 20, "28px 24px") + CTA_JS, pad="24px 0 0")
 
 # One tab = one week. The tab name is the week's "label" field; the week's own HTML goes in the cell marked data-hl-body.
 HL_EMPTY = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr><td style="padding:20px;">'
@@ -997,7 +1025,7 @@ cal_foot_text = (txt("Join Us", 14, GOLD, "bold", extra="letter-spacing:0.18em;t
 cal_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
                  + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
 cal_foot_inner = fl_col(cal_foot_text, "66%", 240, "0 24px 0 0") + fl_col(cal_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
-cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "48px 24px"), pad="64px 0 48px")
+cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "48px 24px") + CTA_JS, pad="64px 0 48px")
 
 CAL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 CAL_EMPTY = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr><td style="padding:20px;">'
@@ -1152,6 +1180,8 @@ import json
 _d = open(R + "tools/dashboard.html").read()
 _body = HL_JS[len("<script>"):-len("</script>")].strip("\n")
 _d = re.sub(r"/\*HL_JS_START\*/.*?/\*HL_JS_END\*/", lambda m: "/*HL_JS_START*/var HL_SCRIPT = " + json.dumps(_body) + ";/*HL_JS_END*/", _d, count=1, flags=re.S)
+_tb = CTA_JS[len("<script>"):-len("</script>")].strip("\n")
+_d = re.sub(r"/\*CTA_JS_START\*/.*?/\*CTA_JS_END\*/", lambda m: "/*CTA_JS_START*/var CTA_SCRIPT = " + json.dumps(_tb) + ";/*CTA_JS_END*/", _d, count=1, flags=re.S)
 _cb = CAL_JS[len("<script>"):-len("</script>")].strip("\n")
 _d = re.sub(r"/\*CAL_JS_START\*/.*?/\*CAL_JS_END\*/", lambda m: "/*CAL_JS_START*/var CAL_SCRIPT = " + json.dumps(_cb) + ";/*CAL_JS_END*/", _d, count=1, flags=re.S)
 open(R + "tools/dashboard.html", "w").write(_d)

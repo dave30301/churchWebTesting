@@ -96,3 +96,7 @@ bottom). They appear in the "Call-to-action band" section of any of those three 
 existed. Use these to tune the spacing on a page you keep editing in the dashboard. Changing `pad=` in `gen_pages.py` only affects
 pages you re-generate and paste in fresh; HTML you load from the CMS into the dashboard keeps whatever spacing it already has.
 
+The call-to-action buttons ("Plan a Visit", "Watch Live") are vertically centred beside the text by a small script in the band
+(`CTA_JS` in `gen_pages.py`, marker `fbcCtaCenter`). On phones, where the buttons stack under the text, it leaves their normal gap.
+The Page Editor adds or updates this script on any Pen, Highlights or Calendar page you load, so existing pages pick it up.
+
