@@ -872,7 +872,7 @@ HL_EMPTY = (f'<table role="presentation" width="100%" cellpadding="0" cellspacin
 HL_WEEKS = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"]   # newest first; edit each tab name in the Page Editor
 def hl_week(label):
     return ('<!-- WEEK START: copy from here -->\n'
-            f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-hl="1"{FITEM("hl")} style="width:100%;border-collapse:separate;">'
+            f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" data-hl="1" data-hl-label="{label}"{FITEM("hl")} style="width:100%;border-collapse:separate;">'
             f'<tr data-hl-title="1"><td style="padding:16px 20px 0 20px;">{txt(label, 22, MAROON, "bold", fb=F("label"))}</td></tr>'
             f'<tr><td data-hl-body="1" data-hl-empty="1" style="padding:0;">{HL_EMPTY}</td></tr></table>\n'
             '<!-- WEEK END -->\n')
@@ -884,16 +884,33 @@ HL_JS = r"""<script>
   // Pastor's Highlights tabs. Each week is one block in the box below; the tab row is built from those blocks
   // (newest on the left). With scripts blocked every week simply stays stacked, newest first.
   // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.
-  var panels = document.querySelectorAll('table[data-hl]');
   var bar = document.getElementById('fbcHlTabs');
+  var box = document.getElementById('fbcHlBox');
   if (!bar) { return; }
-  if (!panels.length) { return; }
   var tabs = [];
   function each(list, fn) { Array.prototype.forEach.call(list, fn); }
   function words(n) { return (n.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, ''); }
+  // The weeks are the blocks marked data-hl. If a CMS dropped that mark, the weeks are the tables directly inside the box.
+  var panels = [];
+  each(document.querySelectorAll('table[data-hl]'), function (n) { panels.push(n); });
+  if (panels.length === 0) {
+    if (box) { each(box.children, function (n) { if (n.tagName === 'TABLE') { panels.push(n); } }); }
+  }
+  if (panels.length === 0) { return; }
+  // A week's tab name is its title line. Looked up three ways, so it survives a CMS that drops some of the invisible marks:
+  // the marked line, the first short cell of the block, then the block's data-hl-label.
+  function titleCell(p) {
+    var td = p.querySelector('td');
+    if (!td) { return null; }
+    if (td.hasAttribute('data-hl-body')) { return null; }
+    if (Math.max(words(td).length, 40) !== 40) { return null; }
+    return td;
+  }
   function labelOf(p, i) {
     var el = p.querySelector('[data-fbc="label"]');
     var t = el ? words(el) : '';
+    if (t === '') { var td = titleCell(p); if (td) { t = words(td); } }
+    if (t === '') { t = p.getAttribute('data-hl-label') || ''; }
     if (t === '') { return 'Week ' + (i + 1); }
     return t;
   }
@@ -909,6 +926,7 @@ HL_JS = r"""<script>
   bar.textContent = '';
   each(panels, function (p, i) {
     var row = p.querySelector('[data-hl-title]');
+    if (!row) { var tc = titleCell(p); if (tc) { row = tc.parentNode; } }
     if (row) { row.style.display = 'none'; }
     var a = document.createElement('a');
     a.setAttribute('href', '#');
@@ -956,3 +974,10 @@ hl_hdr = f"""<!-- ==============================================================
 hl_page = page(c("SECTION 1: Header - page name and purpose on the left, logo on the right") + hl_hero + c("SECTION 2: Five weekly tabs") + hl_body + c("SECTION 3: Call to action") + hl_foot, hl_hdr, key="hl")
 hl_page = hl_page.replace('<td style="">', '<td style="padding:0;margin:0;">').replace("border-collapse:separate;", "border-collapse:separate;margin:0;")
 write("pastors-highlights", hl_page)
+
+# keep the Page Editor's copy of the Highlights tabs script identical to the page's (it replaces older copies on load)
+import json
+_d = open(R + "tools/dashboard.html").read()
+_body = HL_JS[len("<script>"):-len("</script>")].strip("\n")
+_d = re.sub(r"/\*HL_JS_START\*/.*?/\*HL_JS_END\*/", lambda m: "/*HL_JS_START*/var HL_SCRIPT = " + json.dumps(_body) + ";/*HL_JS_END*/", _d, count=1, flags=re.S)
+open(R + "tools/dashboard.html", "w").write(_d)
