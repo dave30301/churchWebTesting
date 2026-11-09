@@ -88,22 +88,15 @@
     }
     return { m: -1, y: 0 };
   }
+  // Each tab shows its name exactly as it was typed. Which month a calendar is for comes from its data-cal-key ("2026-11"),
+  // or, if that is missing, from the name itself.
   var labels = [];
-  var years = {};
-  var yearCount = 0;
-  each(panels, function (p, i) {
-    var l = labelOf(p, i);
-    labels.push(l);
-    var y = parse(l).y;
-    if (y !== 0) { if (!years[y]) { years[y] = 1; yearCount++; } }
-  });
-  // Month names show as "Nov"; when the tabs cover more than one year they show as "Nov 2026".
-  function shortOf(t) {
-    var p = parse(t);
-    if (p.m === -1) { return t; }
-    var s = FULL[p.m].charAt(0).toUpperCase() + FULL[p.m].slice(1, 3);
-    if (Math.max(yearCount, 2) === yearCount) { if (p.y !== 0) { s = s + ' ' + p.y; } }
-    return s;
+  each(panels, function (p, i) { labels.push(labelOf(p, i)); });
+  function monthOf(p, i) {
+    var k = p.getAttribute('data-cal-key') || '';
+    var r = /^([0-9][0-9][0-9][0-9])-([0-9][0-9])$/.exec(k);
+    if (r) { return { m: parseInt(r[2], 10) - 1, y: parseInt(r[1], 10) }; }
+    return parse(labels[i]);
   }
   function paint(a, on) {
     a.style.backgroundColor = on ? '#6B1735' : '#F2F2F2';
@@ -122,7 +115,7 @@
     var row = p.querySelector('[data-cal-title]');
     if (!row) { var tc = titleCell(p); if (tc) { row = tc.parentNode; } }
     if (row) { row.style.display = 'none'; }
-    var pr = parse(labels[i]);
+    var pr = monthOf(p, i);
     if (!found) {
       if (pr.m === nowD.getMonth()) {
         if (pr.y === 0 || pr.y === nowD.getFullYear()) { start = i; found = true; }
@@ -135,7 +128,7 @@
     a.style.cssText = 'display:block;float:left;position:relative;z-index:1;box-sizing:border-box;min-width:66px;margin:0 -9px 0 0;padding:9px 24px 8px 24px;text-align:center;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;line-height:1.2;background-color:#F2F2F2;color:#6B1735;';
     a.style.clipPath = slant;
     a.style.webkitClipPath = slant;
-    a.textContent = shortOf(labels[i]);
+    a.textContent = labels[i];
     a.setAttribute('title', labels[i]);
     bar.appendChild(a);
     tabs.push(a);

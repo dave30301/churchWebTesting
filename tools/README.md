@@ -74,8 +74,9 @@ In the Page Editor (`tools/dashboard.html`) load the page, then under "Weeks, ne
 
 Same header and footer as the Pastor's Pen and Highlights pages, with small trapezoid (folder-style) tabs, left-justified. The page
 starts with **no tabs**: every calendar you add becomes its own tab, most recent month on the left. Each calendar sits in a block
-marked `data-cal`, its HTML in the cell marked `data-cal-body`. Tabs read "Nov" (or "Nov 2026" when the tabs cover more than one
-year); the current month opens first. The header logo is `CAL_LOGO` in `gen_pages.py` (placeholder address).
+marked `data-cal`, its HTML in the cell marked `data-cal-body`. A tab shows its name exactly as typed (new ones start as "Nov",
+or "Jan 2027" for another year; rename them in the **Tab name** field). Which month a calendar is for is kept apart, in
+`data-cal-key="2026-11"`, so renaming a tab never breaks the ordering or the "current month opens first" rule. The header logo is `CAL_LOGO` in `gen_pages.py` (placeholder address).
 
 In the Page Editor load the page, then under "Months, January to December":
 - **+ Add calendar files**: pick one HTML file per month. The month comes from the file name, title, picture names or text
