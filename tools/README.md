@@ -96,13 +96,10 @@ bottom). They appear in the "Call-to-action band" section of any of those three 
 existed. Use these to tune the spacing on a page you keep editing in the dashboard. Changing `pad=` in `gen_pages.py` only affects
 pages you re-generate and paste in fresh; HTML you load from the CMS into the dashboard keeps whatever spacing it already has.
 
-On the Calendar page only, the call-to-action buttons ("Plan a Visit", "Watch Live") are vertically centred beside the text by code
-inside the calendar's one tabs script (`CTA_JS` in `gen_pages.py`, marker `fbcCtaCenter`). That script sits above the footer, so the
-centring waits until the page has loaded. On phones, where the buttons stack under the text, it leaves their normal gap. It finds the
-two columns from the heading and the first button (not from the `align` attribute). Loading a calendar page into the Page Editor
-replaces its tabs script with the current one, and removes the separate centring script an earlier version added. The Pen and
-Highlights pages do not use it.
-The calendar band also wraps the two columns in a `display:flex` row with `align-items:center`, so the buttons are centred even where a
-CMS does not run scripts (the script then leaves them alone). Where a CMS drops `display:flex`, the columns float as before and the
-script does the centring.
+Calendar page call to action. The CMS this site uses removes every inline `display:` and `white-space:` style and removes backslashes
+from scripts, so the band is built from things it keeps: the text and the two buttons are two cells of one table row with
+`valign="middle"` (centred with no script), and each button's padding is on its table cell, not on the link. A small script
+(`CTA_JS`, marker `fbcCtaCenter`, inside the calendar's tabs script) only stacks the two cells, buttons under the text, when the
+band is 520px wide or less; styles a script sets are kept by the CMS. The calendar tabs script contains no backslashes.
+Loading a calendar page into the Page Editor replaces its tabs script with the current one. Pen and Highlights are unchanged.
 
