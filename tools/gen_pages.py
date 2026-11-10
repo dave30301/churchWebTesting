@@ -703,47 +703,58 @@ CTA_JS = r"""<script>
 (function () {
   // fbcCtaCenter: vertically centers the call-to-action buttons beside the text when the two sit side by side
   // (on phones, where they stack, the buttons keep their normal small gap under the text).
+  // This script sits above the call-to-action band in the page, so it waits until the page has loaded before looking for it.
   // The two columns are found as the two blocks that hold the heading and the first button, so this keeps working
   // when a CMS rewrites the columns' align attribute or wraps them.
   // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.
-  var h = document.querySelector('[data-fbc="cta.heading"]');
-  var b = document.querySelector('[data-fbc="cta.button"]');
-  if (!h) { return; }
-  if (!b) { return; }
-  var up = [];
-  var n = h;
-  while (n) { up.push(n); n = n.parentNode; }
-  var common = b;
-  while (common) { if (up.indexOf(common) !== -1) { break; } common = common.parentNode; }
-  if (!common) { return; }
-  function column(node) {
-    var c = node;
-    while (c.parentNode) { if (c.parentNode === common) { return c; } c = c.parentNode; }
-    return null;
+  var started = false;
+  function setup() {
+    if (started) { return; }
+    var h = document.querySelector('[data-fbc="cta.heading"]');
+    var b = document.querySelector('[data-fbc="cta.button"]');
+    if (!h) { return; }
+    if (!b) { return; }
+    var up = [];
+    var n = h;
+    while (n) { up.push(n); n = n.parentNode; }
+    var common = b;
+    while (common) { if (up.indexOf(common) !== -1) { break; } common = common.parentNode; }
+    if (!common) { return; }
+    function column(node) {
+      var c = node;
+      while (c.parentNode) { if (c.parentNode === common) { return c; } c = c.parentNode; }
+      return null;
+    }
+    var textCol = column(h);
+    var btnCol = column(b);
+    if (!textCol) { return; }
+    if (!btnCol) { return; }
+    if (textCol === btnCol) { return; }
+    var cell = btnCol;
+    if (btnCol.tagName === 'TABLE') { cell = btnCol.getElementsByTagName('td')[0]; }
+    if (!cell) { return; }
+    started = true;
+    var orig = cell.getAttribute('data-fbc-pad');
+    if (orig === null) { orig = cell.style.paddingTop || '14px'; cell.setAttribute('data-fbc-pad', orig); }
+    function center() {
+      cell.style.paddingTop = '0px';
+      var tt = textCol.getBoundingClientRect();
+      var bt = btnCol.getBoundingClientRect();
+      if (Math.max(bt.top, tt.bottom - 1) === bt.top) { cell.style.paddingTop = orig; return; }
+      var pad = Math.round((tt.height - bt.height) / 2);
+      cell.style.paddingTop = Math.max(pad, 0) + 'px';
+    }
+    center();
+    window.addEventListener('load', center);
+    window.addEventListener('resize', center);
+    setTimeout(center, 400);
+    setTimeout(center, 1500);
   }
-  var textCol = column(h);
-  var btnCol = column(b);
-  if (!textCol) { return; }
-  if (!btnCol) { return; }
-  if (textCol === btnCol) { return; }
-  var cell = btnCol;
-  if (btnCol.tagName === 'TABLE') { cell = btnCol.getElementsByTagName('td')[0]; }
-  if (!cell) { return; }
-  var orig = cell.getAttribute('data-fbc-pad');
-  if (orig === null) { orig = cell.style.paddingTop || '14px'; cell.setAttribute('data-fbc-pad', orig); }
-  function center() {
-    cell.style.paddingTop = '0px';
-    var tt = textCol.getBoundingClientRect();
-    var bt = btnCol.getBoundingClientRect();
-    if (Math.max(bt.top, tt.bottom - 1) === bt.top) { cell.style.paddingTop = orig; return; }
-    var pad = Math.round((tt.height - bt.height) / 2);
-    cell.style.paddingTop = Math.max(pad, 0) + 'px';
-  }
-  center();
-  window.addEventListener('load', center);
-  window.addEventListener('resize', center);
-  setTimeout(center, 400);
-  setTimeout(center, 1500);
+  setup();
+  document.addEventListener('DOMContentLoaded', setup);
+  window.addEventListener('load', setup);
+  setTimeout(setup, 300);
+  setTimeout(setup, 1200);
 })();
 </script>"""
 # Footer: call to action (text left, buttons right; stacks on phones like the other pages' bands)
@@ -753,7 +764,7 @@ pen_foot_text = (txt("Worship With Us", 14, GOLD, "bold", extra="letter-spacing:
 pen_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
                  + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
 pen_foot_inner = fl_col(pen_foot_text, "66%", 240, "0 24px 0 0") + fl_col(pen_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
-pen_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(pen_foot_inner, MAROON, 20, "28px 24px") + CTA_JS, pad="24px 0 0")
+pen_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(pen_foot_inner, MAROON, 20, "28px 24px"), pad="24px 0 0")
 
 PEN_LIB_FALLBACK = "Scroll down to read earlier Sundays."
 pen_lib_col = (txt("The Library &nbsp;&middot;&nbsp; Rolling 12 Months", 13, GOLD, "bold", extra="letter-spacing:0.14em;text-transform:uppercase;", fb=F("lib.label")) + sp(10)
@@ -909,7 +920,7 @@ hl_foot_text = (txt("Be Part of It", 14, GOLD, "bold", extra="letter-spacing:0.1
 hl_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
                 + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
 hl_foot_inner = fl_col(hl_foot_text, "66%", 240, "0 24px 0 0") + fl_col(hl_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
-hl_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(hl_foot_inner, MAROON, 20, "28px 24px") + CTA_JS, pad="24px 0 0")
+hl_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(hl_foot_inner, MAROON, 20, "28px 24px"), pad="24px 0 0")
 
 # One tab = one week. The tab name is the week's "label" field; the week's own HTML goes in the cell marked data-hl-body.
 HL_EMPTY = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr><td style="padding:20px;">'
@@ -1044,7 +1055,7 @@ cal_foot_text = (txt("Join Us", 14, GOLD, "bold", extra="letter-spacing:0.18em;t
 cal_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
                  + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
 cal_foot_inner = fl_col(cal_foot_text, "66%", 240, "0 24px 0 0") + fl_col(cal_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
-cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "48px 24px") + CTA_JS, pad="64px 0 48px")
+cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "48px 24px"), pad="64px 0 48px")
 
 CAL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 CAL_EMPTY = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr><td style="padding:20px;">'
@@ -1168,6 +1179,9 @@ CAL_JS = r"""<script>
   show(start);
 })();
 </script>"""
+# The calendar page keeps everything in this one script, including the call-to-action button centering.
+CAL_JS = CAL_JS[:-len("</script>")] + CTA_JS[len("<script>"):]
+
 cal_body = sec(
     c("Small folder tabs, one per calendar you add, most recent on the left (built by the script below from the blocks in the box)")
     + f'<div id="fbcCalTabs" style="font-family:{B};font-size:15px;color:{TGRAY};"></div>'
@@ -1199,8 +1213,6 @@ import json
 _d = open(R + "tools/dashboard.html").read()
 _body = HL_JS[len("<script>"):-len("</script>")].strip("\n")
 _d = re.sub(r"/\*HL_JS_START\*/.*?/\*HL_JS_END\*/", lambda m: "/*HL_JS_START*/var HL_SCRIPT = " + json.dumps(_body) + ";/*HL_JS_END*/", _d, count=1, flags=re.S)
-_tb = CTA_JS[len("<script>"):-len("</script>")].strip("\n")
-_d = re.sub(r"/\*CTA_JS_START\*/.*?/\*CTA_JS_END\*/", lambda m: "/*CTA_JS_START*/var CTA_SCRIPT = " + json.dumps(_tb) + ";/*CTA_JS_END*/", _d, count=1, flags=re.S)
 _cb = CAL_JS[len("<script>"):-len("</script>")].strip("\n")
 _d = re.sub(r"/\*CAL_JS_START\*/.*?/\*CAL_JS_END\*/", lambda m: "/*CAL_JS_START*/var CAL_SCRIPT = " + json.dumps(_cb) + ";/*CAL_JS_END*/", _d, count=1, flags=re.S)
 open(R + "tools/dashboard.html", "w").write(_d)

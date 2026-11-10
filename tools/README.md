@@ -96,9 +96,10 @@ bottom). They appear in the "Call-to-action band" section of any of those three 
 existed. Use these to tune the spacing on a page you keep editing in the dashboard. Changing `pad=` in `gen_pages.py` only affects
 pages you re-generate and paste in fresh; HTML you load from the CMS into the dashboard keeps whatever spacing it already has.
 
-The call-to-action buttons ("Plan a Visit", "Watch Live") are vertically centred beside the text by a small script in the band
-(`CTA_JS` in `gen_pages.py`, marker `fbcCtaCenter`). On phones, where the buttons stack under the text, it leaves their normal gap.
-The Page Editor adds or updates this script on any Pen, Highlights or Calendar page you load, so existing pages pick it up.
-The script finds the two columns from the heading and the first button (not from the `align` attribute), so it still works when a CMS
-rewrites the columns' `align="left"` into a float style. It re-runs on load, on resize and shortly after load.
+On the Calendar page only, the call-to-action buttons ("Plan a Visit", "Watch Live") are vertically centred beside the text by code
+inside the calendar's one tabs script (`CTA_JS` in `gen_pages.py`, marker `fbcCtaCenter`). That script sits above the footer, so the
+centring waits until the page has loaded. On phones, where the buttons stack under the text, it leaves their normal gap. It finds the
+two columns from the heading and the first button (not from the `align` attribute). Loading a calendar page into the Page Editor
+replaces its tabs script with the current one, and removes the separate centring script an earlier version added. The Pen and
+Highlights pages do not use it.
 
