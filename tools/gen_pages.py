@@ -1194,7 +1194,7 @@ cal_body = sec(
     + c("Tabs script (optional; without it every month stays stacked)") + CAL_JS, pad="0")
 
 cal_hdr = f"""<!-- =====================================================================
-  FBC CHURCH CALENDAR PAGE - CMS EMBED
+  FBC CHURCH CALENDAR PAGE - CMS EMBED  (build: centered-buttons-3)
   HOW TO USE: switch the CMS block to Source/HTML view and paste everything below.
   Inline CSS + tables only (no <style> tags). Pictures are loaded from the CMS media library.
   LOGO: the header logo is CAL_LOGO in tools/gen_pages.py; upload it to the CMS and set that address.
