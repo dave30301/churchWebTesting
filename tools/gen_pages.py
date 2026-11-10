@@ -703,28 +703,47 @@ CTA_JS = r"""<script>
 (function () {
   // fbcCtaCenter: vertically centers the call-to-action buttons beside the text when the two sit side by side
   // (on phones, where they stack, the buttons keep their normal small gap under the text).
+  // The two columns are found as the two blocks that hold the heading and the first button, so this keeps working
+  // when a CMS rewrites the columns' align attribute or wraps them.
   // Written without angle brackets or ampersands so CMS editors cannot HTML-escape it and break the script.
   var h = document.querySelector('[data-fbc="cta.heading"]');
   var b = document.querySelector('[data-fbc="cta.button"]');
   if (!h) { return; }
   if (!b) { return; }
-  var textTbl = h.closest('table[align="left"]');
-  var btnTbl = b.closest('table[align="left"]');
-  if (!textTbl) { return; }
-  if (!btnTbl) { return; }
-  var btnTd = btnTbl.rows[0].cells[0];
-  var orig = btnTd.style.paddingTop || '14px';
+  var up = [];
+  var n = h;
+  while (n) { up.push(n); n = n.parentNode; }
+  var common = b;
+  while (common) { if (up.indexOf(common) !== -1) { break; } common = common.parentNode; }
+  if (!common) { return; }
+  function column(node) {
+    var c = node;
+    while (c.parentNode) { if (c.parentNode === common) { return c; } c = c.parentNode; }
+    return null;
+  }
+  var textCol = column(h);
+  var btnCol = column(b);
+  if (!textCol) { return; }
+  if (!btnCol) { return; }
+  if (textCol === btnCol) { return; }
+  var cell = btnCol;
+  if (btnCol.tagName === 'TABLE') { cell = btnCol.getElementsByTagName('td')[0]; }
+  if (!cell) { return; }
+  var orig = cell.getAttribute('data-fbc-pad');
+  if (orig === null) { orig = cell.style.paddingTop || '14px'; cell.setAttribute('data-fbc-pad', orig); }
   function center() {
-    btnTd.style.paddingTop = '0px';
-    var tt = textTbl.getBoundingClientRect();
-    var bt = btnTbl.getBoundingClientRect();
-    if (Math.max(bt.top, tt.bottom - 1) === bt.top) { btnTd.style.paddingTop = orig; return; }
+    cell.style.paddingTop = '0px';
+    var tt = textCol.getBoundingClientRect();
+    var bt = btnCol.getBoundingClientRect();
+    if (Math.max(bt.top, tt.bottom - 1) === bt.top) { cell.style.paddingTop = orig; return; }
     var pad = Math.round((tt.height - bt.height) / 2);
-    btnTd.style.paddingTop = Math.max(pad, 0) + 'px';
+    cell.style.paddingTop = Math.max(pad, 0) + 'px';
   }
   center();
   window.addEventListener('load', center);
   window.addEventListener('resize', center);
+  setTimeout(center, 400);
+  setTimeout(center, 1500);
 })();
 </script>"""
 # Footer: call to action (text left, buttons right; stacks on phones like the other pages' bands)

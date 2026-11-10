@@ -99,4 +99,6 @@ pages you re-generate and paste in fresh; HTML you load from the CMS into the da
 The call-to-action buttons ("Plan a Visit", "Watch Live") are vertically centred beside the text by a small script in the band
 (`CTA_JS` in `gen_pages.py`, marker `fbcCtaCenter`). On phones, where the buttons stack under the text, it leaves their normal gap.
 The Page Editor adds or updates this script on any Pen, Highlights or Calendar page you load, so existing pages pick it up.
+The script finds the two columns from the heading and the first button (not from the `align` attribute), so it still works when a CMS
+rewrites the columns' `align="left"` into a float style. It re-runs on load, on resize and shortly after load.
 
