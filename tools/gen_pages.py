@@ -703,7 +703,7 @@ CTA_JS = r"""<script>
 (function () {
   // fbcCtaCenter: the call-to-action text and buttons are two cells of ONE table row, and valign=middle centers the buttons
   // beside the text with no script at all. This script only does the phone layout: on a narrow screen it stacks the two cells
-  // (buttons under the text, with less room at the sides), because a CMS strips media queries. Styles set from a script are kept by a CMS, unlike saved styles.
+  // (buttons under the text, with less room inside the band), because a CMS strips media queries. Styles set from a script are kept by a CMS, unlike saved styles.
   // This script sits above the band in the page, so it waits until the page has loaded before looking for it.
   // Written without angle brackets, ampersands or backslashes so CMS editors cannot damage it.
   var started = false;
@@ -742,6 +742,8 @@ CTA_JS = r"""<script>
     var bl = btnCell.style.paddingLeft;
     var sl = band ? band.style.paddingLeft : '';
     var sr = band ? band.style.paddingRight : '';
+    var st = band ? band.style.paddingTop : '';
+    var sb = band ? band.style.paddingBottom : '';
     function layout() {
       var w = tbl.getBoundingClientRect().width;
       if (Math.max(w, 600) === 600) {
@@ -752,7 +754,7 @@ CTA_JS = r"""<script>
         btnCell.style.width = '100%';
         btnCell.style.paddingTop = '20px';
         btnCell.style.paddingLeft = '0px';
-        if (band) { band.style.paddingLeft = '24px'; band.style.paddingRight = '24px'; }
+        if (band) { band.style.paddingLeft = '24px'; band.style.paddingRight = '24px'; band.style.paddingTop = '56px'; band.style.paddingBottom = '56px'; }
         return;
       }
       textCell.style.display = '';
@@ -762,7 +764,7 @@ CTA_JS = r"""<script>
       btnCell.style.width = bw;
       btnCell.style.paddingTop = bp;
       btnCell.style.paddingLeft = bl;
-      if (band) { band.style.paddingLeft = sl; band.style.paddingRight = sr; }
+      if (band) { band.style.paddingLeft = sl; band.style.paddingRight = sr; band.style.paddingTop = st; band.style.paddingBottom = sb; }
     }
     layout();
     window.addEventListener('load', layout);
@@ -1080,8 +1082,8 @@ def cal_btn(label, href, bg, color, fbl, fbh):
 cal_foot_btns = (cal_btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, "cta.button", "cta.button_url") + sp(14)
                  + cal_btn("Watch Live", YT_STREAMS, CREAM, DARK, "cta.button2", "cta.button2_url"))
 cal_foot_inner = T(TR(TD(cal_foot_text, "width:66%;padding:0;", valign="middle", width="66%")
-                      + TD(cal_foot_btns, "width:34%;padding:0 0 0 56px;", valign="middle", width="34%")), width="100%")
-cal_foot = sec(sp(8) + c("Call to action: text and buttons are two cells of one row (centered); on phones a script stacks them") + rounded(cal_foot_inner, MAROON, 20, "96px 56px"), pad="96px 0 72px")
+                      + TD(cal_foot_btns, "width:34%;padding:0 0 0 76px;", valign="middle", width="34%")), width="100%")
+cal_foot = sec(sp(8) + c("Call to action: text and buttons are two cells of one row (centered); on phones a script stacks them") + rounded(cal_foot_inner, MAROON, 20, "116px 76px"), pad="96px 0 72px")
 
 CAL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 CAL_EMPTY = (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;"><tr><td style="padding:20px;">'
@@ -1217,7 +1219,7 @@ cal_body = sec(
     + c("Tabs script (optional; without it every month stays stacked)") + CAL_JS, pad="0")
 
 cal_hdr = f"""<!-- =====================================================================
-  FBC CHURCH CALENDAR PAGE - CMS EMBED  (build: centered-buttons-5)
+  FBC CHURCH CALENDAR PAGE - CMS EMBED  (build: centered-buttons-6)
   HOW TO USE: switch the CMS block to Source/HTML view and paste everything below.
   Inline CSS + tables only (no <style> tags). Pictures are loaded from the CMS media library.
   LOGO: the header logo is CAL_LOGO in tools/gen_pages.py; upload it to the CMS and set that address.
