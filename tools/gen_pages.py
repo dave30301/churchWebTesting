@@ -741,8 +741,9 @@ CTA_JS = r"""<script>
       var tt = textCol.getBoundingClientRect();
       var bt = btnCol.getBoundingClientRect();
       if (Math.max(bt.top, tt.bottom - 1) === bt.top) { cell.style.paddingTop = orig; return; }
-      var pad = Math.round((tt.height - bt.height) / 2);
-      cell.style.paddingTop = Math.max(pad, 0) + 'px';
+      var d = (tt.top + tt.height / 2) - (bt.top + bt.height / 2);
+      if (Math.max(Math.abs(d), 1) === 1) { return; }
+      cell.style.paddingTop = Math.max(Math.round(d), 0) + 'px';
     }
     center();
     window.addEventListener('load', center);
@@ -1054,7 +1055,10 @@ cal_foot_text = (txt("Join Us", 14, GOLD, "bold", extra="letter-spacing:0.18em;t
                  + txt("Worship is Sundays at 9:00 AM at 9258 Center Street, Manassas, with Sunday School at 11:00 AM, Bible Study on Wednesdays at 7:00 PM and IGNITE on Thursdays at 7:30 PM. Can&rsquo;t be here? Worship with us live online.", 19, CREAM, extra="line-height:1.5;", fb=F("cta.text", long=True)))
 cal_foot_btns = (btn("Plan a Visit", PLAN_A_VISIT, GOLD, DARK, 18, "14px 32px", fbl="cta.button", fbh="cta.button_url") + sp(12)
                  + btn("Watch Live", YT_STREAMS, CREAM, DARK, 18, "14px 32px", fbl="cta.button2", fbh="cta.button2_url"))
-cal_foot_inner = fl_col(cal_foot_text, "66%", 240, "0 24px 0 0") + fl_col(cal_foot_btns, "34%", 220, "14px 0 0 0") + CLEAR
+# display:flex centres the buttons beside the text with no script (and wraps them under the text on phones); where a CMS drops
+# display:flex the columns simply float as before, and the script in the tabs script does the centring instead.
+cal_foot_inner = ('<div style="display:flex;flex-wrap:wrap;align-items:center;">'
+                  + fl_col(cal_foot_text, "66%", 240, "0 24px 0 0") + fl_col(cal_foot_btns, "34%", 220, "14px 0 0 0") + '</div>' + CLEAR)
 cal_foot = sec(sp(8) + c("Call to action: text and buttons sit side by side on wide screens and stack on phones") + rounded(cal_foot_inner, MAROON, 20, "48px 24px"), pad="64px 0 48px")
 
 CAL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]

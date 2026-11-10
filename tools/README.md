@@ -102,4 +102,7 @@ centring waits until the page has loaded. On phones, where the buttons stack und
 two columns from the heading and the first button (not from the `align` attribute). Loading a calendar page into the Page Editor
 replaces its tabs script with the current one, and removes the separate centring script an earlier version added. The Pen and
 Highlights pages do not use it.
+The calendar band also wraps the two columns in a `display:flex` row with `align-items:center`, so the buttons are centred even where a
+CMS does not run scripts (the script then leaves them alone). Where a CMS drops `display:flex`, the columns float as before and the
+script does the centring.
 
