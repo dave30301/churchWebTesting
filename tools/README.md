@@ -102,5 +102,6 @@ from scripts, so the band is built from things it keeps: the text and the two bu
 (`CTA_JS`, marker `fbcCtaCenter`, inside the calendar's tabs script) only stacks the two cells, buttons under the text, when the
 band is 600px wide or less (with less room inside the band while stacked); styles a script sets are kept by the CMS. The calendar tabs script contains no backslashes.
 The Page Editor has three more spacing fields for it: top and bottom inside the band, left and right inside the band, and the space to the left of the buttons.
+When the editor loads a calendar page whose footer is an older layout (buttons in a floated column, or a separate centring script), it swaps in the current footer row (`CAL_FOOT`, kept in step by `gen_pages.py`) and copies across the page's own eyebrow, heading, text, button labels and addresses. Paste the updated HTML back into the CMS afterwards.
 Loading a calendar page into the Page Editor replaces its tabs script with the current one. Pen and Highlights are unchanged.
 
