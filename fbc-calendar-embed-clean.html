@@ -151,7 +151,7 @@
 (function () {
   // fbcCtaCenter: the call-to-action text and buttons are two cells of ONE table row, and valign=middle centers the buttons
   // beside the text with no script at all. This script only does the phone layout: on a narrow screen it stacks the two cells
-  // (buttons under the text), because a CMS strips media queries. Styles set from a script are kept by a CMS, unlike saved styles.
+  // (buttons under the text, with less room at the sides), because a CMS strips media queries. Styles set from a script are kept by a CMS, unlike saved styles.
   // This script sits above the band in the page, so it waits until the page has loaded before looking for it.
   // Written without angle brackets, ampersands or backslashes so CMS editors cannot damage it.
   var started = false;
@@ -180,20 +180,27 @@
     var tbl = common;
     while (tbl) { if (tbl.tagName === 'TABLE') { break; } tbl = tbl.parentNode; }
     if (!tbl) { return; }
+    var band = tbl.parentNode;
+    if (band) { if (band.tagName !== 'TD') { band = null; } }
     started = true;
     var tw = textCell.style.width;
     var tp = textCell.style.paddingRight;
     var bw = btnCell.style.width;
     var bp = btnCell.style.paddingTop;
+    var bl = btnCell.style.paddingLeft;
+    var sl = band ? band.style.paddingLeft : '';
+    var sr = band ? band.style.paddingRight : '';
     function layout() {
       var w = tbl.getBoundingClientRect().width;
-      if (Math.max(w, 520) === 520) {
+      if (Math.max(w, 600) === 600) {
         textCell.style.display = 'block';
         textCell.style.width = '100%';
         textCell.style.paddingRight = '0px';
         btnCell.style.display = 'block';
         btnCell.style.width = '100%';
         btnCell.style.paddingTop = '20px';
+        btnCell.style.paddingLeft = '0px';
+        if (band) { band.style.paddingLeft = '24px'; band.style.paddingRight = '24px'; }
         return;
       }
       textCell.style.display = '';
@@ -202,6 +209,8 @@
       btnCell.style.display = '';
       btnCell.style.width = bw;
       btnCell.style.paddingTop = bp;
+      btnCell.style.paddingLeft = bl;
+      if (band) { band.style.paddingLeft = sl; band.style.paddingRight = sr; }
     }
     layout();
     window.addEventListener('load', layout);
@@ -214,4 +223,4 @@
   setTimeout(setup, 300);
   setTimeout(setup, 1200);
 })();
-</script></td></tr></table></td></tr><tr><td align="center" bgcolor="#ffffff" style="background-color:#ffffff;padding:96px 0 72px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0;max-width:none;table-layout:fixed;"><tr><td style="padding:0;margin:0;"><div style="height:8px;line-height:8px;font-size:0;">&nbsp;</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#6B1735" style="width:100%;border-collapse:separate;margin:0;background-color:#6B1735;border-radius:20px;" height="100%"><tr><td valign="top" bgcolor="#6B1735" style="background-color:#6B1735;border-radius:20px;padding:64px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0;"><tr><td valign="middle" width="66%" style="width:66%;padding:0 24px 0 0;"><div data-fbc="cta.eyebrow" style="margin:0;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#C9A55C;letter-spacing:0.18em;text-transform:uppercase;line-height:1.3;">Join Us</div><div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div><h2 data-fbc="cta.heading" style="margin:0;padding:0;font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:40px;font-weight:normal;line-height:1.12;color:#ffffff;">Mark your calendar and come as you are</h2><div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div><div data-fbc="cta.text" data-fbc-long="1" style="margin:0;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:19px;font-weight:normal;color:#F7F3EC;line-height:1.5;">Worship is Sundays at 9:00 AM at 9258 Center Street, Manassas, with Sunday School at 11:00 AM, Bible Study on Wednesdays at 7:00 PM and IGNITE on Thursdays at 7:30 PM. Can&rsquo;t be here? Worship with us live online.</div></td><td valign="middle" width="34%" style="width:34%;padding:0;"><table role="presentation" width="auto" cellpadding="0" cellspacing="0" border="0" style="width:auto;border-collapse:separate;margin:0;border-radius:999px;"><tr><td align="center" bgcolor="#C9A55C" nowrap="nowrap" style="background-color:#C9A55C;border-radius:999px;padding:16px 36px;"><a href="https://fbcmanassas.org/about/times/" data-fbc="cta.button" data-fbc-href="cta.button_url" style="text-decoration:none;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;color:#171717;text-align:center;">Plan a Visit</a></td></tr></table><div style="height:14px;line-height:14px;font-size:0;">&nbsp;</div><table role="presentation" width="auto" cellpadding="0" cellspacing="0" border="0" style="width:auto;border-collapse:separate;margin:0;border-radius:999px;"><tr><td align="center" bgcolor="#F7F3EC" nowrap="nowrap" style="background-color:#F7F3EC;border-radius:999px;padding:16px 36px;"><a href="https://www.youtube.com/@fbcmanassas5180/streams" data-fbc="cta.button2" data-fbc-href="cta.button2_url" style="text-decoration:none;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;color:#171717;text-align:center;">Watch Live</a></td></tr></table></td></tr></table></td></tr></table></td></tr></table></td></tr></table>
+</script></td></tr></table></td></tr><tr><td align="center" bgcolor="#ffffff" style="background-color:#ffffff;padding:96px 0 72px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0;max-width:none;table-layout:fixed;"><tr><td style="padding:0;margin:0;"><div style="height:8px;line-height:8px;font-size:0;">&nbsp;</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#6B1735" style="width:100%;border-collapse:separate;margin:0;background-color:#6B1735;border-radius:20px;" height="100%"><tr><td valign="top" bgcolor="#6B1735" style="background-color:#6B1735;border-radius:20px;padding:96px 56px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;margin:0;"><tr><td valign="middle" width="66%" style="width:66%;padding:0;"><div data-fbc="cta.eyebrow" style="margin:0;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#C9A55C;letter-spacing:0.18em;text-transform:uppercase;line-height:1.3;">Join Us</div><div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div><h2 data-fbc="cta.heading" style="margin:0;padding:0;font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:40px;font-weight:normal;line-height:1.12;color:#ffffff;">Mark your calendar and come as you are</h2><div style="height:10px;line-height:10px;font-size:0;">&nbsp;</div><div data-fbc="cta.text" data-fbc-long="1" style="margin:0;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:19px;font-weight:normal;color:#F7F3EC;line-height:1.5;">Worship is Sundays at 9:00 AM at 9258 Center Street, Manassas, with Sunday School at 11:00 AM, Bible Study on Wednesdays at 7:00 PM and IGNITE on Thursdays at 7:30 PM. Can&rsquo;t be here? Worship with us live online.</div></td><td valign="middle" width="34%" style="width:34%;padding:0 0 0 56px;"><table role="presentation" width="auto" cellpadding="0" cellspacing="0" border="0" style="width:auto;border-collapse:separate;margin:0;border-radius:999px;"><tr><td align="center" bgcolor="#C9A55C" nowrap="nowrap" style="background-color:#C9A55C;border-radius:999px;padding:16px 36px;"><a href="https://fbcmanassas.org/about/times/" data-fbc="cta.button" data-fbc-href="cta.button_url" style="text-decoration:none;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;color:#171717;text-align:center;">Plan a Visit</a></td></tr></table><div style="height:14px;line-height:14px;font-size:0;">&nbsp;</div><table role="presentation" width="auto" cellpadding="0" cellspacing="0" border="0" style="width:auto;border-collapse:separate;margin:0;border-radius:999px;"><tr><td align="center" bgcolor="#F7F3EC" nowrap="nowrap" style="background-color:#F7F3EC;border-radius:999px;padding:16px 36px;"><a href="https://www.youtube.com/@fbcmanassas5180/streams" data-fbc="cta.button2" data-fbc-href="cta.button2_url" style="text-decoration:none;font-family:'Source Sans 3','Source Sans Pro',Arial,Helvetica,sans-serif;font-size:18px;font-weight:bold;color:#171717;text-align:center;">Watch Live</a></td></tr></table></td></tr></table></td></tr></table></td></tr></table></td></tr></table>

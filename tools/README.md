@@ -100,6 +100,7 @@ Calendar page call to action. The CMS this site uses removes every inline `displ
 from scripts, so the band is built from things it keeps: the text and the two buttons are two cells of one table row with
 `valign="middle"` (centred with no script), and each button's padding is on its table cell, not on the link. A small script
 (`CTA_JS`, marker `fbcCtaCenter`, inside the calendar's tabs script) only stacks the two cells, buttons under the text, when the
-band is 520px wide or less; styles a script sets are kept by the CMS. The calendar tabs script contains no backslashes.
+band is 600px wide or less (with less room at the sides while stacked); styles a script sets are kept by the CMS. The calendar tabs script contains no backslashes.
+The Page Editor has three more spacing fields for it: top and bottom inside the band, left and right inside the band, and the space to the left of the buttons.
 Loading a calendar page into the Page Editor replaces its tabs script with the current one. Pen and Highlights are unchanged.
 
